@@ -1,0 +1,22 @@
+# Numerous always-ignore extensions
+*.diff
+*.err
+*.orig
+*.log
+*.rej
+*.swo
+*.swp
+*.vi
+*.htaccess
+*.idea
+*.csv
+*.xls
+*.xlsx
+*.pyc
+
+# Vagrant local state directory.
+.vagrant
+
+venv
+config.py
+run.py
