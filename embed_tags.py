@@ -60,23 +60,25 @@ def get_brids(name, code):
 def process_description(bird_data, island_data):
     return_data = ''
     for item in bird_data:
-        return_data += item[1] + ' inches; wingspan ' + item[2] + ' inches; '
+        return_data += item[1] + ' in.; wingspan ' + item[2] + ' in.; '
         return_data += item[3] + '; ' + item[4] + '\n'
         for island in island_data:
             return_data += island[1] + '; ' + island[2] + '; ' + island[0]
             if island[3]:
-                return_data += '; Target Bird'
+                return_data += '; Target'
             if island[4]:
-                return_data += '; Speciality Bird'
+                return_data += '; Special'
+            return_data += '\n'
+        return_data[:-2]
         if item[5]:
-            return_data += '\n\nDESCRIPTION: ' + item[5]
+            return_data += '\n\nDESCRIPTION & MISC: ' + item[5]
         if item[6]:
             return_data += '\n\nHABITAT: ' + item[6]
         if item[7]:
             return_data += '\n\nCONSERVATION: ' + item[7]
         if item[8]:
             return_data += '\n\nSONG: ' + item[8]
-        return_data += '\n\nData taken from Birds of the World, Cornell University.'
+        return_data += '\n\nData from "Birds of the World", Cornell University.'
     return return_data
 
 
@@ -112,7 +114,7 @@ for file in glob.glob('*'):
         audio.add_tags()
     except error:
         pass
-    cover_file = path_images + file.rsplit( ".", 1 )[ 0 ] + '.jpg'
+    cover_file = path_images + full_name + '.jpg'
     with open(cover_file, 'rb') as f:
-        audio.tags.add(APIC(mime='image/jpeg', type=3, desc=u'Cover', data=open(cover_file,'rb').read()))
+        audio.tags.add(APIC(mime='image/jpeg', type=3, desc=u'Cover', data=open(cover_file, 'rb').read()))
     audio.save(fname)
