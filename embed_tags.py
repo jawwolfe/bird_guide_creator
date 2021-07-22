@@ -2,7 +2,7 @@ import os, glob, pyodbc
 from pyodbc import InterfaceError
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3NoHeaderError
-from mutagen.id3 import ID3, USLT, TALB, TIT2, APIC, error
+from mutagen.id3 import ID3, USLT, TALB, TIT2, APIC, error, TPE1
 from exceptions import DatabaseConnectionException, DatabaseOperationException
 
 
@@ -57,6 +57,21 @@ def get_brids(name, code):
     return data
 
 
+def get_artist(name, code):
+    conn = connect_sqlserver()
+    cursor = conn.cursor()
+    sql = sql = "EXEC sp_get_artist @Bird_Name=?, @Taxanomic_Code=?"
+    params = (name, code)
+    try:
+        cursor.execute(sql, params)
+        data = cursor.fetchone()
+    except pyodbc.ProgrammingError as err:
+        msg = "An error occurred executing a sql server command get artist"
+        raise DatabaseOperationException(msg)
+    conn.commit()
+    return data
+
+
 def process_description(bird_data, island_data):
     return_data = ''
     for item in bird_data:
@@ -92,6 +107,11 @@ for file in glob.glob('*'):
     data_birds = get_brids(name, prefix)
     data_islands = get_islands(name, prefix)
     lyrics = process_description(data_birds, data_islands)
+    artist_data = get_artist(name, prefix)
+    if artist_data:
+        artist = artist_data[0]
+    else:
+        artist = ''
     try:
         tags = ID3(fname)
     except ID3NoHeaderError:
@@ -99,14 +119,11 @@ for file in glob.glob('*'):
     if len(tags.getall(u"USLT::'en'")) != 0:
         tags.delall(u"USLT::'en'")
         tags.save(fname)
-
-        # tags.add(USLT(encoding=3, lang=u'eng', desc=u'desc', text=lyrics))
-        # apparently the description is important when more than one
-        # USLT frames are present
     tags["USLT::'eng'"] = (USLT(encoding=3, lang=u'eng', desc=u'desc', text=lyrics))
     tags["USLT"] = (USLT(encoding=3, text=lyrics))
     tags["USLT::XXX"] = (USLT(encoding=3, text=lyrics))
     tags["TIT2"] = TIT2(encoding=3, text=full_name)
+    tags["TPE1"] = TPE1(encoding=3, text=artist)
     tags["TALB"] = TALB(encoding=3, text=u'Philippines Bird Songs and Calls')
     tags.save(fname)
     audio = MP3(fname, ID3=ID3)

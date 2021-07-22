@@ -2,18 +2,14 @@ import mutagen, os, glob
 from PIL import Image
 
 path_root = 'C:/temp/'
-path_audio = path_root + 'Philippines Bird Songs and Calls/'
-path_images = path_root + 'Philippines Bird Photos/'
-#path_images = path_root + 'Photos/'
-path_descriptions = path_root + 'Philippines Bird Descriptions/'
-path_new_images = path_root + 'Photos New/'
-test = path_root + 'Audio New/'
+path_new_images = path_root + 'Optimized/'
+path_raw_images = path_root + 'Source/'
 
 lst_images = []
-os.chdir(test)
+os.chdir(path_raw_images)
 for file in glob.glob('*'):
     lst_images.append(file.rsplit( ".", 1 )[ 0 ] )
-    image = Image.open(path_images + file)
+    image = Image.open(path_raw_images + file)
     width, height = image.size
     if width > 800 or height > 800:
         ratio = width / height
