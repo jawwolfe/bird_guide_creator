@@ -76,13 +76,17 @@ def process_description(bird_data, island_data):
     return_data = ''
     for item in bird_data:
         return_data += item[1] + ' in.; wingspan ' + item[2] + ' in.; '
-        return_data += item[3] + '; ' + item[4] + '\n'
+        return_data += item[3] + '; '
+        if 'Not' in item[4]:
+            return_data += '\n'
+        else:
+            return_data += item[4] + '\n'
         for island in island_data:
             return_data += island[1] + '; ' + island[2] + '; ' + island[0]
             if island[3]:
                 return_data += '; Target'
             if island[4]:
-                return_data += '; Special'
+                return_data += '; Specialty'
             return_data += '\n'
         return_data = return_data[:-1]
         if item[6]:
