@@ -84,15 +84,14 @@ def process_description(bird_data, island_data):
             if island[4]:
                 return_data += '; Special'
             return_data += '\n'
-        return_data[:-2]
-        if item[5]:
-            return_data += '\n\nDESCRIPTION & MISC: ' + item[5]
         if item[6]:
             return_data += '\n\nHABITAT: ' + item[6]
-        if item[7]:
-            return_data += '\n\nCONSERVATION: ' + item[7]
         if item[8]:
             return_data += '\n\nSONG: ' + item[8]
+        if item[5]:
+            return_data += '\n\nDESCRIPTION & MISC: ' + item[5]
+        if item[7]:
+            return_data += '\n\nCONSERVATION: ' + item[7]
         return_data += '\n\nData from "Birds of the World", Cornell University.'
     return return_data
 
@@ -102,8 +101,8 @@ os.chdir(path_audio)
 for file in glob.glob('*'):
     fname = path_audio + file
     full_name = file.rsplit(".", 1)[0]
-    prefix = full_name[:2].strip()
-    name = full_name[2:].strip()
+    prefix = full_name[:3].strip()
+    name = full_name[3:].strip()
     data_birds = get_brids(name, prefix)
     data_islands = get_islands(name, prefix)
     lyrics = process_description(data_birds, data_islands)
@@ -124,7 +123,7 @@ for file in glob.glob('*'):
     tags["USLT::XXX"] = (USLT(encoding=3, text=lyrics))
     tags["TIT2"] = TIT2(encoding=3, text=full_name)
     tags["TPE1"] = TPE1(encoding=3, text=artist)
-    tags["TALB"] = TALB(encoding=3, text=u'Philippines Bird Songs and Calls')
+    tags["TALB"] = TALB(encoding=3, text=u'Philippines Bird Guide')
     tags.save(fname)
     audio = MP3(fname, ID3=ID3)
     try:
