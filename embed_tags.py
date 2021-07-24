@@ -75,7 +75,9 @@ def get_artist(name, code):
 def process_description(bird_data, island_data):
     return_data = ''
     for item in bird_data:
-        return_data += item[1] + ' in.; wingspan ' + item[2] + ' in.; '
+        return_data += item[1] + ' in.; '
+        if item[2]:
+            return_data += 'wingspan ' + item[2] + ' in.; '
         return_data += item[3] + '; '
         if 'Not' in item[4]:
             return_data += '\n'
