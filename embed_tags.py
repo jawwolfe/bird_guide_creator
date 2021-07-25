@@ -72,12 +72,22 @@ def get_artist(name, code):
     return data
 
 
+def parse_length(length_string):
+    values = length_string.split('-')
+    if values[0] == values[1]:
+        return_value = values[0]
+    else:
+        return_value = length_string
+    return return_value
+
+
 def process_description(bird_data, island_data):
     return_data = ''
     for item in bird_data:
         return_data += item[0] + '\n'
         if len(item[1]) > 1:
-            return_data += item[1] + ' in. '
+            length = parse_length(item[1])
+            return_data += length + ' in. '
         if len(item[2]) > 1:
             return_data += '; wingspan ' + item[2] + ' in. '
         if 'Least' not in item[3]:
@@ -90,12 +100,13 @@ def process_description(bird_data, island_data):
             return_data += island[1] + '; ' + island[2] + '; ' + island[0]
             if island[3]:
                 return_data += '; Target'
-            # calculate speciality
-            if item[9] == 5 and item[10] == 1:
-                pass
-            else:
-                if island[4] != 6:
-                    return_data += '; Specialty'
+            # calculate speciality but only if is not a target which assumes also a speciality
+            if not island[3]:
+                if item[9] == 5 and item[10] == 1:
+                    pass
+                else:
+                    if island[4] != 6:
+                        return_data += '; Specialty'
             return_data += '\n'
         return_data = return_data[:-1]
         if item[6]:
