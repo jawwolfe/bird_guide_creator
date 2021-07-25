@@ -77,9 +77,9 @@ def process_description(bird_data, island_data):
     for item in bird_data:
         return_data += item[0] + '\n'
         if len(item[1]) > 1:
-            return_data += item[1] + ' in.; '
+            return_data += item[1] + ' in. '
         if len(item[2]) > 1:
-            return_data += 'wingspan ' + item[2] + ' in.; '
+            return_data += '; wingspan ' + item[2] + ' in.; '
         if 'Least' not in item[3]:
             return_data += item[3] + '; '
         if 'Not' in item[4]:
@@ -90,8 +90,12 @@ def process_description(bird_data, island_data):
             return_data += island[1] + '; ' + island[2] + '; ' + island[0]
             if island[3]:
                 return_data += '; Target'
-            if island[4]:
-                return_data += '; Specialty'
+            # calculate speciality
+            if item[9] == 5 and item[10] == 1:
+                pass
+            else:
+                if island[4] != 6:
+                    return_data += '; Specialty'
             return_data += '\n'
         return_data = return_data[:-1]
         if item[6]:
