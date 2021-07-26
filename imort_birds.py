@@ -41,6 +41,7 @@ def get_scientific_name(bird_name):
             return ''
 
 
+# First make sure all names are correct
 os.chdir(path_audio)
 for file in glob.glob('*'):
     full_name = file.rsplit(".", 1)[0]
@@ -48,7 +49,15 @@ for file in glob.glob('*'):
     name = full_name[3:].strip()
     scientific = get_scientific_name(name)
     if not scientific:
-        raise ValueError('No match on common name in Clements')
+        raise ValueError('No match on common name in Clements, check name')
+
+for file in glob.glob('*'):
+    full_name = file.rsplit(".", 1)[0]
+    prefix = full_name[:3].strip()
+    name = full_name[3:].strip()
+    scientific = get_scientific_name(name)
+    if not scientific:
+        raise ValueError('No match on common name in Clements, check name')
     sql = "Insert into Birds(BirdName, TaxanomicCode, ScientificName) values(?,?,?); Select @@Identity as 'ID';"
     params = (name, prefix, scientific)
     cursor = conn.cursor()
