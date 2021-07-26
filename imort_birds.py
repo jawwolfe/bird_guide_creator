@@ -67,7 +67,7 @@ for file in glob.glob('*'):
     id = cursor.fetchone()[0]
     conn.commit()
     # default Cebu birds
-    sql = 'Insert into BirdsIslands(BirdID, IslandID) values(?, 2);'
+    sql = 'Insert into BirdsIslands(BirdID, IslandID, ResidentStatusID) values(?, 1, 1);'
     params = (id)
     cursor = conn.cursor()
     cursor.execute(sql, params)
