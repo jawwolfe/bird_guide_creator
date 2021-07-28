@@ -32,13 +32,13 @@ for item in clements_data:
         clements_species.append(bird)
 
 
-def get_scientific_name(bird_name):
-    for species in clements_species:
-        if species['english'] == name:
+def get_scientific_name(bird_name, species):
+    flag = False
+    for species in species:
+        if species['english'] == bird_name:
+            flag = True
             return species['scientific']
-        else:
-            print('unmatched')
-            return ''
+    return ''
 
 
 # First make sure all names are correct
@@ -47,15 +47,17 @@ for file in glob.glob('*'):
     full_name = file.rsplit(".", 1)[0]
     prefix = full_name[:3].strip()
     name = full_name[3:].strip()
-    scientific = get_scientific_name(name)
+    scientific = get_scientific_name(name, clements_species)
     if not scientific:
+        # print(full_name)
         raise ValueError('No match on common name in Clements, check name')
+
 
 for file in glob.glob('*'):
     full_name = file.rsplit(".", 1)[0]
     prefix = full_name[:3].strip()
     name = full_name[3:].strip()
-    scientific = get_scientific_name(name)
+    scientific = get_scientific_name(name, clements_species)
     if not scientific:
         raise ValueError('No match on common name in Clements, check name')
     sql = "Insert into Birds(BirdName, TaxanomicCode, ScientificName) values(?,?,?); Select @@Identity as 'ID';"
@@ -72,11 +74,4 @@ for file in glob.glob('*'):
     cursor = conn.cursor()
     cursor.execute(sql, params)
     conn.commit()
-
-
-
-
-
-
-
 
