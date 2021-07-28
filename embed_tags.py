@@ -84,7 +84,7 @@ def parse_length(length_string):
 def process_description(bird_data, island_data):
     return_data = ''
     for item in bird_data:
-        return_data += item[0] + '\n'
+        return_data += item[0].strip() + ' (' + item[11] + ') ' + '\n'
         if len(item[1]) > 1:
             length = parse_length(item[1])
             return_data += length + ' in. '
