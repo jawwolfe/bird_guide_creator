@@ -11,7 +11,7 @@
 *.idea
 *.csv
 *.xls
-*.xlsx
+
 *.pyc
 
 # Vagrant local state directory.

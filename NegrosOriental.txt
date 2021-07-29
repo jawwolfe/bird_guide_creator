@@ -1,0 +1,278 @@
+Wandering Whistling-Duck														
+Philippine Duck														
+Tufted Duck														
+Blue-breasted Quail														
+Red Junglefowl														
+Red Junglefowl (Domestic type)														
+Little Grebe														
+Rock Pigeon														
+Metallic Pigeon														
+Philippine Collared-Dove														
+Red Collared-Dove														
+Spotted Dove														
+Philippine Cuckoo-Dove														
+Asian Emerald Dove														
+Asian/Pacific Emerald Dove														
+Zebra Dove														
+Negros Bleeding-heart														
+White-eared Brown-Dove														
+Amethyst Brown-Dove														
+Pink-necked Green-Pigeon														
+Philippine Green-Pigeon														
+Yellow-breasted Fruit-Dove														
+Black-chinned Fruit-Dove														
+Pink-bellied Imperial-Pigeon														
+Green Imperial-Pigeon														
+Pied Imperial-Pigeon														
+imperial-pigeon sp.														
+pigeon/dove sp.														
+Philippine Coucal														
+Lesser Coucal														
+coucal sp.														
+Asian Koel														
+Little Bronze-Cuckoo														
+Plaintive Cuckoo														
+Brush Cuckoo														
+Philippine Drongo-Cuckoo														
+Large Hawk-Cuckoo														
+Philippine Hawk-Cuckoo														
+Oriental Cuckoo														
+Himalayan/Oriental Cuckoo														
+cuckoo sp. (Cuculidae sp.)														
+Philippine Frogmouth														
+Philippine Nightjar														
+Savanna Nightjar														
+Philippine Spinetailed Swift														
+Purple Needletail														
+Pygmy Swiftlet														
+Gray-rumped Swiftlet														
+Philippine Swiftlet														
+Ameline Swiftlet														
+Germain's Swiftlet														
+dark swiftlet sp.														
+swiftlet sp.														
+Pacific Swift														
+House Swift														
+Asian Palm-Swift														
+small swift sp.														
+swift sp.														
+Whiskered Treeswift														
+Buff-banded Rail														
+Barred Rail														
+Eurasian Moorhen														
+swamphen sp.														
+Plain Bush-hen														
+White-breasted Waterhen														
+White-browed Crake														
+Black-winged Stilt														
+Pied Stilt														
+Black-bellied Plover														
+Pacific Golden-Plover														
+Lesser Sand-Plover														
+Greater Sand-Plover														
+Malaysian Plover														
+Kentish Plover														
+Little Ringed Plover														
+plover sp.														
+Greater Painted-Snipe														
+Whimbrel														
+Far Eastern Curlew														
+Black-tailed Godwit														
+Ruddy Turnstone														
+Great Knot														
+Broad-billed Sandpiper														
+Curlew Sandpiper														
+Long-toed Stint														
+Red-necked Stint														
+Sanderling														
+Swinhoe's Snipe														
+snipe sp.														
+Terek Sandpiper														
+Red-necked Phalarope														
+Common Sandpiper														
+Gray-tailed Tattler														
+Common Greenshank														
+Marsh Sandpiper														
+Wood Sandpiper														
+Common Redshank														
+Barred Buttonquail														
+buttonquail sp.														
+Oriental Pratincole														
+Black-headed Gull														
+Sooty Tern														
+Aleutian Tern														
+Little Tern														
+Gull-billed Tern														
+White-winged Tern														
+Whiskered Tern														
+Common Tern														
+Great Crested Tern														
+tern sp.														
+Wedge-tailed Shearwater														
+Lesser Frigatebird														
+Yellow Bittern														
+Cinnamon Bittern														
+Black Bittern														
+Gray Heron														
+Purple Heron														
+Great Egret														
+Intermediate Egret														
+Chinese Egret														
+Little Egret														
+Pacific Reef-Heron														
+Cattle Egret														
+Javan Pond-Heron														
+pond-heron sp.														
+Striated Heron														
+Black-crowned Night-Heron														
+Rufous Night-Heron														
+Osprey														
+Philippine Honey-buzzard														
+Oriental Honey-buzzard														
+Philippine Serpent-Eagle														
+Pinsker's Hawk-Eagle														
+Rufous-bellied Eagle														
+Gray-faced Buzzard														
+Crested Goshawk														
+Chinese Sparrowhawk														
+Besra														
+Accipiter sp.														
+Brahminy Kite														
+White-bellied Sea-Eagle														
+hawk sp.														
+Negros Scops-Owl														
+Northern Boobook														
+Luzon Boobook														
+Writhe-billed Hornbill														
+Visayan Hornbill														
+Common Kingfisher														
+Indigo-banded Kingfisher														
+Dimorphic Dwarf-Kingfisher														
+Brown-breasted Kingfisher														
+Collared Kingfisher														
+Spotted Kingfisher														
+kingfisher sp.														
+Rufous-crowned Bee-eater														
+Blue-tailed Bee-eater														
+bee-eater sp.														
+Dollarbird														
+Coppersmith Barbet														
+Philippine Woodpecker														
+Yellow-faced Flameback														
+White-bellied Woodpecker														
+woodpecker sp.														
+Philippine Falconet														
+Eurasian Kestrel														
+Oriental Hobby														
+Peregrine Falcon														
+Blue-crowned Racquet-tail														
+Blue-naped Parrot														
+Crimson Rosella														
+Philippine Hanging-Parrot														
+parrot sp.														
+Blue-breasted Pitta														
+Blue-winged Pitta														
+Hooded Pitta														
+Golden-bellied Gerygone														
+Scarlet Minivet														
+Bar-bellied Cuckooshrike														
+Pied Triller														
+White-winged Cuckooshrike														
+White-vented Whistler														
+Philippine Oriole														
+Black-naped Oriole														
+White-breasted Woodswallow														
+Visayan Fantail														
+Philippine Pied-Fantail														
+Balicassiao														
+Black-naped Monarch														
+Brown Shrike														
+Long-tailed Shrike														
+Large-billed Crow														
+Citrine Canary-Flycatcher														
+Elegant Tit														
+Australasian Bushlark														
+Oriental Skylark														
+Visayan Tailorbird														
+tailorbird sp.														
+Zitting Cisticola														
+Golden-headed Cisticola														
+Oriental Reed Warbler														
+Clamorous Reed Warbler														
+Tawny Grassbird														
+Striated Grassbird														
+Bank Swallow														
+Barn Swallow														
+Pacific Swallow														
+Striated Swallow														
+Asian House-Martin														
+swallow sp.														
+Yellow-wattled Bulbul														
+Yellow-vented Bulbul														
+Visayan Bulbul														
+Lemon-throated Leaf Warbler														
+Philippine Leaf Warbler														
+Arctic Warbler														
+Kamchatka Leaf Warbler														
+Arctic/Kamchatka Leaf Warbler														
+Japanese Leaf/Arctic/Kamchatka Leaf Warbler														
+Mountain Leaf Warbler														
+Phylloscopus sp.														
+Negros Striped-Babbler														
+Flame-templed Babbler														
+Warbling White-eye														
+Yellowish White-eye														
+Zosterops sp.														
+Sulphur-billed Nuthatch														
+Stripe-sided Rhabdornis														
+Visayan Rhabdornis														
+Asian Glossy Starling														
+Coleto														
+Rosy Starling														
+Chestnut-cheeked Starling														
+White-shouldered Starling														
+Crested Myna														
+Eyebrowed Thrush														
+Island Thrush														
+Gray-streaked Flycatcher														
+Asian Brown Flycatcher														
+Ashy-breasted Flycatcher														
+Philippine Magpie-Robin														
+Visayan Shama														
+Mangrove Blue Flycatcher														
+Blue-and-white Flycatcher														
+Turquoise Flycatcher														
+Negros Jungle-Flycatcher														
+White-browed Shortwing														
+Narcissus Flycatcher														
+Mugimaki Flycatcher														
+Little Pied Flycatcher														
+Bundok Flycatcher														
+Ficedula sp.														
+Blue Rock-Thrush														
+Pied Bushchat														
+Bicolored Flowerpecker														
+Black-belted Flowerpecker														
+Orange-bellied Flowerpecker														
+Pygmy Flowerpecker														
+Fire-breasted Flowerpecker														
+Dicaeum sp.														
+Brown-throated Sunbird														
+Purple-throated Sunbird														
+Olive-backed Sunbird														
+Magnificent Sunbird														
+Handsome Sunbird														
+Maroon-naped Sunbird														
+sunbird sp.														
+Scaly-breasted Munia														
+White-bellied Munia														
+Chestnut Munia														
+Java Sparrow														
+Eurasian Tree Sparrow														
+Gray Wagtail														
+Eastern Yellow Wagtail														
+White Wagtail														
+Paddyfield Pipit														
+Richard's/Paddyfield Pipit														
+Pechora Pipit														
+Red-throated Pipit
