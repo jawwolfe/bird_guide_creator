@@ -8,6 +8,7 @@ from exceptions import DatabaseConnectionException, DatabaseOperationException
 
 path_root = 'C:/temp/'
 path_audio = path_root + 'Philippines Bird Guide/'
+#path_audio = path_root + 'testing/'
 path_audio_test = path_root + 'Audio Test/'
 path_descriptions = path_root + 'Philippines Bird Descriptions/'
 path_images = path_root + 'Philippines Bird Photos/'
@@ -117,7 +118,15 @@ def process_description(bird_data, island_data):
             return_data += '\nDESCRIPTION & MISC: ' + item[5]
         if item[7]:
             return_data += '\nCONSERVATION: ' + item[7]
-        return_data += '\nData from "Birds of the World", Cornell University.'
+        return_data += '\n\nData from "Birds of the World", Cornell University.'
+        return_data += '\nAudio recordings from eBird, Cornell University.'
+        return_data += '\nImages credits ("Artist"):\nA Guide to the Birds of the Philippines. Robert S. Kennedy, ' \
+                       'Pedro C. Gonzales, Edward C. Dickinson, Hector C Miranda, Jr., and Timothy H. Fisher. Oxford ' \
+                       'University Press. 2000'
+        return_data += '\nBirds of the Greater Sundas, the Philippines, and Wallacea. Norman Arlott. ' \
+                       'Princeton University Press. 2018.'
+        return_data += '\nSibley Birds. David Allen Sibley. Second Edition. Alfred A. Knopf. 2014.'
+        return_data += '\neBird, Cornell University.'
     return return_data
 
 
