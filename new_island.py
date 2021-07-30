@@ -12,6 +12,7 @@ path_occidental = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\NegrosOcci
 path_oriental = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\NegrosOriental.txt'
 path_exotic = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\negros_exotic.xlsx'
 path_clements = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Clements_2019.xlsx'
+path_targets = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\negros_targets.xlsx'
 
 
 def process_ebird_file(path):
@@ -20,6 +21,7 @@ def process_ebird_file(path):
     contents_split = file_contents.splitlines()
     my_list = []
     for item in contents_split:
+        # todo add another line to ignore the new page line characters
         if 'sp.' not in item:
             if '/' not in item:
                 if 'Domestic' not in item:
@@ -47,13 +49,19 @@ all_ebird_birds = list(set(lst_negros_occidental + lst_negros_oriental))
 wb = load_workbook(path_exotic)
 sheetname = "Sheet1"
 ws = wb[sheetname]
-
 exotic_birds = []
-
 for row in ws.iter_rows(min_row=2, values_only=True):
     if row[3]:
         data = {'name': row[2], 'scientific': row[3]}
         exotic_birds.append(data)
+
+wb = load_workbook(path_targets)
+sheetname = "Sheet1"
+ws = wb[sheetname]
+targets = []
+for row in ws.iter_rows(min_row=2, values_only=True):
+    data = {'name': row[0], 'scientific': row[1]}
+    targets.append(data)
 
 sql = "Select BirdName, TaxanomicCode, ScientificName from Birds;"
 cursor = conn.cursor()
@@ -82,18 +90,33 @@ for item in exotic_birds:
 master_ebird_list = []
 for bird in all_ebird_birds:
     flag = False
+    code = ''
+    scien = ''
+    target_value = ''
+    add = ''
+    # get code from database
     for item in old_birds:
         if bird.strip() == item[0].strip():
             flag = True
-            add = {'code': item[1], 'name': item[0], 'scientific': item[2]}
+            add = ''
+            code = item[1]
     if not flag:
-        # get scientific name from clements
-        for taxon in clements_species:
-            if taxon['english'].strip() == bird.strip():
-                scien = taxon['scientific']
-        add = {'code': '', 'name': bird, 'scientific': scien}
-    master_ebird_list.append(add)
-
+        code = ''
+        add = 'ADD'
+    # get scientific name from clements
+    for taxon in clements_species:
+        if taxon['english'].strip() == bird.strip():
+            scien = taxon['scientific']
+    # get targets
+    flag2 = False
+    for target in targets:
+        if scien == target['scientific'].strip():
+            target_value = "TARGET"
+            flag2 = True
+    if not flag2:
+        target = ''
+    diction = {'code': code, 'name': bird, 'scientific': scien, 'add': add, 'target': target_value}
+    master_ebird_list.append(diction)
 
 exotic_not_ebird = []
 for exotic in exotic_birds:
@@ -110,19 +133,30 @@ for exotic in exotic_birds:
                 english = taxon['english']
         # Get taxanomic code from old birds if exists
         flag3 = False
+        code = ''
+        add = ''
         for old in old_birds:
             if exotic['scientific'].strip() == old[2].strip():
                 flag3 = True
-                diction = {'code': old[1], 'name': english, 'scientific': exotic['scientific']}
-                exotic_not_ebird.append(diction)
+                code = old[1]
         if not flag3:
-            diction = {'code': '', 'name': english, 'scientific': exotic['scientific']}
+            code = ''
+            add = 'ADD'
+        # Get target if exists
+        flag4 = False
+        for target in targets:
+            if exotic['scientific'].strip() == target['scientific'].strip():
+                flag4 = True
+                diction = {'code': code, 'name': english, 'scientific': exotic['scientific'], 'add': add, 'target': 'TARGET'}
+                exotic_not_ebird.append(diction)
+        if not flag4:
+            diction = {'code': code, 'name': english, 'scientific': exotic['scientific'], 'add': add, 'target': ''}
             exotic_not_ebird.append(diction)
 
 all_negros = exotic_not_ebird + master_ebird_list
 
 f = open("negros_all.csv", "w")
-writer = csv.DictWriter(f, fieldnames=["code", "name", "scientific"], lineterminator='\n')
+writer = csv.DictWriter(f, fieldnames=["code", "name", "scientific", "add", "target"], lineterminator='\n')
 writer.writerows(all_negros)
 f.close()
 
