@@ -1,35 +1,13 @@
 from openpyxl import load_workbook
-import os, glob, pyodbc, sys
-
-path_root = 'C:/temp/'
-path_audio = path_root + 'Optimized/'
+import pyodbc
 
 connection_string = "Driver={ODBC Driver 17 for SQL Server};"
 connection_string += "Server=localhost\\SQLEXPRESS;"
 connection_string += "Database=BirdGuide;"
 connection_string += "Trusted_Connection=yes;"
 conn = pyodbc.connect(connection_string)
-
-
-path = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Clements_2019.xlsx'
-
-path_my_name = 'C:/temp/Philippines Bird Guide/'
-
-wb = load_workbook(path)
-sheetname = "eBird Clements v2019 Aug 2019"
-ws = wb[sheetname]
-
-clements_data = []
-clements_species = []
-
-for row in ws.iter_rows(min_row=2, values_only=True):
-     data = {'category': row[2], 'english': row[3], 'scientific': row[4]}
-     clements_data.append(data)
-
-for item in clements_data:
-    if item['category'] == "species":
-        bird = {'english': item['english'], 'scientific': item['scientific']}
-        clements_species.append(bird)
+path_taxonomy = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Clements_2019.xlsx'
+path_new_island = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\negros_all.xlsx'
 
 
 def get_scientific_name(bird_name, species):
@@ -41,37 +19,89 @@ def get_scientific_name(bird_name, species):
     return ''
 
 
-# First make sure all names are correct
-os.chdir(path_audio)
-for file in glob.glob('*'):
-    full_name = file.rsplit(".", 1)[0]
-    prefix = full_name[:3].strip()
-    name = full_name[3:].strip()
-    scientific = get_scientific_name(name, clements_species)
-    if not scientific:
-        # print(full_name)
-        raise ValueError('No match on common name in Clements, check name')
-
-
-for file in glob.glob('*'):
-    full_name = file.rsplit(".", 1)[0]
-    prefix = full_name[:3].strip()
-    name = full_name[3:].strip()
-    scientific = get_scientific_name(name, clements_species)
-    if not scientific:
-        raise ValueError('No match on common name in Clements, check name')
-    sql = "Insert into Birds(BirdName, TaxanomicCode, ScientificName) values(?,?,?); Select @@Identity as 'ID';"
-    params = (name, prefix, scientific)
+def get_bird_id(myname, mycode):
+    bird_id = ''
+    sql = "select BirdID from Birds where BirdName = ? and TaxanomicCode = ?;"
+    params = (myname, mycode)
     cursor = conn.cursor()
     cursor.execute(sql, params)
-    sql = "Select @@Identity as 'ID';"
-    cursor.execute(sql)
-    id = cursor.fetchone()[0]
-    conn.commit()
-    # default Cebu birds
-    sql = 'Insert into BirdsIslands(BirdID, IslandID, ResidentStatusID) values(?, 1, 1);'
-    params = (id)
+    bird_id = cursor.fetchone()
+    return bird_id
+
+
+def get_bird_island_id(bird_id, island_id):
+    bird_island_id = ''
+    sql = "select ID from BirdsIslands where BirdID = ? and IslandID = ?;"
+    params = (bird_id, island_id)
     cursor = conn.cursor()
     cursor.execute(sql, params)
-    conn.commit()
+    bird_island_id = cursor.fetchone()
+    return bird_island_id
 
+
+def add_new_bird(myname, myprefix, myscientific):
+    check_exists = get_bird_id(myname, myprefix)
+    if not check_exists:
+        sql = "Insert into Birds(BirdName, TaxanomicCode, ScientificName) values(?,?,?); Select @@Identity as 'ID';"
+        params = (myname, myprefix, myscientific)
+        cursor = conn.cursor()
+        cursor.execute(sql, params)
+        sql = "Select @@Identity as 'ID';"
+        cursor.execute(sql)
+        id = cursor.fetchone()[0]
+        conn.commit()
+        return id
+    else:
+        return check_exists
+
+
+def add_bird_island(bird_id, island_id, mytarget):
+    check_exists = get_bird_island_id(bird_id, island_id)
+    if not check_exists:
+        sql = 'Insert into BirdsIslands(BirdID, IslandID, ResidentStatusID, DifficultyID, IsTarget) values(?, ?, 1, 3, ?);'
+        params = (bird_id, island_id, mytarget)
+        cursor = conn.cursor()
+        cursor.execute(sql, params)
+        conn.commit()
+
+
+wb = load_workbook(path_taxonomy)
+sheetname = "eBird Clements v2019 Aug 2019"
+ws = wb[sheetname]
+clements_data = []
+clements_species = []
+for row in ws.iter_rows(min_row=2, values_only=True):
+     data = {'category': row[2], 'english': row[3], 'scientific': row[4]}
+     clements_data.append(data)
+for item in clements_data:
+    if item['category'] == "species":
+        bird = {'english': item['english'], 'scientific': item['scientific']}
+        clements_species.append(bird)
+
+wb = load_workbook(path_new_island)
+sheetname = "negros_all"
+ws = wb[sheetname]
+new_island = []
+for row in ws.iter_rows(min_row=2, values_only=True):
+    data = {'code': row[0], 'english': row[1], 'scientific': row[2], 'add': row[3], 'target': row[4]}
+    new_island.append(data)
+
+for bird in new_island:
+    prefix = bird['code']
+    name = bird['english']
+    scientific = get_scientific_name(name, clements_species)
+    if bird['target']:
+        target_value = 1
+    else:
+        target_value = 0
+    if not scientific:
+        raise ValueError('No match on common name in Clements, check name')
+    if bird['add'] == 'ADD':
+        myid = add_new_bird(name, prefix, scientific)
+        add_bird_island(myid, 6, target_value)
+    else:
+        myid = get_bird_id(name, prefix)
+        if myid:
+            add_bird_island(myid[0], 6, target_value)
+        else:
+            raise ValueError("Cant find bird ID")
