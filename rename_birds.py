@@ -20,6 +20,18 @@ conn.commit()
 c = 0
 os.chdir(path_photos)
 
+for file in glob.glob('*'):
+    full_name = file.rsplit(".", 1)[0]
+    prefix = full_name[:3].strip()
+    name = full_name[3:].strip()
+
+    for item in data:
+        if name == item[0]:
+            old_path = path_photos + full_name + '.jpg'
+            new_path = path_photos + full_name + '_' + item[3] + '.jpg'
+            os.rename(old_path, new_path)
+
+'''
 for item in data:
     if item[0] != item[1]:
         old_path_image = path_photos + item[2] + ' ' + item[1] + '.jpg'
@@ -29,12 +41,4 @@ for item in data:
         new_path_audio = path_audio + item[2] + ' ' + item[0] + '.mp3'
         os.rename(old_path_audio, new_path_audio)
 
-
-
-
-
-
-
-
-
-
+'''
