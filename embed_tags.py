@@ -164,7 +164,7 @@ for file in glob.glob('*'):
         audio.add_tags()
     except error:
         pass
-    cover_file = path_images + full_name + '.jpg'
+    cover_file = path_images + full_name + '_' + artist + '.jpg'
     with open(cover_file, 'rb') as f:
         audio.tags.add(APIC(mime='image/jpeg', type=3, desc=u'Cover', data=open(cover_file, 'rb').read()))
     audio.save(fname)
