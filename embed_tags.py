@@ -94,9 +94,11 @@ def process_description(bird_data, island_data):
         if 'Least' not in item[3]:
             return_data += '; ' + item[3] + ' '
         if 'Not' in item[4]:
-            return_data += '\n'
+            return_data += ''
         else:
-            return_data += '; ' + item[4] + '\n'
+            return_data += '; ' + item[4]
+        if item[6]:
+            return_data += '\nHABITAT: ' + item[6] + '\n'
         for island in island_data:
             return_data += island[1] + '; ' + island[2] + '; ' + island[0]
             if island[3]:
@@ -110,14 +112,12 @@ def process_description(bird_data, island_data):
                         return_data += '; Specialty'
             return_data += '\n'
         return_data = return_data[:-1]
-        if item[6]:
-            return_data += '\nHABITAT: ' + item[6]
+        if item[7]:
+            return_data += '\nCONSERVATION: ' + item[7]
         if item[8]:
             return_data += '\nSONG: ' + item[8]
         if item[5]:
             return_data += '\nDESCRIPTION & MISC: ' + item[5]
-        if item[7]:
-            return_data += '\nCONSERVATION: ' + item[7]
         return_data += '\n\nData from "Birds of the World", Cornell University.'
         return_data += '\nAudio recordings from eBird, Cornell University.'
         return_data += '\nImages credits ("Artist"):\nA Guide to the Birds of the Philippines. Robert S. Kennedy, ' \
