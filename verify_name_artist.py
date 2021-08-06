@@ -62,6 +62,7 @@ def update_bird_artist(birdid, artistid):
 
 
 os.chdir(path_new_images)
+c = 0
 for file in glob.glob('*'):
     raw_name = file.rsplit(".", 1)[0]
     split_name = raw_name.split("_", 1)
@@ -70,5 +71,14 @@ for file in glob.glob('*'):
     artist_name = split_name[1]
     prefix = full_name[:3].strip()
     artist_id = get_artist_id(artist_name)
-    birdid = get_bird_id(name, prefix)
-    update_bird_artist(birdid[0], artist_id[0])
+    if artist_id:
+        birdid = get_bird_id(name, prefix)
+        if birdid:
+            update_bird_artist(birdid[0], artist_id[0])
+            c += 1
+        else:
+            print('no match on bird name and code' + full_name)
+    else:
+        print('no match or artist id')
+
+print(str(c))
