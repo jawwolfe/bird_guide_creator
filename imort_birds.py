@@ -7,7 +7,7 @@ connection_string += "Database=BirdGuide;"
 connection_string += "Trusted_Connection=yes;"
 conn = pyodbc.connect(connection_string)
 path_taxonomy = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Clements_2019.xlsx'
-path_new_island = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\negros_all.xlsx'
+path_new_island = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\panay_all.xlsx'
 
 
 def get_scientific_name(bird_name, species):
@@ -27,6 +27,15 @@ def get_bird_id(myname, mycode):
     cursor.execute(sql, params)
     bird_id = cursor.fetchone()
     return bird_id
+
+
+def get_isalnd_id(myname):
+    sql = "select IslandID from Islands where IslandeName = ?;"
+    params = myname
+    cursor = conn.cursor()
+    cursor.execute(sql, params)
+    island_id = cursor.fetchone()
+    return island_id
 
 
 def get_bird_island_id(bird_id, island_id):
@@ -65,6 +74,10 @@ def add_bird_island(bird_id, island_id, mytarget):
         conn.commit()
 
 
+# get the island from the file and go to database for ID
+island_name = path_new_island[len('C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\'):-len('_all.xlsx')]
+island = get_isalnd_id(island_name)[0]
+
 wb = load_workbook(path_taxonomy)
 sheetname = "eBird Clements v2019 Aug 2019"
 ws = wb[sheetname]
@@ -79,10 +92,10 @@ for item in clements_data:
         clements_species.append(bird)
 
 wb = load_workbook(path_new_island)
-sheetname = "negros_all"
+sheetname = "panay_all"
 ws = wb[sheetname]
 new_island = []
-for row in ws.iter_rows(min_row=2, values_only=True):
+for row in ws.iter_rows(min_row=1, values_only=True):
     data = {'code': row[0], 'english': row[1], 'scientific': row[2], 'add': row[3], 'target': row[4]}
     new_island.append(data)
 
@@ -98,10 +111,10 @@ for bird in new_island:
         raise ValueError('No match on common name in Clements, check name')
     if bird['add'] == 'ADD':
         myid = add_new_bird(name, prefix, scientific)
-        add_bird_island(myid, 6, target_value)
+        add_bird_island(myid, island, target_value)
     else:
         myid = get_bird_id(name, prefix)
         if myid:
-            add_bird_island(myid[0], 6, target_value)
+            add_bird_island(myid[0], island, target_value)
         else:
             raise ValueError("Cant find bird ID")
