@@ -9,6 +9,8 @@
 *.vi
 *.htaccess
 *.idea
+*.csv
+*.xlsx
 
 
 *.pyc
