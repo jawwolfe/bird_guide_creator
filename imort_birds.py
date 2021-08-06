@@ -39,13 +39,21 @@ def get_isalnd_id(myname):
 
 
 def get_bird_island_id(bird_id, island_id):
-    bird_island_id = ''
     sql = "select ID from BirdsIslands where BirdID = ? and IslandID = ?;"
     params = (bird_id, island_id)
     cursor = conn.cursor()
     cursor.execute(sql, params)
     bird_island_id = cursor.fetchone()
     return bird_island_id
+
+
+def get_closest_values(bird_id, island_id):
+    sql = "EXEC sp_get_closest_difficulty_residence @birdid=?, @islandid=?"
+    params = (bird_id, island_id)
+    cursor = conn.cursor()
+    cursor.execute(sql, params)
+    values = cursor.fetchone()
+    return values
 
 
 def add_new_bird(myname, myprefix, myscientific):
@@ -66,12 +74,25 @@ def add_new_bird(myname, myprefix, myscientific):
 
 def add_bird_island(bird_id, island_id, mytarget):
     check_exists = get_bird_island_id(bird_id, island_id)
+    values = get_closest_values(bird_id, island_id)
+    residence = values[0]
+    difficulty = values[1]
     if not check_exists:
-        sql = 'Insert into BirdsIslands(BirdID, IslandID, ResidentStatusID, DifficultyID, IsTarget) values(?, ?, 1, 3, ?);'
-        params = (bird_id, island_id, mytarget)
+        sql = 'Insert into BirdsIslands(BirdID, IslandID, ResidentStatusID, DifficultyID, IsTarget) values(?, ?, ?, ?, ?);'
+        params = (bird_id, island_id, residence, difficulty, mytarget)
         cursor = conn.cursor()
         cursor.execute(sql, params)
         conn.commit()
+
+
+def update_bird_island(bird_id, island_id, myvalues):
+    residence = myvalues[1]
+    difficulty = myvalues[0]
+    sql = 'Update BirdsIslands set DifficultyID = ?, ResidentStatusID = ? where BirdID = ? and IslandID = ?;'
+    params = (difficulty, residence, bird_id, island_id)
+    cursor = conn.cursor()
+    cursor.execute(sql, params)
+    conn.commit()
 
 
 # get the island from the file and go to database for ID
@@ -98,6 +119,23 @@ new_island = []
 for row in ws.iter_rows(min_row=1, values_only=True):
     data = {'code': row[0], 'english': row[1], 'scientific': row[2], 'add': row[3], 'target': row[4]}
     new_island.append(data)
+
+
+'''
+# For updating instead of inserting new as usual
+for bird in new_island:
+    prefix = bird['code']
+    name = bird['english']
+    myid = get_bird_id(name, prefix)
+    exists = get_bird_island_id(myid[0], island)
+    if exists:
+        values = get_closest_values(myid[0], island)
+        if values:
+            update_bird_island(myid[0], island, values)
+    else:
+        print('NOT EXISTS')
+'''
+
 
 for bird in new_island:
     prefix = bird['code']
