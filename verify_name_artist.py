@@ -77,8 +77,8 @@ for file in glob.glob('*'):
             update_bird_artist(birdid[0], artist_id[0])
             c += 1
         else:
-            print('no match on bird name and code' + full_name)
+            print('no match on bird name and code: ' + full_name)
     else:
-        print('no match or artist id')
+        print('no match or artist id: ' + full_name)
 
 print(str(c))
