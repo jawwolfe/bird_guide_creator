@@ -58,6 +58,20 @@ def get_brids(name, code):
     return data
 
 
+def get_all_birds():
+    conn = connect_sqlserver()
+    cursor = conn.cursor()
+    sql = sql = "select * from birds;"
+    try:
+        cursor.execute(sql)
+        data = cursor.fetchall()
+    except pyodbc.ProgrammingError as err:
+        msg = "An error occurred executing a sql server command get birds"
+        raise DatabaseOperationException(msg)
+    conn.commit()
+    return data
+
+
 def get_artist(name, code):
     conn = connect_sqlserver()
     cursor = conn.cursor()
@@ -130,8 +144,37 @@ def process_description(bird_data, island_data):
     return return_data
 
 
-lst_images = []
 os.chdir(path_audio)
+'''
+data_birds = get_all_birds()
+for bird in data_birds:
+    flag = False
+    for file in glob.glob('*'):
+        fname = path_audio + file
+        full_name = file.rsplit(".", 1)[0]
+        prefix = full_name[:3].strip()
+        name = full_name[3:].strip()
+        test = bird[1].strip()
+        if name.strip() == bird[1].strip():
+            flag = True
+    if not flag:
+        print('Cant find this bird in files: ' + bird[1])
+
+for file in glob.glob('*'):
+    flag = False
+    fname = path_audio + file
+    full_name = file.rsplit(".", 1)[0]
+    prefix = full_name[:3].strip()
+    name = full_name[3:].strip()
+    for bird in data_birds:
+        test = bird[1]
+        if bird[0] == name.strip():
+            flag = True
+    if not flag:
+        print('Cant find this bird in database: ' + full_name)
+'''
+
+lst_images = []
 for file in glob.glob('*'):
     fname = path_audio + file
     full_name = file.rsplit(".", 1)[0]
@@ -168,3 +211,4 @@ for file in glob.glob('*'):
     with open(cover_file, 'rb') as f:
         audio.tags.add(APIC(mime='image/jpeg', type=3, desc=u'Cover', data=open(cover_file, 'rb').read()))
     audio.save(fname)
+
