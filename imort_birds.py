@@ -85,11 +85,19 @@ def add_bird_island(bird_id, island_id, mytarget):
         conn.commit()
 
 
-def update_bird_island(bird_id, island_id, myvalues):
+def update_bird_island_values(bird_id, island_id, myvalues):
     residence = myvalues[1]
     difficulty = myvalues[0]
     sql = 'Update BirdsIslands set DifficultyID = ?, ResidentStatusID = ? where BirdID = ? and IslandID = ?;'
     params = (difficulty, residence, bird_id, island_id)
+    cursor = conn.cursor()
+    cursor.execute(sql, params)
+    conn.commit()
+
+
+def update_bird_island_targets(bird_id, island_id, target):
+    sql = 'Update BirdsIslands set IsTarget = ? where BirdID = ? and IslandID = ?;'
+    params = (target, bird_id, island_id)
     cursor = conn.cursor()
     cursor.execute(sql, params)
     conn.commit()
@@ -120,18 +128,23 @@ for row in ws.iter_rows(min_row=1, values_only=True):
     data = {'code': row[0], 'english': row[1], 'scientific': row[2], 'add': row[3], 'target': row[4]}
     new_island.append(data)
 
-
 '''
 # For updating instead of inserting new as usual
 for bird in new_island:
     prefix = bird['code']
     name = bird['english']
+    target = bird['target']
+    if target:
+        target_value = 1
+    else:
+        target_value = 0
     myid = get_bird_id(name, prefix)
     exists = get_bird_island_id(myid[0], island)
     if exists:
-        values = get_closest_values(myid[0], island)
-        if values:
-            update_bird_island(myid[0], island, values)
+        update_bird_island_targets(myid[0], island, target_value)
+        #values = get_closest_values(myid[0], island)
+        #if values:
+            #update_bird_island(myid[0], island, values)
     else:
         print('NOT EXISTS')
 '''
