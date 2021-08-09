@@ -8,13 +8,11 @@ connection_string += "Database=BirdGuide;"
 connection_string += "Trusted_Connection=yes;"
 conn = pyodbc.connect(connection_string)
 
-path_exotic = ''
+path_exotic = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Mindoro Exotic.xlsx'
 path_clements = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Clements_2019.xlsx'
-path_targets = ''
-path1 = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Panay Aklan.xlsx'
-path2 = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Panay Antique.xlsx'
-path3 = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Panay Capiz.xlsx'
-path4 = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Panay Iloilo.xlsx'
+path_targets = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Mindoro Targets.xlsx'
+path1 = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Mindoro Occidental.xlsx'
+path2 = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Mindoro Oriental.xlsx'
 
 
 def process_ebird_file(path):
@@ -49,10 +47,8 @@ for item in clements_data:
         clements_species.append(bird)
 
 lst_1 = process_ebird_file(path1)
-lst_2 = process_ebird_file(path3)
-lst_3 = process_ebird_file(path3)
-lst_4 = process_ebird_file(path4)
-all_ebird_birds = list(set(lst_1 + lst_2 + lst_3 + lst_4))
+lst_2 = process_ebird_file(path2)
+all_ebird_birds = list(set(lst_1 + lst_2 ))
 
 
 exotic_birds = []
@@ -62,7 +58,7 @@ if path_exotic:
     ws = wb[sheetname]
     for row in ws.iter_rows(min_row=2, values_only=True):
         if row[3]:
-            data = {'name': row[2], 'scientific': row[3]}
+            data = {'name': row[1], 'scientific': row[2]}
             exotic_birds.append(data)
 
 targets = []
@@ -71,7 +67,7 @@ if path_targets:
     sheetname = "Sheet1"
     ws = wb[sheetname]
     for row in ws.iter_rows(min_row=2, values_only=True):
-        data = {'name': row[0], 'scientific': row[1]}
+        data = {'name': row[1], 'scientific': row[2]}
         targets.append(data)
 
 
@@ -172,8 +168,7 @@ if path_exotic:
 
 all_island = exotic_not_ebird + master_ebird_list
 
-f = open("panay_all.csv", "w")
+f = open("mindoro_all.csv", "w")
 writer = csv.DictWriter(f, fieldnames=["code", "name", "scientific", "add", "target"], lineterminator='\n')
 writer.writerows(all_island)
 f.close()
-
