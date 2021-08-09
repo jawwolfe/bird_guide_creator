@@ -8,8 +8,8 @@ connection_string += "Database=BirdGuide;"
 connection_string += "Trusted_Connection=yes;"
 conn = pyodbc.connect(connection_string)
 
-path_playlist = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Bohol Bird Guide.m3u'
-island_id = 1
+path_playlist = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Panay Bird Guide.m3u'
+island_id = 10
 
 
 def connect_sqlserver():
