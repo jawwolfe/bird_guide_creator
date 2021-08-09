@@ -7,7 +7,7 @@ connection_string += "Database=BirdGuide;"
 connection_string += "Trusted_Connection=yes;"
 conn = pyodbc.connect(connection_string)
 path_taxonomy = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Clements_2019.xlsx'
-path_new_island = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\panay_all.xlsx'
+path_new_island = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\panay_add.xlsx'
 
 
 def get_scientific_name(bird_name, species):
@@ -40,7 +40,7 @@ def get_isalnd_id(myname):
 
 def get_bird_island_id(bird_id, island_id):
     sql = "select ID from BirdsIslands where BirdID = ? and IslandID = ?;"
-    params = (bird_id, island_id)
+    params = (bird_id[0], island_id)
     cursor = conn.cursor()
     cursor.execute(sql, params)
     bird_island_id = cursor.fetchone()
@@ -72,14 +72,21 @@ def add_new_bird(myname, myprefix, myscientific):
         return check_exists
 
 
-def add_bird_island(bird_id, island_id, mytarget):
+def add_bird_island(bird_id, island_id, mytarget, new):
     check_exists = get_bird_island_id(bird_id, island_id)
-    values = get_closest_values(bird_id, island_id)
-    residence = values[0]
-    difficulty = values[1]
+    residence = None
+    difficulty = None
+    if not new:
+        values = get_closest_values(bird_id, island_id)
+        residence = values[0]
+        difficulty = values[1]
     if not check_exists:
-        sql = 'Insert into BirdsIslands(BirdID, IslandID, ResidentStatusID, DifficultyID, IsTarget) values(?, ?, ?, ?, ?);'
-        params = (bird_id, island_id, residence, difficulty, mytarget)
+        if not new:
+            sql = 'Insert into BirdsIslands(BirdID, IslandID, ResidentStatusID, DifficultyID, IsTarget) values(?, ?, ?, ?, ?);'
+            params = (bird_id[0], island_id, residence, difficulty, mytarget)
+        else:
+            sql = 'Insert into BirdsIslands(BirdID, IslandID, ResidentStatusID, DifficultyID, IsTarget) values(?, ?, 1, 3, ?);'
+            params = (bird_id[0], island_id, mytarget)
         cursor = conn.cursor()
         cursor.execute(sql, params)
         conn.commit()
@@ -121,7 +128,7 @@ for item in clements_data:
         clements_species.append(bird)
 
 wb = load_workbook(path_new_island)
-sheetname = "panay_all"
+sheetname = "panay_add"
 ws = wb[sheetname]
 new_island = []
 for row in ws.iter_rows(min_row=1, values_only=True):
@@ -162,10 +169,10 @@ for bird in new_island:
         raise ValueError('No match on common name in Clements, check name')
     if bird['add'] == 'ADD':
         myid = add_new_bird(name, prefix, scientific)
-        add_bird_island(myid, island, target_value)
+        add_bird_island(myid, island, target_value, new=True)
     else:
         myid = get_bird_id(name, prefix)
         if myid:
-            add_bird_island(myid[0], island, target_value)
+            add_bird_island(myid[0], island, target_value, new=False)
         else:
             raise ValueError("Cant find bird ID")
