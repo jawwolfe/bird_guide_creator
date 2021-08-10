@@ -7,7 +7,7 @@ connection_string += "Database=BirdGuide;"
 connection_string += "Trusted_Connection=yes;"
 conn = pyodbc.connect(connection_string)
 path_taxonomy = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Clements_2019.xlsx'
-path_new_island = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\panay_add.xlsx'
+path_new_island = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\panay_all.xlsx'
 
 
 def get_scientific_name(bird_name, species):
@@ -53,6 +53,7 @@ def get_closest_values(bird_id, island_id):
     cursor = conn.cursor()
     cursor.execute(sql, params)
     values = cursor.fetchone()
+    cursor.close()
     return values
 
 
@@ -128,14 +129,14 @@ for item in clements_data:
         clements_species.append(bird)
 
 wb = load_workbook(path_new_island)
-sheetname = "panay_add"
+sheetname = "Sheet1"
 ws = wb[sheetname]
 new_island = []
 for row in ws.iter_rows(min_row=1, values_only=True):
     data = {'code': row[0], 'english': row[1], 'scientific': row[2], 'add': row[3], 'target': row[4]}
     new_island.append(data)
 
-'''
+
 # For updating instead of inserting new as usual
 for bird in new_island:
     prefix = bird['code']
@@ -146,12 +147,12 @@ for bird in new_island:
     else:
         target_value = 0
     myid = get_bird_id(name, prefix)
-    exists = get_bird_island_id(myid[0], island)
+    exists = get_bird_island_id(myid, island)
     if exists:
-        update_bird_island_targets(myid[0], island, target_value)
-        #values = get_closest_values(myid[0], island)
-        #if values:
-            #update_bird_island(myid[0], island, values)
+        #update_bird_island_targets(myid[0], island, target_value)
+        values = get_closest_values(myid[0], island)
+        if values:
+            update_bird_island_values(myid[0], island, values)
     else:
         print('NOT EXISTS')
 '''
@@ -176,3 +177,4 @@ for bird in new_island:
             add_bird_island(myid[0], island, target_value, new=False)
         else:
             raise ValueError("Cant find bird ID")
+'''
