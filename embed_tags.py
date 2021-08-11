@@ -168,7 +168,7 @@ for file in glob.glob('*'):
     name = full_name[3:].strip()
     for bird in data_birds:
         test = bird[1]
-        if bird[0] == name.strip():
+        if bird[1] == name.strip():
             flag = True
     if not flag:
         print('Cant find this bird in database: ' + full_name)
