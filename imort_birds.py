@@ -7,7 +7,7 @@ connection_string += "Database=BirdGuide;"
 connection_string += "Trusted_Connection=yes;"
 conn = pyodbc.connect(connection_string)
 path_taxonomy = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Clements_2019.xlsx'
-path_new_island = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\panay_all.xlsx'
+path_new_island = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\mindoro_all.xlsx'
 
 
 def get_scientific_name(bird_name, species):
@@ -20,13 +20,15 @@ def get_scientific_name(bird_name, species):
 
 
 def get_bird_id(myname, mycode):
-    bird_id = ''
     sql = "select BirdID from Birds where BirdName = ? and TaxanomicCode = ?;"
     params = (myname, mycode)
     cursor = conn.cursor()
     cursor.execute(sql, params)
     bird_id = cursor.fetchone()
-    return bird_id
+    if bird_id:
+        return bird_id[0]
+    else:
+        return ''
 
 
 def get_isalnd_id(myname):
@@ -40,11 +42,14 @@ def get_isalnd_id(myname):
 
 def get_bird_island_id(bird_id, island_id):
     sql = "select ID from BirdsIslands where BirdID = ? and IslandID = ?;"
-    params = (bird_id[0], island_id)
+    params = (bird_id, island_id)
     cursor = conn.cursor()
     cursor.execute(sql, params)
     bird_island_id = cursor.fetchone()
-    return bird_island_id
+    if bird_island_id:
+        return bird_island_id[0]
+    else:
+        return ''
 
 
 def get_closest_values(bird_id, island_id):
@@ -77,17 +82,17 @@ def add_bird_island(bird_id, island_id, mytarget, new):
     check_exists = get_bird_island_id(bird_id, island_id)
     residence = None
     difficulty = None
-    if not new:
+    if not new and not check_exists:
         values = get_closest_values(bird_id, island_id)
-        residence = values[0]
-        difficulty = values[1]
+        residence = values[1]
+        difficulty = values[0]
     if not check_exists:
         if not new:
             sql = 'Insert into BirdsIslands(BirdID, IslandID, ResidentStatusID, DifficultyID, IsTarget) values(?, ?, ?, ?, ?);'
-            params = (bird_id[0], island_id, residence, difficulty, mytarget)
+            params = (bird_id, island_id, residence, difficulty, mytarget)
         else:
             sql = 'Insert into BirdsIslands(BirdID, IslandID, ResidentStatusID, DifficultyID, IsTarget) values(?, ?, 1, 3, ?);'
-            params = (bird_id[0], island_id, mytarget)
+            params = (bird_id, island_id, mytarget)
         cursor = conn.cursor()
         cursor.execute(sql, params)
         conn.commit()
@@ -136,7 +141,7 @@ for row in ws.iter_rows(min_row=1, values_only=True):
     data = {'code': row[0], 'english': row[1], 'scientific': row[2], 'add': row[3], 'target': row[4]}
     new_island.append(data)
 
-
+'''
 # For updating instead of inserting new as usual
 for bird in new_island:
     prefix = bird['code']
@@ -149,10 +154,10 @@ for bird in new_island:
     myid = get_bird_id(name, prefix)
     exists = get_bird_island_id(myid, island)
     if exists:
-        #update_bird_island_targets(myid[0], island, target_value)
-        values = get_closest_values(myid[0], island)
+        #update_bird_island_targets(myid, island, target_value)
+        values = get_closest_values(myid, island)
         if values:
-            update_bird_island_values(myid[0], island, values)
+            update_bird_island_values(myid, island, values)
     else:
         print('NOT EXISTS')
 '''
@@ -174,7 +179,6 @@ for bird in new_island:
     else:
         myid = get_bird_id(name, prefix)
         if myid:
-            add_bird_island(myid[0], island, target_value, new=False)
+            add_bird_island(myid, island, target_value, new=False)
         else:
             raise ValueError("Cant find bird ID")
-'''
