@@ -167,13 +167,13 @@ for bird in new_island:
     prefix = bird['code']
     name = bird['english']
     scientific = get_scientific_name(name, clements_species)
-    if bird['target']:
+    if bird['target'].strip() == 'TARGET':
         target_value = 1
     else:
         target_value = 0
     if not scientific:
-        raise ValueError('No match on common name in Clements, check name')
-    if bird['add'] == 'ADD':
+        raise ValueError('No match on common name in Clements, check name for ' + name)
+    if bird['add'].strip() == 'ADD':
         myid = add_new_bird(name, prefix, scientific)
         add_bird_island(myid, island, target_value, new=True)
     else:
