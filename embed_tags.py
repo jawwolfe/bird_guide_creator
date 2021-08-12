@@ -114,7 +114,8 @@ def process_description(bird_data, island_data):
         if item[6]:
             return_data += '\nHABITAT: ' + item[6]
         if item[8]:
-            return_data += '\nSONG: ' + item[8] + '\n'
+            return_data += '\nSONG: ' + item[8]
+        return_data += '\n'
         for island in island_data:
             return_data += island[1] + '; ' + island[2] + '; ' + island[0]
             if island[3]:
