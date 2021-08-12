@@ -11,9 +11,8 @@ conn = pyodbc.connect(connection_string)
 path_exotic = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Mindoro Exotic.xlsx'
 path_clements = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Clements_2019.xlsx'
 path_targets = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Mindoro Targets.xlsx'
-path1 = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Mindoro Occidental.xlsx'
-path2 = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Mindoro Oriental.xlsx'
-
+path1 = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Mindoro Oriental.xlsx'
+path2 = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Mindoro Occidental.xlsx'
 
 def process_ebird_file(path):
     my_wb = load_workbook(path)
@@ -48,7 +47,8 @@ for item in clements_data:
 
 lst_1 = process_ebird_file(path1)
 lst_2 = process_ebird_file(path2)
-all_ebird_birds = list(set(lst_1 + lst_2 ))
+
+all_ebird_birds = list(set(lst_1 + lst_2))
 
 
 exotic_birds = []
@@ -57,7 +57,7 @@ if path_exotic:
     sheetname = "Sheet1"
     ws = wb[sheetname]
     for row in ws.iter_rows(min_row=2, values_only=True):
-        if row[3]:
+        if row[1]:
             data = {'name': row[1], 'scientific': row[2]}
             exotic_birds.append(data)
 
