@@ -32,6 +32,7 @@ def get_birds(island):
     #sql = "EXEC sp_get_in_island @islandid=?"
     #sql = "EXEC sp_get_common_by_island @IslandID=?"
     #sql = "EXEC sp_get_common_uncommon_doves_by_island @IslandID=?"
+    #sql = "EXEC sp_get_common_scarce_passarines_by_island @IslandID=?"
     sql = "EXEC sp_get_common_passarines_by_island @IslandID=?"
     params = (island)
     try:
