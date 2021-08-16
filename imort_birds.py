@@ -7,7 +7,7 @@ connection_string += "Database=BirdGuide;"
 connection_string += "Trusted_Connection=yes;"
 conn = pyodbc.connect(connection_string)
 path_taxonomy = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Clements_2019.xlsx'
-path_new_island = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\mindoro_all.xlsx'
+path_new_island = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\samar_all.xlsx'
 
 
 def get_scientific_name(bird_name, species):
@@ -167,13 +167,16 @@ for bird in new_island:
     prefix = bird['code']
     name = bird['english']
     scientific = get_scientific_name(name, clements_species)
-    if bird['target'].strip() == 'TARGET':
-        target_value = 1
+    if bird['target']:
+        if bird['target'].strip() == 'TARGET':
+            target_value = 1
+        else:
+            target_value = 0
     else:
         target_value = 0
     if not scientific:
         raise ValueError('No match on common name in Clements, check name for ' + name)
-    if bird['add'].strip() == 'ADD':
+    if bird['add'] == 'ADD':
         myid = add_new_bird(name, prefix, scientific)
         add_bird_island(myid, island, target_value, new=True)
     else:
