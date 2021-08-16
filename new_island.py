@@ -8,11 +8,12 @@ connection_string += "Database=BirdGuide;"
 connection_string += "Trusted_Connection=yes;"
 conn = pyodbc.connect(connection_string)
 
-path_exotic = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Mindoro Exotic.xlsx'
+path_exotic = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Palawan Exotic.xlsx'
 path_clements = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Clements_2019.xlsx'
-path_targets = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Mindoro Targets.xlsx'
-path1 = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Mindoro Oriental.xlsx'
-path2 = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Mindoro Occidental.xlsx'
+path_targets = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Palawan Targets.xlsx'
+path1 = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Palawan Ebird.xlsx'
+path2 = ''
+path3 = ''
 
 def process_ebird_file(path):
     my_wb = load_workbook(path)
@@ -46,9 +47,9 @@ for item in clements_data:
         clements_species.append(bird)
 
 lst_1 = process_ebird_file(path1)
-lst_2 = process_ebird_file(path2)
-
-all_ebird_birds = list(set(lst_1 + lst_2))
+#lst_2 = process_ebird_file(path2)
+#lst_3 = process_ebird_file(path3)
+all_ebird_birds = list(set(lst_1))
 
 
 exotic_birds = []
@@ -168,7 +169,7 @@ if path_exotic:
 
 all_island = exotic_not_ebird + master_ebird_list
 
-f = open("mindoro_all.csv", "w")
+f = open("palawan_all.csv", "w")
 writer = csv.DictWriter(f, fieldnames=["code", "name", "scientific", "add", "target"], lineterminator='\n')
 writer.writerows(all_island)
 f.close()
