@@ -9,7 +9,7 @@ connection_string += "Trusted_Connection=yes;"
 conn = pyodbc.connect(connection_string)
 
 
-path_playlist = "C:\\Users\\awwolfe\\PycharmProjects\\audioembedder\\Cebu Common Passerines.m3u"
+path_playlist = "C:\\Users\\awwolfe\\PycharmProjects\\audioembedder\\Cebu Common to Scarce Passerines.m3u"
 island_id = 2
 
 
@@ -33,7 +33,8 @@ def get_birds(island):
     #sql = "EXEC sp_get_common_by_island @IslandID=?"
     #sql = "EXEC sp_get_common_uncommon_doves_by_island @IslandID=?"
     #sql = "EXEC sp_get_common_scarce_passarines_by_island @IslandID=?"
-    sql = "EXEC sp_get_common_passarines_by_island @IslandID=?"
+    #sql = "EXEC sp_get_common_passarines_by_island @IslandID=?"
+    sql = 'EXEC sp_get_common_scarce_passarines_by_island @IslandID=?'
     params = (island)
     try:
         cursor.execute(sql, params)
