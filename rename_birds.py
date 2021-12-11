@@ -18,7 +18,7 @@ cursor.execute(sql)
 data = cursor.fetchall()
 conn.commit()
 c = 0
-os.chdir(path_photos)
+os.chdir(path_audio)
 
 for file in glob.glob('*'):
     full_name = file.rsplit(".", 1)[0]
@@ -27,8 +27,8 @@ for file in glob.glob('*'):
 
     for item in data:
         if name == item[0]:
-            old_path = path_photos + full_name + '.jpg'
-            new_path = path_photos + full_name + '_' + item[3] + '.jpg'
+            old_path = path_audio + full_name + '.mp3'
+            new_path = path_audio + item[2] + ' ' + name + '.mp3'
             os.rename(old_path, new_path)
 
 '''
