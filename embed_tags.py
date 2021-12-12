@@ -99,7 +99,7 @@ def parse_length(length_string):
 def process_description(bird_data, island_data):
     return_data = ''
     for item in bird_data:
-        return_data += item[0].strip() + ' (' + item[11] + ') ' + '\n'
+        return_data += item[0].strip() + ' (' + item[9] + ') ' + '\n'
         if len(item[1]) > 1:
             length = parse_length(item[1])
             return_data += length + ' in. '
@@ -107,33 +107,27 @@ def process_description(bird_data, island_data):
             return_data += '; wingspan ' + item[2] + ' in. '
         if 'Least' not in item[3]:
             return_data += '; ' + item[3] + ' '
-        if 'Not' in item[4]:
-            return_data += ''
-        else:
-            return_data += '; ' + item[4]
-        if item[6]:
-            return_data += '\nHABITAT: ' + item[6]
-        if item[8]:
-            return_data += '\nSONG: ' + item[8]
+        if item[5]:
+            return_data += '\nHABITAT: ' + item[5]
+        if item[7]:
+            return_data += '\nSONG: ' + item[7]
         return_data += '\n'
         for island in island_data:
             return_data += island[1] + '; ' + island[2] + '; ' + island[0]
             if island[3]:
                 return_data += '; Target'
-            # calculate speciality but only if is not a target which assumes also a speciality
-            if not island[3]:
-                if item[9] == 5 and item[10] == 1:
-                    pass
-                else:
-                    if island[4] != 6:
-                        return_data += '; Specialty'
+            # Endemic
+            if island[5]:
+                return_data += '; ' + island[5]
             return_data += '\n'
         return_data = return_data[:-1]
-        if item[7]:
-            return_data += '\nCONSERVATION: ' + item[7]
-        if item[5]:
-            return_data += '\nDESCRIPTION & MISC: ' + item[5]
-        return_data += '\n\nData from "Birds of the World", Cornell University.'
+        if item[6]:
+            return_data += '\nCONSERVATION: ' + item[6]
+        if item[4]:
+            return_data += '\nDESCRIPTION & MISC: ' + item[4]
+        return_data += '\nRANGE: ' + item[10]
+        return_data += '\n\nCREDITS:  '
+        return_data += '\nData from "Birds of the World", Cornell University.'
         return_data += '\nAudio recordings from eBird, Cornell University.'
         return_data += '\nImages credits ("Artist"):\nA Guide to the Birds of the Philippines. Robert S. Kennedy, ' \
                        'Pedro C. Gonzales, Edward C. Dickinson, Hector C Miranda, Jr., and Timothy H. Fisher. Oxford ' \
