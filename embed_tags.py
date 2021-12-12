@@ -1,4 +1,4 @@
-import os, glob, pyodbc
+import os, glob, pyodbc, math
 from pyodbc import InterfaceError
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3NoHeaderError
@@ -117,7 +117,7 @@ def process_description(bird_data, island_data):
             if island[3]:
                 return_data += '; Target'
             # Endemic
-            if island[5]:
+            if island[5].strip() != 'Not Endemic':
                 return_data += '; ' + island[5]
             return_data += '\n'
         return_data = return_data[:-1]
@@ -173,8 +173,8 @@ lst_images = []
 for file in glob.glob('*'):
     fname = path_audio + file
     full_name = file.rsplit(".", 1)[0]
-    prefix = full_name[:3].strip()
-    name = full_name[3:].strip()
+    prefix = full_name[:4].strip()
+    name = full_name[4:].strip()
     data_birds = get_brids(name, prefix)
     data_islands = get_islands(name, prefix)
     lyrics = process_description(data_birds, data_islands)
@@ -198,6 +198,8 @@ for file in glob.glob('*'):
     tags["TALB"] = TALB(encoding=3, text=u'Philippines Bird Guide')
     tags.save(fname)
     audio = MP3(fname, ID3=ID3)
+    length = int(audio.info.length)
+    # todo update the length
     try:
         audio.add_tags()
     except error:
