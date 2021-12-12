@@ -31,7 +31,7 @@ def connect_sqlserver():
 def get_islands(name, code):
     conn = connect_sqlserver()
     cursor = conn.cursor()
-    sql = sql = "EXEC sp_get_island_data @Bird_Name=?, @Taxanomic_Code=?"
+    sql = sql = "EXEC sp_get_guide_data @Bird_Name=?, @Taxanomic_Code=?"
     params = (name, code)
     try:
         cursor.execute(sql, params)
@@ -96,7 +96,22 @@ def parse_length(length_string):
     return return_value
 
 
-def process_description(bird_data, island_data):
+def update_audio_length(audio_length, bird_name, code):
+    conn = connect_sqlserver()
+    cursor = conn.cursor()
+    params = (audio_length, bird_name, code)
+    sql = "EXEC sp_update_audio_length @Length=?, @Bird_Name=?, @Taxanomic_Code=?"
+    try:
+        cursor.execute(sql, params)
+    except pyodbc.ProgrammingError as err:
+        msg = "An error occurred executing a sql server command get birds"
+        raise DatabaseOperationException(msg)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+def process_description(bird_data, island_data, artists_data):
     return_data = ''
     for item in bird_data:
         return_data += item[0].strip() + ' (' + item[9] + ') ' + '\n'
@@ -127,47 +142,18 @@ def process_description(bird_data, island_data):
             return_data += '\nDESCRIPTION & MISC: ' + item[4]
         return_data += '\nRANGE: ' + item[10]
         return_data += '\n\nCREDITS:  '
+        # these credits are the same no matter which guide
         return_data += '\nData from "Birds of the World", Cornell University.'
         return_data += '\nAudio recordings from eBird, Cornell University.'
-        return_data += '\nImages credits ("Artist"):\nA Guide to the Birds of the Philippines. Robert S. Kennedy, ' \
-                       'Pedro C. Gonzales, Edward C. Dickinson, Hector C Miranda, Jr., and Timothy H. Fisher. Oxford ' \
-                       'University Press. 2000'
-        return_data += '\nBirds of the Greater Sundas, the Philippines, and Wallacea. Norman Arlott. ' \
-                       'Princeton University Press. 2018.'
-        return_data += '\nSibley Birds. David Allen Sibley. Second Edition. Alfred A. Knopf. 2014.'
-        return_data += '\neBird, Cornell University.'
+        return_data += '\nImages credits ("Artist"):\n'
+        # image credits by bird
+        return_data += artist_data[3] + ', authors: ' + artist_data[2] + ', publisher: ' + artist_data[5] + \
+                       ', year: ' + str(artist_data[4])
     return return_data
 
 
 os.chdir(path_audio)
-'''
-data_birds = get_all_birds()
-for bird in data_birds:
-    flag = False
-    for file in glob.glob('*'):
-        fname = path_audio + file
-        full_name = file.rsplit(".", 1)[0]
-        prefix = full_name[:3].strip()
-        name = full_name[3:].strip()
-        test = bird[1].strip()
-        if name.strip() == bird[1].strip():
-            flag = True
-    if not flag:
-        print('Cant find this bird in files: ' + bird[1])
 
-for file in glob.glob('*'):
-    flag = False
-    fname = path_audio + file
-    full_name = file.rsplit(".", 1)[0]
-    prefix = full_name[:3].strip()
-    name = full_name[3:].strip()
-    for bird in data_birds:
-        test = bird[1]
-        if bird[1] == name.strip():
-            flag = True
-    if not flag:
-        print('Cant find this bird in database: ' + full_name)
-'''
 
 lst_images = []
 for file in glob.glob('*'):
@@ -177,8 +163,8 @@ for file in glob.glob('*'):
     name = full_name[4:].strip()
     data_birds = get_brids(name, prefix)
     data_islands = get_islands(name, prefix)
-    lyrics = process_description(data_birds, data_islands)
     artist_data = get_artist(name, prefix)
+    lyrics = process_description(data_birds, data_islands, artist_data)
     if artist_data:
         artist = artist_data[0]
     else:
@@ -199,7 +185,7 @@ for file in glob.glob('*'):
     tags.save(fname)
     audio = MP3(fname, ID3=ID3)
     length = int(audio.info.length)
-    # todo update the length
+    update_audio_length(length, name, prefix)
     try:
         audio.add_tags()
     except error:
