@@ -9,8 +9,15 @@ connection_string += "Trusted_Connection=yes;"
 conn = pyodbc.connect(connection_string)
 
 
+playlists_special = [{'sp': 'sp_get_in_guide', 'name': ''},
+                     {'sp': 'sp_get_common_by_guide', 'name': 'Common Birds'},
+                     {'sp': 'sp_get_common_uncommon_doves_by_guide', 'name': 'Common-Uncommon Doves and Cuckoos'},
+                     {'sp': 'sp_get_common_passerines_by_guide','name': 'Common Passerines'},
+                     {'sp': 'sp_get_common_scarce_passerines_by_guide', 'name': 'Common-Scarce Passerines'}]
+
+
 path_create = "C:\\temp\\Playlists\\"
-guide_id = 1
+guide_id = 2
 header = '#EXTM3U\n'
 item_begin = '#EXTINF:'
 extension = '.mp3\n'
@@ -60,15 +67,11 @@ def get_playlist_name(guide_id):
     return data
 
 
-def get_birds(island):
+def get_birds(guide, sp):
     conn = connect_sqlserver()
     cursor = conn.cursor()
-    sql = "EXEC sp_get_in_guide @GuideID=?"
-    #sql = "EXEC sp_get_common_by_guide @GuideID=?"
-    #sql = "EXEC sp_get_common_uncommon_doves_by_guide @GuideID=?"
-    #sql = "EXEC sp_get_common_passarines_by_guide @GuideID=?"
-    #sql = 'EXEC sp_get_common_scarce_passarines_by_guide @GuideID=?'
-    params = (island)
+    sql = "EXEC " + sp + " @GuideID=?"
+    params = (guide)
     try:
         cursor.execute(sql, params)
         data = cursor.fetchall()
@@ -79,19 +82,25 @@ def get_birds(island):
     return data
 
 
-guide = get_playlist_name(guide_id)
-playlist_name = guide[0] + ' Bird Guide'
-root = get_phone_root('Android')[0]
-birds = get_birds(guide_id)
-str_file = header
-for item in birds:
-    str_file += item_begin
-    str_file += str(item[2]) + ',' + item[3] + " - "
-    str_file += item[0] + ' ' + item[1] + '\n'
-    str_file += root + folder + item[0] + ' ' + item[1] + extension
+for item in playlists_special:
+    guide = get_playlist_name(guide_id)
+    sql_sp = item['sp']
+    playlist_name = ''
+    if item['name'] == '':
+        playlist_name = guide[0] + ' Bird Guide'
+    else:
+        playlist_name = guide[0] + ' ' + item['name'] 
+    root = get_phone_root('Android')[0]
+    birds = get_birds(guide_id, sql_sp)
+    str_file = header
+    for item in birds:
+        str_file += item_begin
+        str_file += str(item[2]) + ',' + item[3] + " - "
+        str_file += item[0] + ' ' + item[1] + '\n'
+        str_file += root + folder + item[0] + ' ' + item[1] + extension
 
-f = open(path_create + playlist_name + '.m3u', "w")
-f.write(str_file)
+    f = open(path_create + playlist_name + '.m3u', "w")
+    f.write(str_file)
 
 
 
