@@ -6,7 +6,7 @@ connection_string += "Server=localhost\\SQLEXPRESS;"
 connection_string += "Database=BirdGuide;"
 connection_string += "Trusted_Connection=yes;"
 conn = pyodbc.connect(connection_string)
-path_taxonomy = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\Clements_2019.xlsx'
+path_taxonomy = '/data/Clements_2019.xlsx'
 path_new_island = 'C:\\Users\\Andrew\\PycharmProjects\\audioembedder\\samar_all.xlsx'
 
 

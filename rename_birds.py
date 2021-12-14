@@ -22,15 +22,17 @@ os.chdir(path_audio)
 
 for file in glob.glob('*'):
     full_name = file.rsplit(".", 1)[0]
-    prefix = full_name[:3].strip()
-    name = full_name[3:].strip()
+    prefix = full_name[:4].strip()
+    name = full_name[4:].strip()
 
     for item in data:
         if name == item[0]:
             old_path = path_audio + full_name + '.mp3'
-            new_path = path_audio + item[2] + ' ' + name + '.mp3'
+            new_path = path_audio + item[1] + ' ' + name + '.mp3'
+            c+=1
+            print(new_path)
             os.rename(old_path, new_path)
-
+print(str(c))
 '''
 for item in data:
     if item[0] != item[1]:

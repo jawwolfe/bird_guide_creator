@@ -145,7 +145,7 @@ def process_description(bird_data, island_data, artists_data):
         # these credits are the same no matter which guide
         return_data += '\nData from "Birds of the World", Cornell University.'
         return_data += '\nAudio recordings from eBird, Cornell University.'
-        return_data += '\nImages credits ("Artist"):\n'
+        return_data += '\nImages credits ("Artist"):'
         # image credits by bird
         return_data += artist_data[3] + ', authors: ' + artist_data[2] + ', publisher: ' + artist_data[5] + \
                        ', year: ' + str(artist_data[4])
