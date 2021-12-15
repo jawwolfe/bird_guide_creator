@@ -3,18 +3,39 @@ from openpyxl import load_workbook
 
 
 class GuideBase:
-    def __init__(self, logger, sql_server_connection):
+    def __init__(self, logger, sql_server_connection, guide_name):
         self.logger = logger
         self.sql_server_connection = sql_server_connection
+        self.guide_name = guide_name
+        self.clements = None
+        self.guide_id = None
+
+    def get_clements(self):
+        return self.clements
+
+    def set_clements(self):
+        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                 sp='sp_get_all_clements')
+        self.clements = utilities.run_sql_return_no_params()
+
+    def set_guide_id(self):
+        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                 sp='sp_get_guide_id', params=' @GuideName=?', params_values=self.guide_name)
+        a = utilities.run_sql_return_params()
+        self.guide_id = utilities.run_sql_return_params()[0][0]
+
+    def get_guide_id(self):
+        return self.guide_id
 
 
 class CreateGuide(GuideBase):
-    def __init__(self, ebird_files, file_path, logger, sql_server_connection, exotic_file=None, targets_file=None):
+    def __init__(self, ebird_files, file_path, logger, sql_server_connection, guide_name, exotic_file=None,
+                 targets_file=None):
         self.ebird_files = ebird_files
         self.file_path = file_path
         self.exotic_file = exotic_file
         self.targets_file = targets_file
-        GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection)
+        GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, guide_name=guide_name)
 
     def _process_exotic_file(self, file_path, exotic_file, clements):
         return_list = []
@@ -32,7 +53,7 @@ class CreateGuide(GuideBase):
                         code = taxon[4]
                         english = taxon[1]
                 if flag:
-                    diction = {'name': english, 'code': code, 'scientific': row[2]}
+                    diction = {'name': english, 'code': code, 'scientific': row[2], 'target': ''}
                     return_list.append(diction)
                 else:
                     self.logger.info('This exotic bird scientific name did not match Clements: '
@@ -74,7 +95,7 @@ class CreateGuide(GuideBase):
             for taxon in clements:
                 if taxon[1] == bird:
                     flag = True
-                    diction = {'name': bird, 'code': taxon[4], 'scientific': taxon[2]}
+                    diction = {'name': bird, 'code': taxon[4], 'scientific': taxon[2], 'target': ''}
                     birds_clements.append(diction)
             if not flag:
                 self.logger.info('This ebird bird English name did not match Clements: ' + bird)
@@ -92,10 +113,9 @@ class CreateGuide(GuideBase):
 
     def run_guide(self):
         self.logger.info('Start script execution.')
-
-        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
-                                 sp='sp_get_all_clements')
-        clements = utilities.run_sql_return_no_params()
+        self.set_clements()
+        self.set_guide_id()
+        clements = self.get_clements()
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                  sp='sp_get_all_birds')
         all_birds = utilities.run_sql_return_no_params()
@@ -110,7 +130,7 @@ class CreateGuide(GuideBase):
 
         # match ebird list to clements on english name and get scientific name and taxon code
         # if using the same clements version year there should be no logged mismatches
-        distinct_ebird_list_clements = self._match_clements_ebird(clements, distinct_ebird_list)
+        distinct_ebird_list_clements = self._match_clements_ebird(self.get_clements(), distinct_ebird_list)
 
         # get exotic birds list and match to clements on scientific name, get clements english name and taxon code
         # log birds that don't match and fix these manually
@@ -140,6 +160,12 @@ class CreateGuide(GuideBase):
             diction = {'name': final_bird['name'], 'code': final_bird['code'], 'scientific': final_bird['scientific'],
                        'add': add}
             add_list.append(diction)
+        # todo add targets to list based on scientific name match
+
+
+        # todo add only the new birds to Birds Table and all birds to the BirdsGuide table
         self.logger.info('End Script Execution.\n')
         pass
+
+        # todo make an update guide method that looks for new birds for an existing guide from ebird regional lists
 

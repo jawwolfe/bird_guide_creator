@@ -21,8 +21,9 @@ class UtilitiesBase:
 
 
 class SQLUtilities(UtilitiesBase):
-    def __init__(self, sp, logger, sql_server_connection, params=None):
+    def __init__(self, sp, logger, sql_server_connection, params=None, params_values=None):
         self.params = params
+        self.params_values = params_values
         self.sql_server_connection = sql_server_connection
         self.sp = sp
         UtilitiesBase.__init__(self, logger=logger)
@@ -36,6 +37,22 @@ class SQLUtilities(UtilitiesBase):
             data = cursor.fetchall()
         except pyodbc.ProgrammingError as err:
             msg = "An error occurred executing a sql server command get data"
+            raise DatabaseOperationException(msg)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return data
+
+    def run_sql_return_params(self):
+        conn = self.connect_sqlserver(self.sql_server_connection)
+        cursor = conn.cursor()
+        sql = "EXEC " + self.sp + ' ' + self.params + ';'
+        my_params = self.params_values
+        try:
+            cursor.execute(sql, my_params)
+            data = cursor.fetchall()
+        except pyodbc.ProgrammingError as err:
+            msg = "An error occurred executing a sql server command get birds"
             raise DatabaseOperationException(msg)
         conn.commit()
         cursor.close()
