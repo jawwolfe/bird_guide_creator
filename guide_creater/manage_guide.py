@@ -1,15 +1,17 @@
 from guide_creater.utilites import SQLUtilities
 from openpyxl import load_workbook
 from guide_creater.exceptions import TaxonomyException
-
+import shutil, datetime, csv, os
 
 class GuideBase:
-    def __init__(self, logger, sql_server_connection, guide_name, ebird_files, file_path):
+    def __init__(self, logger, sql_server_connection, guide_name, ebird_files, file_path, audio_path, image_path):
         self.logger = logger
         self.sql_server_connection = sql_server_connection
         self.guide_name = guide_name
         self.ebird_files = ebird_files
         self.file_path = file_path
+        self.audio_path = audio_path
+        self.image_path = image_path
         self.clements = None
         self.guide_id = None
 
@@ -81,12 +83,12 @@ class GuideBase:
 
 
 class CreateGuide(GuideBase):
-    def __init__(self, ebird_files, file_path, logger, sql_server_connection, guide_name, exotic_file=None,
-                 targets_file=None):
+    def __init__(self, ebird_files, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
+                 exotic_file=None, targets_file=None):
         self.exotic_file = exotic_file
         self.targets_file = targets_file
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, guide_name=guide_name,
-                           ebird_files=ebird_files, file_path=file_path)
+                           ebird_files=ebird_files, file_path=file_path, audio_path=audio_path, image_path=image_path)
 
     def _process_exotic_file(self):
         return_list = []
@@ -133,6 +135,13 @@ class CreateGuide(GuideBase):
             if not flag:
                 ebird_list.append(exotic_bird)
         return ebird_list
+
+    def _check_new(self, mylist):
+        flag = False
+        for item in mylist:
+            if item['add'] == 'ADD':
+                flag = True
+        return flag
 
     def run_create(self):
         self.logger.info('Start script execution.')
@@ -189,12 +198,20 @@ class CreateGuide(GuideBase):
             diction = {'name': final_bird['name'], 'code': final_bird['code'], 'scientific': final_bird['scientific'],
                        'add': add, 'target': final_bird['target'], 'id': id}
             add_list.append(diction)
+        new_image_list = []
+        # create paths for new images and audio files
+        guide_des = 'New_Guide ' + self.guide_name + '_' + datetime.datetime.today().strftime('%Y-%m-%d')
+        image_path = self.image_path
+        audio_path = self.audio_path + guide_des + "\\"
+        if self._check_new(add_list):
+            os.mkdir(self.audio_path + guide_des)
         for add in add_list:
             target = 0
             if add['target'] == "TARGET":
                 target = 1
             if add['add'] == "ADD":
                 # add to birds database
+                '''
                 params_values = (add['name'], add['code'], add['scientific'], '')
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird',
@@ -208,22 +225,33 @@ class CreateGuide(GuideBase):
                                          params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
                 utilities.run_sql_params()
                 self.logger.info("Added bird " + add['name'] + ' to the guide: ' + self.guide_name)
+                '''
+                diction = {'name': add['code'] + ' ' + add['name']}
+                new_image_list.append(diction)
+                shutil.copy(self.audio_path + 'blank.mp3', audio_path + add['code'] + ' ' + add['name'] + '.mp3')
             else:
+                '''
                 params_values = (add['id'], guide_id, 1, 2, target, 5)
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird_guide',
                                          params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
                 utilities.run_sql_params()
                 self.logger.info("Added bird " + add['name'] + ' to the guide: ' + self.guide_name)
+                '''
+        f = open(image_path + guide_des + '.csv', "w")
+        writer = csv.DictWriter(f, fieldnames=["name"], lineterminator='\n')
+        writer.writerows(new_image_list)
+        f.close()
+
         # todo update the playlist for this guide
-        # todo create mp3 file and list of image names for all new birds to the database
         self.logger.info('End Script Execution.\n')
 
 
 class UpdateGuide(GuideBase):
-    def __init__(self, ebird_files, file_path, logger, sql_server_connection, guide_name):
+    def __init__(self, ebird_files, file_path, logger, sql_server_connection, guide_name, audio_path, image_path):
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection,
-                           guide_name=guide_name, ebird_files=ebird_files, file_path=file_path)
+                           guide_name=guide_name, ebird_files=ebird_files, file_path=file_path, audio_path=audio_path,
+                           image_path=image_path)
 
     def run_update(self):
         self.logger.info('Start script execution.')
@@ -244,6 +272,7 @@ class UpdateGuide(GuideBase):
         # get clements data
         ebird_list_clements = self._match_clements_ebird(clements, all_ebird_data)
 
+        new_image_list = []
         # check for birds new to the birds database
         for ebird in ebird_list_clements:
             flag = False
@@ -283,4 +312,3 @@ class UpdateGuide(GuideBase):
                                  params_values=guide_id, params='@GuideID=?', sp='sp_update_guide_last_update')
         utilities.run_sql_params()
         self.logger.info("End script execution.")
-

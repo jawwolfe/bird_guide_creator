@@ -10,6 +10,8 @@ SQLSERVER_NAME = config.SQLSERVER_NAME
 SQLSERVER_DATABASE = config.SQLSERVER_DATABASE
 LOG_FILE_PATH = config.LOG_FILE_PATH
 BIRDS_FILE_PATH = config.BIRDS_FILE_PATH
+AUIDO_PATH = config.AUDIO_PATH
+IMAGE_PATH = config.IMAGE_PATH
 LOG_MESSAGE = '%(asctime)s -%(process)d - %(levelname)s - %(message)s'
 LOG_TIME = '%d-%b-%y %H:%M:%S'
 
@@ -37,9 +39,10 @@ LOGGER = initialize_logger('bird_guide')
 # {'Ariana_ebird.xlsx', 'Ben_Arous_ebird.xlsx', 'Bizerte_ebird.xlsx', 'Nabeul_ebird.xlsx', 'Tunis_ebird.xlsx'}
 
 
-guide = CreateGuide(ebird_files={'Palawan_ebird.xlsx'}, exotic_file='Palawan_exotic_edited.xlsx',
+guide = CreateGuide(ebird_files={'Palawan_ebird_12-15-21.xlsx'}, exotic_file='Palawan_exotic_edited.xlsx',
                     targets_file='Palawan_targets.xlsx', file_path=BIRDS_FILE_PATH, logger=LOGGER,
-                    sql_server_connection=initialize_sqlserver(), guide_name='Palawan PH')
+                    sql_server_connection=initialize_sqlserver(), guide_name='Palawan PH', image_path=IMAGE_PATH,
+                    audio_path=AUIDO_PATH)
 guide.run_create()
 '''
 
