@@ -12,3 +12,7 @@ class NoErrorsException(Exception):
     """An error occurred locating error file for processing."""
     pass
 
+
+class TaxonomyException(Exception):
+    """Bird doesn't match taxonomy need to fix before proceeding."""
+    pass

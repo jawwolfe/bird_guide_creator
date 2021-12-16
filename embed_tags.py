@@ -145,7 +145,7 @@ def process_description(bird_data, island_data, artists_data):
         # these credits are the same no matter which guide
         return_data += '\nData from "Birds of the World", Cornell University.'
         return_data += '\nAudio recordings from eBird, Cornell University.'
-        return_data += '\nImages credits ("Artist"):'
+        return_data += '\nImages credits ("Artist"):  '
         # image credits by bird
         return_data += artist_data[3] + ', authors: ' + artist_data[2] + ', publisher: ' + artist_data[5] + \
                        ', year: ' + str(artist_data[4])
@@ -181,7 +181,7 @@ for file in glob.glob('*'):
     tags["USLT::XXX"] = (USLT(encoding=3, text=lyrics))
     tags["TIT2"] = TIT2(encoding=3, text=full_name)
     tags["TPE1"] = TPE1(encoding=3, text=artist)
-    tags["TALB"] = TALB(encoding=3, text=u'Philippines Bird Guide')
+    tags["TALB"] = TALB(encoding=3, text=u'Birds of the World')
     tags.save(fname)
     audio = MP3(fname, ID3=ID3)
     length = int(audio.info.length)

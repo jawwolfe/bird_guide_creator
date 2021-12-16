@@ -1,5 +1,6 @@
 from guide_creater.utilites import SQLUtilities
 from openpyxl import load_workbook
+from guide_creater.exceptions import TaxonomyException
 
 
 class GuideBase:
@@ -72,7 +73,10 @@ class GuideBase:
                     diction = {'name': bird, 'code': taxon[4], 'scientific': taxon[2], 'target': ''}
                     birds_clements.append(diction)
             if not flag:
-                self.logger.info('This ebird bird English name did not match Clements: ' + bird)
+                msg = "This ebird bird English name" + bird + " didn't match the Clements taxonomy." \
+                      " Please fix before proceeding"
+                self.logger.error(msg)
+                raise TaxonomyException(msg)
         return birds_clements
 
 
@@ -103,8 +107,10 @@ class CreateGuide(GuideBase):
                     diction = {'name': english, 'code': code, 'scientific': row[2], 'target': '', 'id': ''}
                     return_list.append(diction)
                 else:
-                    self.logger.info('This exotic bird scientific name did not match Clements: '
-                                     + row[2] + ', English: ' + row[1])
+                    msg = "This exotic bird scientific name " + row[2] + " did not match Clements taxonomy, " \
+                          "please fix before proceeding. English name: " + row[1]
+                    self.logger.error(msg)
+                    raise TaxonomyException(msg)
         return return_list
 
     def _get_targets(self):
@@ -112,7 +118,7 @@ class CreateGuide(GuideBase):
         wb = load_workbook(self.file_path + self.targets_file)
         sheetname = "Sheet1"
         ws = wb[sheetname]
-        for row in ws.iter_rows(min_row=2, values_only=True):
+        for row in ws.iter_rows(min_row=1, values_only=True):
             if row[1]:
                 diction = {'name': row[1], 'scientific': row[2]}
                 return_list.append(diction)
@@ -161,6 +167,8 @@ class CreateGuide(GuideBase):
         # add targets
         for target in targets:
             for bird in all_birds_clements:
+                if 'Pheasant' in bird['name']:
+                    pass
                 if target['scientific'] == bird['scientific']:
                     bird['target'] = 'TARGET'
 
@@ -169,19 +177,47 @@ class CreateGuide(GuideBase):
         add_list = []
         for final_bird in all_birds_clements:
             flag = False
+            id = None
             for master_bird in all_birds:
                 if master_bird[1] == final_bird['name']:
                     flag = True
+                    id = master_bird[0]
             if not flag:
                 add = 'ADD'
             else:
                 add = ''
             diction = {'name': final_bird['name'], 'code': final_bird['code'], 'scientific': final_bird['scientific'],
-                       'add': add, 'target': final_bird['target'], 'id': ''}
+                       'add': add, 'target': final_bird['target'], 'id': id}
             add_list.append(diction)
-        # todo add only the new birds to Birds Table and all birds to the BirdsGuide table
+        for add in add_list:
+            target = 0
+            if add['target'] == "TARGET":
+                target = 1
+            if add['add'] == "ADD":
+                # add to birds database
+                params_values = (add['name'], add['code'], add['scientific'], '')
+                utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                         params_values=params_values, sp='sp_insert_bird',
+                                         params='@BirdName=?,@TaxanomicCode=?,@ScientificName=?,@Artist=?')
+                bird_id = utilities.run_sql_return_params()
+                add['id'] = bird_id[0][0]
+                self.logger.info("Added new bird to database: " + add['name'])
+                params_values = (add['id'], guide_id, 1, 2, target, 5)
+                utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                         params_values=params_values, sp='sp_insert_bird_guide',
+                                         params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
+                utilities.run_sql_params()
+                self.logger.info("Added bird " + add['name'] + ' to the guide: ' + self.guide_name)
+            else:
+                params_values = (add['id'], guide_id, 1, 2, target, 5)
+                utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                         params_values=params_values, sp='sp_insert_bird_guide',
+                                         params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
+                utilities.run_sql_params()
+                self.logger.info("Added bird " + add['name'] + ' to the guide: ' + self.guide_name)
+        # todo update the playlist for this guide
+        # todo create mp3 file and list of image names for all new birds to the database
         self.logger.info('End Script Execution.\n')
-        pass
 
 
 class UpdateGuide(GuideBase):
@@ -222,12 +258,10 @@ class UpdateGuide(GuideBase):
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird',
                                          params='@BirdName=?,@TaxanomicCode=?,@ScientificName=?,@Artist=?')
-                bird_id = utilities.run_sql_return_params()[0]
-                params_values = (bird_id[0], guide_id, 1, 2, 0, 2)
-                utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
-                                         params_values=params_values, sp='sp_insert_bird_guide',
-                                         params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
-                utilities.run_sql_params()
+                bird_id = utilities.run_sql_return_params()
+                ebird['id'] = bird_id[0][0]
+                self.logger.info("Added new bird to database: " + ebird['name'])
+                # todo create blank mp3 file and image name for each new bird
 
         # check for birds new to the guide
         for ebird in ebird_list_clements:
@@ -237,12 +271,16 @@ class UpdateGuide(GuideBase):
                     flag = True
             if not flag:
                 print('Not in Birds Guide:' + ebird['name'])
-                params_values = (ebird['id'], guide_id, 1, 2, 0, 2)
+                params_values = (ebird['id'], guide_id, 1, 2, 0, 5)
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird_guide',
                                          params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
                 utilities.run_sql_params()
+                self.logger.info("Added bird " + ebird['name'] + ' to the guide: ' + self.guide_name)
+        # todo update playlist for this guide
 
-
-
+        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                 params_values=guide_id, params='@GuideID=?', sp='sp_update_guide_last_update')
+        utilities.run_sql_params()
+        self.logger.info("End script execution.")
 
