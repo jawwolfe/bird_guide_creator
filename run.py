@@ -1,4 +1,4 @@
-from guide_creater.manage_guide import CreateGuide
+from guide_creater.manage_guide import CreateGuide, UpdateGuide
 from guide_creater.configs import config
 import os, logging, datetime
 from guide_creater.connection import SQLServerConnection
@@ -36,8 +36,15 @@ LOGGER = initialize_logger('bird_guide')
 
 # {'Ariana_ebird.xlsx', 'Ben_Arous_ebird.xlsx', 'Bizerte_ebird.xlsx', 'Nabeul_ebird.xlsx', 'Tunis_ebird.xlsx'}
 
+
 guide = CreateGuide(ebird_files={'Palawan_ebird.xlsx'}, exotic_file='Palawan_exotic_edited.xlsx',
-                    targets_file='Palawan_targets.xlsx',
-                    file_path=BIRDS_FILE_PATH, logger=LOGGER, sql_server_connection=initialize_sqlserver(),
-                    guide_name='Palawan PH')
+                    targets_file='Palawan_targets.xlsx', file_path=BIRDS_FILE_PATH, logger=LOGGER,
+                    sql_server_connection=initialize_sqlserver(), guide_name='Palawan PH')
 guide.run_guide()
+'''
+
+guide = UpdateGuide(ebird_files={'Cebu_ebird_12-15-21.xlsx'}, file_path=BIRDS_FILE_PATH, logger=LOGGER,
+                    sql_server_connection=initialize_sqlserver(),
+                    guide_name='Cebu PH')
+guide.run_update()
+'''
