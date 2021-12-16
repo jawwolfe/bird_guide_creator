@@ -36,7 +36,7 @@ class SQLUtilities(UtilitiesBase):
             cursor.execute(sql)
             data = cursor.fetchall()
         except pyodbc.ProgrammingError as err:
-            msg = "An error occurred executing a sql server command get data"
+            msg = "An error occurred executing a sql server command"
             raise DatabaseOperationException(msg)
         conn.commit()
         cursor.close()
@@ -52,9 +52,23 @@ class SQLUtilities(UtilitiesBase):
             cursor.execute(sql, my_params)
             data = cursor.fetchall()
         except pyodbc.ProgrammingError as err:
-            msg = "An error occurred executing a sql server command get birds"
+            msg = "An error occurred executing a sql server command"
             raise DatabaseOperationException(msg)
         conn.commit()
         cursor.close()
         conn.close()
         return data
+
+    def run_sql_params(self):
+        conn = self.connect_sqlserver(self.sql_server_connection)
+        cursor = conn.cursor()
+        sql = "EXEC " + self.sp + ' ' + self.params + ';'
+        my_params = self.params_values
+        try:
+            cursor.execute(sql, my_params)
+        except pyodbc.ProgrammingError as err:
+            msg = "An error occurred executing a sql server command"
+            raise DatabaseOperationException(msg)
+        conn.commit()
+        cursor.close()
+        conn.close()

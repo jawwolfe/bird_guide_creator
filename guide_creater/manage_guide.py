@@ -100,7 +100,7 @@ class CreateGuide(GuideBase):
                         code = taxon[4]
                         english = taxon[1]
                 if flag:
-                    diction = {'name': english, 'code': code, 'scientific': row[2], 'target': ''}
+                    diction = {'name': english, 'code': code, 'scientific': row[2], 'target': '', 'id': ''}
                     return_list.append(diction)
                 else:
                     self.logger.info('This exotic bird scientific name did not match Clements: '
@@ -128,7 +128,7 @@ class CreateGuide(GuideBase):
                 ebird_list.append(exotic_bird)
         return ebird_list
 
-    def run_guide(self):
+    def run_create(self):
         self.logger.info('Start script execution.')
         self.set_clements()
         self.set_guide_id()
@@ -177,7 +177,7 @@ class CreateGuide(GuideBase):
             else:
                 add = ''
             diction = {'name': final_bird['name'], 'code': final_bird['code'], 'scientific': final_bird['scientific'],
-                       'add': add, 'target': final_bird['target']}
+                       'add': add, 'target': final_bird['target'], 'id': ''}
             add_list.append(diction)
         # todo add only the new birds to Birds Table and all birds to the BirdsGuide table
         self.logger.info('End Script Execution.\n')
@@ -213,10 +213,21 @@ class UpdateGuide(GuideBase):
             flag = False
             for name in all_birds:
                 if ebird['name'] == name[1]:
+                    ebird['id'] = name[0]
                     flag = True
             if not flag:
                 print('Not in Birds Database:' + ebird['name'])
                 # add to birds database
+                params_values = (ebird['name'], ebird['code'], ebird['scientific'], '')
+                utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                         params_values=params_values, sp='sp_insert_bird',
+                                         params='@BirdName=?,@TaxanomicCode=?,@ScientificName=?,@Artist=?')
+                bird_id = utilities.run_sql_return_params()[0]
+                params_values = (bird_id[0], guide_id, 1, 2, 0, 2)
+                utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                         params_values=params_values, sp='sp_insert_bird_guide',
+                                         params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
+                utilities.run_sql_params()
 
         # check for birds new to the guide
         for ebird in ebird_list_clements:
@@ -226,7 +237,11 @@ class UpdateGuide(GuideBase):
                     flag = True
             if not flag:
                 print('Not in Birds Guide:' + ebird['name'])
-                # add to guide
+                params_values = (ebird['id'], guide_id, 1, 2, 0, 2)
+                utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                         params_values=params_values, sp='sp_insert_bird_guide',
+                                         params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
+                utilities.run_sql_params()
 
 
 
