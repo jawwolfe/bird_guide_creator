@@ -101,33 +101,33 @@ class GuideBase:
                 master_flag = True
         return master_flag
 
-    def _create_playlists(self, birds):
+    def _create_playlists(self):
         playlists_sps = [{'sp': 'sp_get_in_guide', 'name': ''},
-                             {'sp': 'sp_get_common_by_guide', 'name': 'Common Birds'},
-                             {'sp': 'sp_get_common_uncommon_doves_by_guide',
-                              'name': 'Common-Uncommon Doves and Cuckoos'},
-                             {'sp': 'sp_get_common_passerines_by_guide', 'name': 'Common Passerines'},
-                             {'sp': 'sp_get_common_scarce_passerines_by_guide', 'name': 'Common-Scarce Passerines'}]
+                         {'sp': 'sp_get_common_by_guide', 'name': 'Common Birds'},
+                         {'sp': 'sp_get_common_uncommon_doves_by_guide', 'name': 'Common-Uncommon Doves and Cuckoos'},
+                         {'sp': 'sp_get_common_passerines_by_guide', 'name': 'Common Passerines'},
+                         {'sp': 'sp_get_common_scarce_passerines_by_guide', 'name': 'Common-Scarce Passerines'}]
         header = '#EXTM3U\n'
         item_begin = '#EXTINF:'
         extension = '.mp3\n'
         folder = 'Birds/'
-        root = get_phone_root('Android')[0]
+        root = '/storage/emulated/0/'
+        # root = get_phone_root('Android')[0]
         for item in playlists_sps:
             guide = self.guide_name
-            sql_sp = item['sp']
-            playlist_name = ''
             if item['name'] == '':
                 playlist_name = guide[0] + ' Bird Guide'
             else:
                 playlist_name = guide[0] + ' ' + item['name']
-             #birds = get_birds(guide_id, sql_sp)
+            utilities = SQLUtilities(item['sp'], self.logger, sql_server_connection=self.sql_server_connection,
+                                     params_values=self.guide_id, params='@GuideID=?')
+            birds = utilities.run_sql_return_params()
             str_file = header
-            for item in birds:
+            for bird in birds:
                 str_file += item_begin
-                str_file += str(item[2]) + ',' + item[3] + " - "
-                str_file += item[0] + ' ' + item[1] + '\n'
-                str_file += root + folder + item[0] + ' ' + item[1] + extension
+                str_file += str(bird[2]) + ',' + bird[3] + " - "
+                str_file += bird[0] + ' ' + bird[1] + '\n'
+                str_file += root + folder + bird[0] + ' ' + bird[1] + extension
             # todo make a guide specific directory with date
             f = open(self.playlist_path + playlist_name + '.m3u', "w")
             f.write(str_file)
