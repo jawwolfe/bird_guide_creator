@@ -265,6 +265,10 @@ class CreateGuide(GuideBase):
                 f.write('"' + item['name'] + '"' + "\n")
             f.close()
 
+        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                 params_values=guide_id, params='@GuideID=?', sp='sp_update_guide_last_update')
+        utilities.run_sql_params()
+
         # todo update the playlist for this guide
         self.logger.info('End Script Execution.\n')
 
