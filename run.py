@@ -12,6 +12,7 @@ LOG_FILE_PATH = config.LOG_FILE_PATH
 BIRDS_FILE_PATH = config.BIRDS_FILE_PATH
 AUIDO_PATH = config.AUDIO_PATH
 IMAGE_PATH = config.IMAGE_PATH
+PLAYLIST_PATH = config.PLAYLIST_PATH
 LOG_MESSAGE = '%(asctime)s -%(process)d - %(levelname)s - %(message)s'
 LOG_TIME = '%d-%b-%y %H:%M:%S'
 

@@ -4,7 +4,8 @@ from guide_creater.exceptions import TaxonomyException
 import shutil, datetime, csv, os
 
 class GuideBase:
-    def __init__(self, logger, sql_server_connection, guide_name, ebird_files, file_path, audio_path, image_path):
+    def __init__(self, logger, sql_server_connection, guide_name, ebird_files, file_path, audio_path, image_path,
+                 playlist_path):
         self.logger = logger
         self.sql_server_connection = sql_server_connection
         self.guide_name = guide_name
@@ -12,6 +13,7 @@ class GuideBase:
         self.file_path = file_path
         self.audio_path = audio_path
         self.image_path = image_path
+        self.playlist_path = playlist_path
         self.clements = None
         self.guide_id = None
 
@@ -99,14 +101,46 @@ class GuideBase:
                 master_flag = True
         return master_flag
 
+    def _create_playlists(self, birds):
+        playlists_sps = [{'sp': 'sp_get_in_guide', 'name': ''},
+                             {'sp': 'sp_get_common_by_guide', 'name': 'Common Birds'},
+                             {'sp': 'sp_get_common_uncommon_doves_by_guide',
+                              'name': 'Common-Uncommon Doves and Cuckoos'},
+                             {'sp': 'sp_get_common_passerines_by_guide', 'name': 'Common Passerines'},
+                             {'sp': 'sp_get_common_scarce_passerines_by_guide', 'name': 'Common-Scarce Passerines'}]
+        header = '#EXTM3U\n'
+        item_begin = '#EXTINF:'
+        extension = '.mp3\n'
+        folder = 'Birds/'
+        root = get_phone_root('Android')[0]
+        for item in playlists_sps:
+            guide = self.guide_name
+            sql_sp = item['sp']
+            playlist_name = ''
+            if item['name'] == '':
+                playlist_name = guide[0] + ' Bird Guide'
+            else:
+                playlist_name = guide[0] + ' ' + item['name']
+             #birds = get_birds(guide_id, sql_sp)
+            str_file = header
+            for item in birds:
+                str_file += item_begin
+                str_file += str(item[2]) + ',' + item[3] + " - "
+                str_file += item[0] + ' ' + item[1] + '\n'
+                str_file += root + folder + item[0] + ' ' + item[1] + extension
+            # todo make a guide specific directory with date
+            f = open(self.playlist_path + playlist_name + '.m3u', "w")
+            f.write(str_file)
+
 
 class CreateGuide(GuideBase):
     def __init__(self, ebird_files, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
-                 exotic_file=None, targets_file=None):
+                 playlist_path, exotic_file=None, targets_file=None):
         self.exotic_file = exotic_file
         self.targets_file = targets_file
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, guide_name=guide_name,
-                           ebird_files=ebird_files, file_path=file_path, audio_path=audio_path, image_path=image_path)
+                           ebird_files=ebird_files, file_path=file_path, audio_path=audio_path, image_path=image_path,
+                           playlist_path=playlist_path)
 
     def _process_exotic_file(self):
         return_list = []
@@ -274,10 +308,11 @@ class CreateGuide(GuideBase):
 
 
 class UpdateGuide(GuideBase):
-    def __init__(self, ebird_files, file_path, logger, sql_server_connection, guide_name, audio_path, image_path):
+    def __init__(self, ebird_files, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
+                 playlist_path):
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection,
                            guide_name=guide_name, ebird_files=ebird_files, file_path=file_path, audio_path=audio_path,
-                           image_path=image_path)
+                           image_path=image_path, playlist_path=playlist_path)
 
     def run_update(self):
         self.logger.info('Start script execution.')
