@@ -81,12 +81,23 @@ class GuideBase:
                 raise TaxonomyException(msg)
         return birds_clements
 
-    def _check_new(self, mylist):
+    def _check_new_add(self, mylist):
         flag = False
         for item in mylist:
             if item['add'] == 'ADD':
                 flag = True
         return flag
+
+    def _check_new_update(self, ebird, database):
+        master_flag = False
+        for bird in ebird:
+            flag = False
+            for name in database:
+                if bird['name'] == name[1]:
+                    flag = True
+            if not flag:
+                master_flag = True
+        return master_flag
 
 
 class CreateGuide(GuideBase):
@@ -212,7 +223,7 @@ class CreateGuide(GuideBase):
             if add['add'] == "ADD":
                 # add to birds database
                 '''
-                params_values = (add['name'], add['code'], add['scientific'], '')
+                params_values = (add['name'], add['code'], add['scientific'], 1006)
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird',
                                          params='@BirdName=?,@TaxanomicCode=?,@ScientificName=?,@Artist=?')
@@ -238,10 +249,11 @@ class CreateGuide(GuideBase):
                 utilities.run_sql_params()
                 self.logger.info("Added bird " + add['name'] + ' to the guide: ' + self.guide_name)
                 '''
-        f = open(image_path + guide_des + '.csv', "w")
-        for item in new_image_list:
-            f.write('"' + item['name'] + '"' + "\n")
-        f.close()
+        if self._check_new(add_list):
+            f = open(image_path + guide_des + '.csv', "w")
+            for item in new_image_list:
+                f.write('"' + item['name'] + '"' + "\n")
+            f.close()
 
         # todo update the playlist for this guide
         self.logger.info('End Script Execution.\n')
@@ -279,6 +291,10 @@ class UpdateGuide(GuideBase):
 
         new_image_list = []
         # check for birds new to the birds database
+
+        if self._check_new_update(ebird_list_clements, all_birds):
+            os.mkdir(self.audio_path + guide_des)
+
         for ebird in ebird_list_clements:
             flag = False
             for name in all_birds:
@@ -287,17 +303,14 @@ class UpdateGuide(GuideBase):
                     flag = True
             if not flag:
                 print('Not in Birds Database:' + ebird['name'])
-                os.mkdir(self.audio_path + guide_des)
                 # add to birds database
-                '''
-                params_values = (ebird['name'], ebird['code'], ebird['scientific'], '')
+                params_values = (ebird['name'], ebird['code'], ebird['scientific'], 1006)
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird',
                                          params='@BirdName=?,@TaxanomicCode=?,@ScientificName=?,@Artist=?')
                 bird_id = utilities.run_sql_return_params()
                 ebird['id'] = bird_id[0][0]
                 self.logger.info("Added new bird to database: " + ebird['name'])
-                '''
                 diction = {'name': ebird['code'] + ' ' + ebird['name']}
                 new_image_list.append(diction)
                 shutil.copy(self.audio_path + 'blank.mp3', audio_path + ebird['code'] + ' ' + ebird['name'] + '.mp3')
@@ -310,18 +323,18 @@ class UpdateGuide(GuideBase):
                     flag = True
             if not flag:
                 print('Not in Birds Guide:' + ebird['name'])
-                '''
                 params_values = (ebird['id'], guide_id, 1, 2, 0, 5)
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird_guide',
                                          params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
                 utilities.run_sql_params()
                 self.logger.info("Added bird " + ebird['name'] + ' to the guide: ' + self.guide_name)
-                '''
-        f = open(image_path + guide_des + '.csv', "w")
-        for item in new_image_list:
-            f.write('"' + item['name'] + '"' + "\n")
-        f.close()
+
+        if self._check_new_update(ebird_list_clements, all_birds):
+            f = open(image_path + guide_des + '.csv', "w")
+            for item in new_image_list:
+                f.write('"' + item['name'] + '"' + "\n")
+            f.close()
 
         # todo update playlist for this guide
 
