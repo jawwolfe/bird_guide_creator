@@ -214,7 +214,7 @@ class CreateGuide(GuideBase):
         guide_des = 'New_Guide ' + self.guide_name + '_' + datetime.datetime.today().strftime('%Y-%m-%d')
         image_path = self.image_path
         audio_path = self.audio_path + guide_des + "\\"
-        if self._check_new(add_list):
+        if self._check_new_add(add_list):
             os.mkdir(self.audio_path + guide_des)
         for add in add_list:
             target = 0
@@ -222,7 +222,6 @@ class CreateGuide(GuideBase):
                 target = 1
             if add['add'] == "ADD":
                 # add to birds database
-                '''
                 params_values = (add['name'], add['code'], add['scientific'], 1006)
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird',
@@ -236,20 +235,31 @@ class CreateGuide(GuideBase):
                                          params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
                 utilities.run_sql_params()
                 self.logger.info("Added bird " + add['name'] + ' to the guide: ' + self.guide_name)
-                '''
                 diction = {'name': add['code'] + ' ' + add['name']}
                 new_image_list.append(diction)
                 shutil.copy(self.audio_path + 'blank.mp3', audio_path + add['code'] + ' ' + add['name'] + '.mp3')
-            else:
-                '''
+
+        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                 sp='sp_get_in_guide', params='@GuideID=?', params_values=guide_id)
+        guide_birds = utilities.run_sql_return_params()
+
+        for add in add_list:
+            flag = False
+            target = 0
+            if add['target'] == "TARGET":
+                target = 1
+            for name in guide_birds:
+                if add['name'] == name[1]:
+                    flag = True
+            if not flag:
                 params_values = (add['id'], guide_id, 1, 2, target, 5)
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird_guide',
                                          params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
                 utilities.run_sql_params()
                 self.logger.info("Added bird " + add['name'] + ' to the guide: ' + self.guide_name)
-                '''
-        if self._check_new(add_list):
+
+        if self._check_new_add(add_list):
             f = open(image_path + guide_des + '.csv', "w")
             for item in new_image_list:
                 f.write('"' + item['name'] + '"' + "\n")
