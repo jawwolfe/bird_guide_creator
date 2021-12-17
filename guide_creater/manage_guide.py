@@ -81,6 +81,13 @@ class GuideBase:
                 raise TaxonomyException(msg)
         return birds_clements
 
+    def _check_new(self, mylist):
+        flag = False
+        for item in mylist:
+            if item['add'] == 'ADD':
+                flag = True
+        return flag
+
 
 class CreateGuide(GuideBase):
     def __init__(self, ebird_files, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
@@ -135,13 +142,6 @@ class CreateGuide(GuideBase):
             if not flag:
                 ebird_list.append(exotic_bird)
         return ebird_list
-
-    def _check_new(self, mylist):
-        flag = False
-        for item in mylist:
-            if item['add'] == 'ADD':
-                flag = True
-        return flag
 
     def run_create(self):
         self.logger.info('Start script execution.')
@@ -239,8 +239,8 @@ class CreateGuide(GuideBase):
                 self.logger.info("Added bird " + add['name'] + ' to the guide: ' + self.guide_name)
                 '''
         f = open(image_path + guide_des + '.csv', "w")
-        writer = csv.DictWriter(f, fieldnames=["name"], lineterminator='\n')
-        writer.writerows(new_image_list)
+        for item in new_image_list:
+            f.write('"' + item['name'] + '"' + "\n")
         f.close()
 
         # todo update the playlist for this guide
@@ -272,6 +272,11 @@ class UpdateGuide(GuideBase):
         # get clements data
         ebird_list_clements = self._match_clements_ebird(clements, all_ebird_data)
 
+        # create paths for new images and audio files
+        guide_des = 'Updates_Guide ' + self.guide_name + '_' + datetime.datetime.today().strftime('%Y-%m-%d')
+        image_path = self.image_path
+        audio_path = self.audio_path + guide_des + "\\"
+
         new_image_list = []
         # check for birds new to the birds database
         for ebird in ebird_list_clements:
@@ -282,7 +287,9 @@ class UpdateGuide(GuideBase):
                     flag = True
             if not flag:
                 print('Not in Birds Database:' + ebird['name'])
+                os.mkdir(self.audio_path + guide_des)
                 # add to birds database
+                '''
                 params_values = (ebird['name'], ebird['code'], ebird['scientific'], '')
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird',
@@ -290,7 +297,10 @@ class UpdateGuide(GuideBase):
                 bird_id = utilities.run_sql_return_params()
                 ebird['id'] = bird_id[0][0]
                 self.logger.info("Added new bird to database: " + ebird['name'])
-                # todo create blank mp3 file and image name for each new bird
+                '''
+                diction = {'name': ebird['code'] + ' ' + ebird['name']}
+                new_image_list.append(diction)
+                shutil.copy(self.audio_path + 'blank.mp3', audio_path + ebird['code'] + ' ' + ebird['name'] + '.mp3')
 
         # check for birds new to the guide
         for ebird in ebird_list_clements:
@@ -300,12 +310,19 @@ class UpdateGuide(GuideBase):
                     flag = True
             if not flag:
                 print('Not in Birds Guide:' + ebird['name'])
+                '''
                 params_values = (ebird['id'], guide_id, 1, 2, 0, 5)
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird_guide',
                                          params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
                 utilities.run_sql_params()
                 self.logger.info("Added bird " + ebird['name'] + ' to the guide: ' + self.guide_name)
+                '''
+        f = open(image_path + guide_des + '.csv', "w")
+        for item in new_image_list:
+            f.write('"' + item['name'] + '"' + "\n")
+        f.close()
+
         # todo update playlist for this guide
 
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,

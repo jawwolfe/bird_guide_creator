@@ -38,7 +38,7 @@ LOGGER = initialize_logger('bird_guide')
 
 # {'Ariana_ebird.xlsx', 'Ben_Arous_ebird.xlsx', 'Bizerte_ebird.xlsx', 'Nabeul_ebird.xlsx', 'Tunis_ebird.xlsx'}
 
-
+'''
 guide = CreateGuide(ebird_files={'Palawan_ebird_12-15-21.xlsx'}, exotic_file='Palawan_exotic_edited.xlsx',
                     targets_file='Palawan_targets.xlsx', file_path=BIRDS_FILE_PATH, logger=LOGGER,
                     sql_server_connection=initialize_sqlserver(), guide_name='Palawan PH', image_path=IMAGE_PATH,
@@ -48,7 +48,7 @@ guide.run_create()
 
 guide = UpdateGuide(ebird_files={'Cebu_ebird_12-15-21.xlsx'}, file_path=BIRDS_FILE_PATH, logger=LOGGER,
                     sql_server_connection=initialize_sqlserver(),
-                    guide_name='Cebu PH')
+                    guide_name='Cebu PH', image_path=IMAGE_PATH, audio_path=AUIDO_PATH)
 guide.run_update()
-'''
+
 
