@@ -3,6 +3,7 @@ from openpyxl import load_workbook
 from guide_creater.exceptions import TaxonomyException
 import shutil, datetime, csv, os
 
+
 class GuideBase:
     def __init__(self, logger, sql_server_connection, guide_name, ebird_files, file_path, audio_path, image_path,
                  playlist_root):
