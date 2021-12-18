@@ -5,7 +5,7 @@ import shutil, datetime, csv, os
 
 class GuideBase:
     def __init__(self, logger, sql_server_connection, guide_name, ebird_files, file_path, audio_path, image_path,
-                 playlist_path):
+                 playlist_root):
         self.logger = logger
         self.sql_server_connection = sql_server_connection
         self.guide_name = guide_name
@@ -13,7 +13,7 @@ class GuideBase:
         self.file_path = file_path
         self.audio_path = audio_path
         self.image_path = image_path
-        self.playlist_path = playlist_path
+        self.playlist_root = playlist_root
         self.clements = None
         self.guide_id = None
 
@@ -110,15 +110,17 @@ class GuideBase:
         header = '#EXTM3U\n'
         item_begin = '#EXTINF:'
         extension = '.mp3\n'
-        folder = 'Birds/'
-        root = '/storage/emulated/0/'
-        # root = get_phone_root('Android')[0]
+        folder_phone = 'Birds/'
+        # todo get phone root from database
+        root_phone = '/storage/emulated/0/'
+        playlist_path = self.playlist_root + self.guide_name
+        if not os.path.exists(playlist_path):
+            os.mkdir(playlist_path)
         for item in playlists_sps:
-            guide = self.guide_name
             if item['name'] == '':
-                playlist_name = guide[0] + ' Bird Guide'
+                playlist_name = self.guide_name + ' Bird Guide'
             else:
-                playlist_name = guide[0] + ' ' + item['name']
+                playlist_name = self.guide_name + ' ' + item['name']
             utilities = SQLUtilities(item['sp'], self.logger, sql_server_connection=self.sql_server_connection,
                                      params_values=self.guide_id, params='@GuideID=?')
             birds = utilities.run_sql_return_params()
@@ -127,20 +129,19 @@ class GuideBase:
                 str_file += item_begin
                 str_file += str(bird[2]) + ',' + bird[3] + " - "
                 str_file += bird[0] + ' ' + bird[1] + '\n'
-                str_file += root + folder + bird[0] + ' ' + bird[1] + extension
-            # todo make a guide specific directory with date
-            f = open(self.playlist_path + playlist_name + '.m3u', "w")
+                str_file += root_phone + folder_phone + bird[0] + ' ' + bird[1] + extension
+            f = open(playlist_path + "\\" + playlist_name + '.m3u', "w")
             f.write(str_file)
 
 
 class CreateGuide(GuideBase):
     def __init__(self, ebird_files, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
-                 playlist_path, exotic_file=None, targets_file=None):
+                 playlist_root, exotic_file=None, targets_file=None):
         self.exotic_file = exotic_file
         self.targets_file = targets_file
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, guide_name=guide_name,
                            ebird_files=ebird_files, file_path=file_path, audio_path=audio_path, image_path=image_path,
-                           playlist_path=playlist_path)
+                           playlist_root=playlist_root)
 
     def _process_exotic_file(self):
         return_list = []
@@ -298,21 +299,21 @@ class CreateGuide(GuideBase):
             for item in new_image_list:
                 f.write('"' + item['name'] + '"' + "\n")
             f.close()
+            self._create_playlists()
+            self.logger.info("Playlist updated.")
 
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                  params_values=guide_id, params='@GuideID=?', sp='sp_update_guide_last_update')
         utilities.run_sql_params()
-
-        # todo update the playlist for this guide
         self.logger.info('End Script Execution.\n')
 
 
 class UpdateGuide(GuideBase):
     def __init__(self, ebird_files, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
-                 playlist_path):
+                 playlist_root):
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection,
                            guide_name=guide_name, ebird_files=ebird_files, file_path=file_path, audio_path=audio_path,
-                           image_path=image_path, playlist_path=playlist_path)
+                           image_path=image_path, playlist_root=playlist_root)
 
     def run_update(self):
         self.logger.info('Start script execution.')
@@ -340,10 +341,8 @@ class UpdateGuide(GuideBase):
 
         new_image_list = []
         # check for birds new to the birds database
-
         if self._check_new_update(ebird_list_clements, all_birds):
             os.mkdir(self.audio_path + guide_des)
-
         for ebird in ebird_list_clements:
             flag = False
             for name in all_birds:
@@ -384,8 +383,8 @@ class UpdateGuide(GuideBase):
             for item in new_image_list:
                 f.write('"' + item['name'] + '"' + "\n")
             f.close()
-
-        # todo update playlist for this guide
+            self._create_playlists()
+            self.logger.info("Playlist updated.")
 
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                  params_values=guide_id, params='@GuideID=?', sp='sp_update_guide_last_update')
