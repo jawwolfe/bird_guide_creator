@@ -16,3 +16,8 @@ class NoErrorsException(Exception):
 class TaxonomyException(Exception):
     """Bird doesn't match taxonomy need to fix before proceeding."""
     pass
+
+
+class VerifyImageException(Exception):
+    """Image name has incorrect name or artist"""
+    pass

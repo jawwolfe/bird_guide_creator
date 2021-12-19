@@ -21,7 +21,7 @@ if _requirements_common_file.exists() and _requirements_common_file.is_file():
 
 setup(
    name='audioembedder',
-   version='2.0',
+   version='3.0',
    description='Makes bird guides.',
    author='DCS',
    author_email='awwolfe@manchester.edu',
