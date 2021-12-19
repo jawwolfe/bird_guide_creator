@@ -191,12 +191,14 @@ class CreateGuide(GuideBase):
         return ebird_list
 
     def run_create(self):
-        self.logger.info('Start script execution.')
+        self.logger.info('Start script execution to create Bird Guide.')
         self.set_clements()
         self.set_guide_id()
         clements = self.get_clements()
         guide_id = self.get_guide_id()
-        targets = self._get_targets()
+        targets = None
+        if self.targets_file:
+            targets = self._get_targets()
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                  sp='sp_get_all_birds')
         all_birds = utilities.run_sql_return_no_params()
@@ -221,12 +223,13 @@ class CreateGuide(GuideBase):
             all_birds_clements = ebird_list_clements
 
         # add targets
-        for target in targets:
-            for bird in all_birds_clements:
-                if 'Pheasant' in bird['name']:
-                    pass
-                if target['scientific'] == bird['scientific']:
-                    bird['target'] = 'TARGET'
+        if self.targets_file:
+            for target in targets:
+                for bird in all_birds_clements:
+                    if 'Pheasant' in bird['name']:
+                        pass
+                    if target['scientific'] == bird['scientific']:
+                        bird['target'] = 'TARGET'
 
         # compare the full list to birds already in guides database
         # and create a final list for adding to the database
@@ -317,7 +320,7 @@ class UpdateGuide(GuideBase):
                            image_path=image_path, playlist_root=playlist_root)
 
     def run_update(self):
-        self.logger.info('Start script execution.')
+        self.logger.info('Start script execution to update Bird Guide.')
         self.set_clements()
         self.set_guide_id()
         clements = self.get_clements()

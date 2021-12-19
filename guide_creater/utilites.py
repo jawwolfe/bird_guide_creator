@@ -1,5 +1,5 @@
 import pyodbc
-from exceptions import DatabaseConnectionException, DatabaseOperationException
+from guide_creater.exceptions import DatabaseConnectionException, DatabaseOperationException
 
 
 class UtilitiesBase:
