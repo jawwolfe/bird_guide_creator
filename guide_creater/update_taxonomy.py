@@ -7,17 +7,17 @@ class UpdateTaxonomy:
         self.logger = logger
         self.sql_server_connection = sql_server_connection
 
-    def run_taxonomy_update(self):
-        utilities = SQLUtilities(sp='sp_get_clements_species', logger=self.logger,
-                                 sql_server_connection=self.sql_server_connection)
-        cl_species = utilities.run_sql_return_no_params()
+    def generate_code(self, species):
+        add_list = []
+        letters = []
+        family_codes = []
+        fpre = ''
+        gpre = ''
         let = list(string.ascii_uppercase[0:26])
         let2 = list(string.ascii_uppercase[0:26])
-        letters = []
         for l in let:
             for l2 in let2:
                 letters.append(l + l2)
-        family_codes = []
         for letter in let:
             for i in range(9):
                 family_codes.append(letter + str(i+1))
@@ -25,16 +25,12 @@ class UpdateTaxonomy:
         family = None
         genus = None
         g = 0
-        add_list = []
-
-        for item in cl_species:
+        for item in species:
             if family != item[1]:
                 family = item[1]
-                #print(family)
                 # create family prefix
                 fpre = family_codes[c]
                 c += 1
-                #print(fpre)
                 g = 0
                 # create genus prefix
                 gpre = letters[g]
@@ -46,54 +42,59 @@ class UpdateTaxonomy:
                     gpre = letters[g]
                 else:
                     pass
-            # create new item
-            dict = {'order': item[0], 'group': family, 'code': fpre + gpre, 'english': item[3], 'scientific': item[4], 'range': ''}
-            add_list.append(dict)
+            diction = {'order': item[0], 'group': family, 'code': fpre + gpre, 'english': item[3],
+                       'scientific': item[4], 'range': ''}
+            add_list.append(diction)
+        return add_list
 
-        def search_list(list, needle):
-            res = ''
-            for item in list:
-                if item['category'] == 'subspecies' or item['category'] == 'group (monotypic)':
-                    if needle in item['scientific']:
-                        sub = item['scientific'][item['scientific'].rindex(' ')+1:]
-                        res += (sub + ':  ' + item['range'] + '\n')
-            return res
+    def search_list(self, mylist, needle):
+        res = ''
+        for item in mylist:
+            if item['category'] == 'subspecies' or item['category'] == 'group (monotypic)':
+                if needle in item['scientific']:
+                    sub = item['scientific'][item['scientific'].rindex(' ')+1:]
+                    res += (sub + ':  ' + item['range'] + '\n')
+        return res
 
+    def run_taxonomy_update(self):
+        species_ranges = []
+        raw_data = []
         utilities = SQLUtilities(sp='sp_get_clements_species', logger=self.logger,
                                  sql_server_connection=self.sql_server_connection)
+        cl_species = utilities.run_sql_return_no_params()
+        utilities = SQLUtilities(sp='sp_get_clements_species_subspecies', logger=self.logger,
+                                 sql_server_connection=self.sql_server_connection)
         cl_species_subspecies = utilities.run_sql_return_no_params()
-        sql = "exec sp_get_clements_species_subspecies;"
-        ranges = []
-        range = None
-        raw_data = []
-
+        # generats the unique sortable alpha numeric code list for all bird families in Clements taxonomy
+        add_list = self.generate_code(cl_species)
+        # get all the subspecies so collect the scientific name and range
         for item in cl_species_subspecies:
-            dict = {'category': item[2], 'range': item[5], 'scientific': item[6]}
-            raw_data.append(dict)
-
+            diction = {'category': item[2], 'range': item[5], 'scientific': item[6]}
+            raw_data.append(diction)
+        # create range strings for each species from subspecies
         for item in raw_data:
             if item['category'] == 'species':
                 if item['range'] is None:
                     if item['scientific'] == 'Crypturellus noctivagus':
                         pass
-
                     # this species has subspecies get all the ranges and ss name
-                    range = search_list(raw_data, item['scientific'])
+                    species_range = self.search_list(raw_data, item['scientific'])
                 else:
                     pass
                     # this species has no subspecies just get range
-                    range = item['range']
-                dict = {'scientific': item['scientific'], 'range': range}
-                ranges.append(dict)
-
+                    species_range = item['range']
+                diction = {'scientific': item['scientific'], 'range': species_range}
+                species_ranges.append(diction)
+        # add ranges to list
         for add in add_list:
-            for str_range in ranges:
+            for str_range in species_ranges:
                 if add['scientific'] == str_range['scientific']:
                     add['range'] = str_range['range']
-
+        # todo truncate the table "Clements"
+        # insert finished taxonomy into database
         for i in add_list:
             params = (i['order'], i['code'], i['english'], i['scientific'], i['group'], i['range'])
-            utilities = SQLUtilities(sp='sp_update_clements', logger=self.logger, params_values=params,
+            utilities = SQLUtilities(sp='sp_insert_clements', logger=self.logger, params_values=params,
                                      params='@order=?, @code=?, @english=?, @scientific=?, @ebirdgroup=?, @range=?',
                                      sql_server_connection=self.sql_server_connection)
-            utilities.run_sql_params()
+            #utilities.run_sql_params()
