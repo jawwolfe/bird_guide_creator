@@ -22,9 +22,9 @@ if _requirements_common_file.exists() and _requirements_common_file.is_file():
 setup(
    name='audioembedder',
    version='5.0',
-   description='Makes bird guides.',
+   description='Makes bird guides for phone music player.',
    author='DCS',
-   author_email='awwolfe@manchester.edu',
+   author_email='jawwolfe@gmail.com',
    packages=['audioembedder'],
    install_requires=_install_requires
 )
