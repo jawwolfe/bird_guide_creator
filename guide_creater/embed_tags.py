@@ -120,4 +120,4 @@ class EmbedTags:
             with open(cover_file, 'rb') as f:
                 audio.tags.add(APIC(mime='image/jpeg', type=3, desc=u'Cover', data=open(cover_file, 'rb').read()))
             audio.save(fname)
-            self.logger.info("End script execution.")
+        self.logger.info("End script execution.")

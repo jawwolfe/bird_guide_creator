@@ -57,6 +57,7 @@ class UpdateTaxonomy:
         return res
 
     def run_taxonomy_update(self):
+        self.logger.info("Begin script execution to update taxonomy.")
         species_ranges = []
         raw_data = []
         utilities = SQLUtilities(sp='sp_get_clements_species', logger=self.logger,
@@ -94,7 +95,8 @@ class UpdateTaxonomy:
         # insert finished taxonomy into database
         for i in add_list:
             params = (i['order'], i['code'], i['english'], i['scientific'], i['group'], i['range'])
-            utilities = SQLUtilities(sp='sp_insert_clements', logger=self.logger, params_values=params,
+            utilities = SQLUtilities(sp='sp_insert_clements_test', logger=self.logger, params_values=params,
                                      params='@order=?, @code=?, @english=?, @scientific=?, @ebirdgroup=?, @range=?',
                                      sql_server_connection=self.sql_server_connection)
-            #utilities.run_sql_params()
+            utilities.run_sql_params()
+        self.logger.info("End script execution.")

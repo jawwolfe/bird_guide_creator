@@ -2,8 +2,6 @@ from guide_creater.manage_guide import CreateGuide, UpdateGuide
 from guide_creater.configs import config
 from globals import initialize_logger, initialize_sqlserver
 
-SQLSERVER_NAME = config.SQLSERVER_NAME
-SQLSERVER_DATABASE = config.SQLSERVER_DATABASE
 RAW_FILE_PATH = config.RAW_FILE_PATH
 AUDIO_PATH = config.AUDIO_PATH
 IMAGE_PATH = config.IMAGE_PATH
