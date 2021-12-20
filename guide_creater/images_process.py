@@ -51,7 +51,11 @@ class Verify(GuideBase):
             split_name = raw_name.split("_", 1)
             full_name = split_name[0]
             name = full_name[4:].strip()
-            artist_name = split_name[1]
+            try:
+                artist_name = split_name[1]
+            except IndexError as err:
+                self.logger.error("Artist name not separated properly. " + full_name)
+                raise VerifyImageException
             prefix = full_name[:4].strip()
             utilities = SQLUtilities('sp_get_artist_id', self.logger, self.sql_server_connection,
                                      params='@ArtistName=?', params_values=artist_name)
