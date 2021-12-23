@@ -49,7 +49,7 @@ class RecreateImageList:
 
         f = open(image_path + guide_des + '.csv', "w")
         for item in new_image_list:
-            f.write('"' + item[0] + '"' + "\n")
+            f.write('"' + item[0] + '"' + ',"' + item[1] + '"' + ',"' + item[2] + '"' + '\n')
         f.close()
 
 

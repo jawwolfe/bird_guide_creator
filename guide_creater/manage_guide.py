@@ -274,7 +274,7 @@ class CreateGuide(GuideBase):
                                          params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
                 utilities.run_sql_params()
                 self.logger.info("Added bird " + add['name'] + ' to the guide: ' + self.guide_name)
-                diction = {'name': add['code'] + ' ' + add['name']}
+                diction = {'name': add['code'] + ' ' + add['name'], 'scientific': add['scientific']}
                 new_image_list.append(diction)
                 shutil.copy(self.audio_path + 'blank.mp3', audio_path + add['code'] + ' ' + add['name'] + '.mp3')
 
@@ -301,7 +301,7 @@ class CreateGuide(GuideBase):
         if self._check_new_add(add_list):
             f = open(image_path + guide_des + '.csv', "w")
             for item in new_image_list:
-                f.write('"' + item['name'] + '"' + "\n")
+                f.write('"' + item['name'] + '"' + ',"' + item['scientific'] + '"' + '\n')
             f.close()
             self._create_playlists()
             self.logger.info("Playlist updated.")
@@ -363,7 +363,7 @@ class UpdateGuide(GuideBase):
                 bird_id = utilities.run_sql_return_params()
                 ebird['id'] = bird_id[0][0]
                 self.logger.info("Added new bird to database: " + ebird['name'])
-                diction = {'name': ebird['code'] + ' ' + ebird['name']}
+                diction = {'name': ebird['code'] + ' ' + ebird['name'], 'scientific': ebird['scientific']}
                 new_image_list.append(diction)
                 shutil.copy(self.audio_path + 'blank.mp3', audio_path + ebird['code'] + ' ' + ebird['name'] + '.mp3')
 
@@ -385,7 +385,7 @@ class UpdateGuide(GuideBase):
         if self._check_new_update(ebird_list_clements, all_birds):
             f = open(image_path + guide_des + '.csv', "w")
             for item in new_image_list:
-                f.write('"' + item['name'] + '"' + "\n")
+                f.write('"' + item['name'] + '"' + ',"' + item['scientific'] + '"' + '\n')
             f.close()
             self._create_playlists()
             self.logger.info("Playlist updated.")
