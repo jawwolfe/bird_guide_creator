@@ -21,7 +21,10 @@ class Optimize(GuideBase):
         lst_images = []
         os.chdir(self.source_path)
         # todo add other image extensions
-        for file in glob.glob('*.jpg'):
+        files = glob.glob('*.gif')
+        files.extend(glob.glob('*.png'))
+        files.extend(glob.glob('*.jpg'))
+        for file in files:
             lst_images.append(file.rsplit(".", 1)[0])
             image = Image.open(self.source_path + file)
             width, height = image.size
