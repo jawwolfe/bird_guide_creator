@@ -53,8 +53,9 @@ class GuideBase:
                             if 'Domestic' not in my_item:
                                 if 'undescribed' not in my_item:
                                     if my_item != 'Jan':
-                                        if ' x ' not in my_item:
-                                            file_list.append(my_item.replace('\t', ''))
+                                        if my_item != 'bird sp':
+                                            if ' x ' not in my_item:
+                                                file_list.append(my_item.replace('\t', ''))
             for item in file_list:
                 bird_list.append(item)
         distinct_ebird_list = self._remove_ebird_duplicates(bird_list)

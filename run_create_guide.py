@@ -8,10 +8,11 @@ IMAGE_PATH = config.IMAGE_PATH
 PLAYLIST_PATH = config.PLAYLIST_PATH
 LOGGER = initialize_logger('bird_guide')
 
-
-guide = CreateGuide(ebird_files={'Ariana_ebird.xlsx', 'Ben_Arous_ebird.xlsx', 'Bizerte_ebird.xlsx', 'Nabeul_ebird.xlsx',
-                                 'Tunis_ebird.xlsx'},
-                    exotic_file=None, targets_file=None, file_path=RAW_FILE_PATH, logger=LOGGER,
-                    sql_server_connection=initialize_sqlserver(), guide_name='North Tunisia', image_path=IMAGE_PATH,
+#'Exotic_Thailand_KYNP_edited.xlsx'
+#'Exotic_Thailand_KYNP_TARGETS.xlsx'
+#Khao Yai National Park
+guide = CreateGuide(ebird_files={'Nakhon_Nayok_Ebird_edited.xlsx'},
+                    exotic_file='Exotic_Thailand_KYNP_edited.xlsx', targets_file='Exotic_Thailand_KYNP_TARGETS.xlsx', file_path=RAW_FILE_PATH, logger=LOGGER,
+                    sql_server_connection=initialize_sqlserver(), guide_name='Khao Yai National Park', image_path=IMAGE_PATH,
                     audio_path=AUDIO_PATH, playlist_root=PLAYLIST_PATH)
 guide.run_create()
