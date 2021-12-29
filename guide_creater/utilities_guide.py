@@ -1,6 +1,6 @@
 from guide_creater.utilites import SQLUtilities
 from openpyxl import load_workbook
-import csv, datetime, os, glob
+import csv, datetime, os, glob, shutil
 
 
 class Compare:
@@ -53,8 +53,25 @@ class RecreateImageList:
         f.close()
 
 
+class RecreateAudioFiles:
+    def __init__(self, logger, sql_server_connection):
+        self.logger = logger
+        self.sql_server_connection = sql_server_connection
+
+    def run_recreate_audio_files(self):
+        # this was to recreate the csv file with the new birds for a guide to create images
+        utilities = SQLUtilities(sp='sp_get_new_birds_by_guide', sql_server_connection=self.sql_server_connection,
+                                 params_values=12, params='@GuideID=?', logger=self.logger)
+        new_bird_list = utilities.run_sql_return_params()
+        guide_des = 'New_Guide ' + 'North Tunisia' + '_' + datetime.datetime.today().strftime('%Y-%m-%d')
+        audio_path = 'C:\\temp\\Audio\\'
+        os.mkdir(audio_path + guide_des + '\\')
+        for item in new_bird_list:
+            shutil.copy(audio_path + 'blank.mp3', audio_path + guide_des + "\\" + item[0] + '.mp3')
+
+
 class Rename:
-    def __init__(self, logger, sql_server_connection, path_audio, path_images):
+    def __init__(self, logger, sql_server_connection, path_audio='', path_images=''):
         self.logger = logger
         self.sql_server_connection = sql_server_connection
         self.path_audio = path_audio
@@ -65,21 +82,24 @@ class Rename:
         utilities = SQLUtilities(sp='sp_get_names', logger=self.logger,
                                  sql_server_connection=self.sql_server_connection)
         names = utilities.run_sql_return_no_params()
-        c = 0
+
         os.chdir(self.path_audio)
         for file in glob.glob('*'):
-            full_name = file.rsplit(".", 1)[0]
-            prefix = full_name[:4].strip()
-            name = full_name[4:].strip()
-
+            old_path = self.path_audio + file
+            new_path = self.path_audio + file[1:].replace('_', "'")
+            print(new_path)
+            os.rename(old_path, new_path)
+            '''
+            print(file)
             for item in names:
-                if name == item[0]:
-                    old_path = self.path_audio + full_name + '.mp3'
-                    new_path = self.path_audio + item[1] + ' ' + name + '.mp3'
+                if item == item[0]:
+                    old_path = self.path_audio + '.mp3'
+                    new_path = self.path_audio + item[1] + '.mp3'
                     c += 1
                     print(new_path)
-                    os.rename(old_path, new_path)
-        print(str(c))
+                    #os.rename(old_path, new_path)
+            '''
+
         '''
         for item in data:
             if item[0] != item[1]:
