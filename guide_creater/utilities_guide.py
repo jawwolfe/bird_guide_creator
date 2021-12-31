@@ -1,13 +1,14 @@
 from guide_creater.utilites import SQLUtilities
 from openpyxl import load_workbook
-import csv, datetime, os, glob, shutil
+import datetime, os, glob, shutil
 
 
 class Compare:
-    def __init__(self, logger, path_one, path_two):
+    def __init__(self, logger, path_one, path_two=None, sql_server_connection=None):
         self.logger = logger
         self.path_one = path_one
         self.path_two = path_two
+        self.sql_server_connection = sql_server_connection
 
     def process_ebird_file(self, path):
         wb = load_workbook(path)
@@ -31,6 +32,19 @@ class Compare:
             if not flag:
                 diction = {'code': item['code'], 'name': item['name']}
                 add.append(diction)
+
+    def run_compare_db_directory(self):
+        utilities = SQLUtilities(sp='sp_get_new_birds_by_guide', sql_server_connection=self.sql_server_connection,
+                                 params_values=12, params='@GuideID=?', logger=self.logger)
+        new_bird_list = utilities.run_sql_return_params()
+        for item in new_bird_list:
+            flag = False
+            for filename in os.listdir(self.path_one):
+                split = filename.split("_", 1)
+                if item[0] == split[0]:
+                    flag = True
+            if not flag:
+                print(item[0])
 
 
 class RecreateImageList:
@@ -61,9 +75,9 @@ class RecreateAudioFiles:
     def run_recreate_audio_files(self):
         # this was to recreate the csv file with the new birds for a guide to create images
         utilities = SQLUtilities(sp='sp_get_new_birds_by_guide', sql_server_connection=self.sql_server_connection,
-                                 params_values=12, params='@GuideID=?', logger=self.logger)
+                                 params_values=1014, params='@GuideID=?', logger=self.logger)
         new_bird_list = utilities.run_sql_return_params()
-        guide_des = 'New_Guide ' + 'North Tunisia' + '_' + datetime.datetime.today().strftime('%Y-%m-%d')
+        guide_des = 'New_Guide ' + 'Kuala Lumpur and Selangor' + '_' + datetime.datetime.today().strftime('%Y-%m-%d')
         audio_path = 'C:\\temp\\Audio\\'
         os.mkdir(audio_path + guide_des + '\\')
         for item in new_bird_list:

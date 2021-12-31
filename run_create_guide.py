@@ -17,8 +17,8 @@ LOGGER = initialize_logger('bird_guide')
 # 'Khao Yai National Park' guide name
 
 
-guide = CreateGuide(ebird_files={'Kuala_Lumpur_Malaysia_Ebird.xlsx', 'Selangor_Malaysia_Ebird.xlsx'},
+guide = CreateGuide(ebird_files={'Tozeur.xlsx', 'Kebili.xlsx', 'Gabes.xlsx', 'Gafsa.xlsx'},
                     exotic_file=None, targets_file=None, file_path=RAW_FILE_PATH, logger=LOGGER,
-                    sql_server_connection=initialize_sqlserver(), guide_name='Kuala Lumpur and Selangor', image_path=IMAGE_PATH,
+                    sql_server_connection=initialize_sqlserver(), guide_name='South Tunisia', image_path=IMAGE_PATH,
                     audio_path=AUDIO_PATH, playlist_root=PLAYLIST_PATH)
 guide.run_create()

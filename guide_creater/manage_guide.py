@@ -42,7 +42,7 @@ class GuideBase:
             my_sheetname = "Sheet1"
             my_ws = my_wb[my_sheetname]
             raw_list = []
-            for my_row in my_ws.iter_rows(min_row=2, values_only=True):
+            for my_row in my_ws.iter_rows(min_row=1, values_only=True):
                 raw_list.append(my_row[0])
             file_list = []
             for my_item in raw_list:
@@ -266,14 +266,15 @@ class CreateGuide(GuideBase):
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird',
                                          params='@BirdName=?,@TaxanomicCode=?,@ScientificName=?,@Artist=?')
-                bird_id = utilities.run_sql_return_params()
-                add['id'] = bird_id[0][0]
+                #bird_id = utilities.run_sql_return_params()
+                #add['id'] = bird_id[0][0]
+                add['id'] = 0
                 self.logger.info("Added new bird to database: " + add['name'])
                 params_values = (add['id'], guide_id, 1, 2, target, 5)
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird_guide',
                                          params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
-                utilities.run_sql_params()
+                #utilities.run_sql_params()
                 self.logger.info("Added bird " + add['name'] + ' to the guide: ' + self.guide_name)
                 diction = {'name': add['code'] + ' ' + add['name'], 'scientific': add['scientific']}
                 new_image_list.append(diction)
