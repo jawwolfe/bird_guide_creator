@@ -6,7 +6,7 @@ import shutil, datetime, csv, os
 
 class GuideBase:
     def __init__(self, logger, sql_server_connection, guide_name, ebird_files, file_path, audio_path, image_path,
-                 playlist_root):
+                 playlist_root, test):
         self.logger = logger
         self.sql_server_connection = sql_server_connection
         self.guide_name = guide_name
@@ -17,6 +17,7 @@ class GuideBase:
         self.playlist_root = playlist_root
         self.clements = None
         self.guide_id = None
+        self.test = test
 
     def get_clements(self):
         return self.clements
@@ -106,12 +107,12 @@ class GuideBase:
 
 class CreateGuide(GuideBase):
     def __init__(self, ebird_files, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
-                 playlist_root, exotic_file=None, targets_file=None):
+                 playlist_root, test, exotic_file=None, targets_file=None):
         self.exotic_file = exotic_file
         self.targets_file = targets_file
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, guide_name=guide_name,
                            ebird_files=ebird_files, file_path=file_path, audio_path=audio_path, image_path=image_path,
-                           playlist_root=playlist_root)
+                           playlist_root=playlist_root, test=test)
 
     def _process_exotic_file(self):
         return_list = []
@@ -223,7 +224,10 @@ class CreateGuide(GuideBase):
         image_path = self.image_path
         audio_path = self.audio_path + guide_des + "\\"
         if self._check_new_add(add_list):
-            os.mkdir(self.audio_path + guide_des)
+            try:
+                os.mkdir(self.audio_path + guide_des)
+            except FileExistsError as err:
+                pass
         for add in add_list:
             target = 0
             if add['target'] == "TARGET":
@@ -234,23 +238,32 @@ class CreateGuide(GuideBase):
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird',
                                          params='@BirdName=?,@TaxanomicCode=?,@ScientificName=?,@Artist=?')
-                bird_id = utilities.run_sql_return_params()
-                add['id'] = bird_id[0][0]
+                if self.test:
+                    bird_id = 0
+                else:
+                    bird_id = utilities.run_sql_return_params()
+                if self.test:
+                    add['id'] = bird_id
+                else:
+                    add['id'] = bird_id[0][0]
                 self.logger.info("Added new bird to database: " + add['name'])
                 params_values = (add['id'], guide_id, 1, 2, target, 5)
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird_guide',
                                          params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
-                utilities.run_sql_params()
+                if self.test:
+                    pass
+                else:
+                    utilities.run_sql_params()
                 self.logger.info("Added bird " + add['name'] + ' to the guide: ' + self.guide_name)
                 diction = {'name': add['code'] + ' ' + add['name'], 'scientific': add['scientific']}
                 new_image_list.append(diction)
                 shutil.copy(self.audio_path + 'blank.mp3', audio_path + add['code'] + ' ' + add['name'] + '.mp3')
 
+        # add the birds already in the database to the guide
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                  sp='sp_get_in_guide', params='@GuideID=?', params_values=guide_id)
         guide_birds = utilities.run_sql_return_params()
-
         for add in add_list:
             flag = False
             target = 0
@@ -264,7 +277,10 @@ class CreateGuide(GuideBase):
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird_guide',
                                          params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
-                utilities.run_sql_params()
+                if self.test:
+                    pass
+                else:
+                    utilities.run_sql_params()
                 self.logger.info("Added bird " + add['name'] + ' to the guide: ' + self.guide_name)
 
         if self._check_new_add(add_list):
@@ -272,23 +288,29 @@ class CreateGuide(GuideBase):
             for item in new_image_list:
                 f.write('"' + item['name'] + '"' + ',"' + item['scientific'] + '"' + '\n')
             f.close()
-            playlist = BirdUtilities(self.logger, self.sql_server_connection, self.playlist_root,
-                                     guide_id=self.guide_id,guide_name=self.guide_name)
-            playlist.create_playlists()
+            if self.test:
+                pass
+            else:
+                playlist = BirdUtilities(self.logger, self.sql_server_connection, self.playlist_root,
+                                         guide_id=self.guide_id, guide_name=self.guide_name)
+                playlist.create_playlists()
             self.logger.info("Playlist updated.")
 
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                  params_values=guide_id, params='@GuideID=?', sp='sp_update_guide_last_update')
-        utilities.run_sql_params()
+        if self.test:
+            pass
+        else:
+            utilities.run_sql_params()
         self.logger.info('End Script Execution.\n')
 
 
 class UpdateGuide(GuideBase):
     def __init__(self, ebird_files, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
-                 playlist_root):
+                 playlist_root, test):
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection,
                            guide_name=guide_name, ebird_files=ebird_files, file_path=file_path, audio_path=audio_path,
-                           image_path=image_path, playlist_root=playlist_root)
+                           image_path=image_path, playlist_root=playlist_root, test=test)
 
     def run_update(self):
         self.logger.info('Start script execution to update Bird Guide.')
@@ -317,7 +339,10 @@ class UpdateGuide(GuideBase):
         new_image_list = []
         # check for birds new to the birds database
         if self._check_new_update(ebird_list_clements, all_birds):
-            os.mkdir(self.audio_path + guide_des)
+            try:
+                os.mkdir(self.audio_path + guide_des)
+            except FileExistsError as err:
+                pass
         for ebird in ebird_list_clements:
             flag = False
             for name in all_birds:
@@ -331,8 +356,14 @@ class UpdateGuide(GuideBase):
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird',
                                          params='@BirdName=?,@TaxanomicCode=?,@ScientificName=?,@Artist=?')
-                bird_id = utilities.run_sql_return_params()
-                ebird['id'] = bird_id[0][0]
+                if self.test:
+                    bird_id = 0
+                else:
+                    bird_id = utilities.run_sql_return_params()
+                if self.test:
+                    ebird['id'] = bird_id
+                else:
+                    ebird['id'] = bird_id[0][0]
                 self.logger.info("Added new bird to database: " + ebird['name'])
                 diction = {'name': ebird['code'] + ' ' + ebird['name'], 'scientific': ebird['scientific']}
                 new_image_list.append(diction)
@@ -350,7 +381,10 @@ class UpdateGuide(GuideBase):
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird_guide',
                                          params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
-                utilities.run_sql_params()
+                if self.test:
+                    pass
+                else:
+                    utilities.run_sql_params()
                 self.logger.info("Added bird " + ebird['name'] + ' to the guide: ' + self.guide_name)
 
         if self._check_new_update(ebird_list_clements, all_birds):
@@ -360,10 +394,16 @@ class UpdateGuide(GuideBase):
             f.close()
             playlist = BirdUtilities(self.logger, self.sql_server_connection, self.playlist_root,
                                      guide_id=self.guide_id, guide_name=self.guide_name)
-            playlist.create_playlists()
+            if self.test:
+                pass
+            else:
+                playlist.create_playlists()
             self.logger.info("Playlist updated.")
 
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                  params_values=guide_id, params='@GuideID=?', sp='sp_update_guide_last_update')
-        utilities.run_sql_params()
+        if self.test:
+            pass
+        else:
+            utilities.run_sql_params()
         self.logger.info("End script execution.")
