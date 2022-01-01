@@ -21,7 +21,7 @@ if _requirements_common_file.exists() and _requirements_common_file.is_file():
 
 setup(
    name='audioembedder',
-   version='5.3',
+   version='5.4',
    description='Makes bird guides for phone music player.',
    author='DCS',
    author_email='jawwolfe@gmail.com',

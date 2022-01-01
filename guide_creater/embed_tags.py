@@ -2,15 +2,16 @@ import os, glob, datetime
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3NoHeaderError
 from mutagen.id3 import ID3, USLT, TALB, TIT2, APIC, error, TPE1
-from guide_creater.utilites import SQLUtilities
+from guide_creater.utilites import SQLUtilities, BirdUtilities
 
 
 class EmbedTags:
-    def __init__(self, logger, sql_server_connection, audio_path, image_path):
+    def __init__(self, logger, sql_server_connection, audio_path, image_path, playlist_root):
         self.logger = logger
         self.sql_server_connection = sql_server_connection
         self.audio_path = audio_path
         self.image_path = image_path
+        self.playlist_root = playlist_root
 
     def parse_length(self, length_string):
         values = length_string.split('-')
@@ -120,4 +121,12 @@ class EmbedTags:
             with open(cover_file, 'rb') as f:
                 audio.tags.add(APIC(mime='image/jpeg', type=3, desc=u'Cover', data=open(cover_file, 'rb').read()))
             audio.save(fname)
+        # update all playlists that have embed = 1 in database
+        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                 sp='sp_get_guides')
+        guides = utilities.run_sql_return_no_params()
+        for guide in guides:
+            playlist = BirdUtilities(self.logger, self.sql_server_connection, self.playlist_root,
+                                     guide_id=guide[0], guide_name=guide[1])
+            playlist.create_playlists()
         self.logger.info("End script execution.")

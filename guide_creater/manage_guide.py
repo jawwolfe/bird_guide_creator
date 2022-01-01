@@ -1,4 +1,4 @@
-from guide_creater.utilites import SQLUtilities
+from guide_creater.utilites import SQLUtilities, BirdUtilities
 from openpyxl import load_workbook
 from guide_creater.exceptions import TaxonomyException
 import shutil, datetime, csv, os
@@ -102,38 +102,6 @@ class GuideBase:
             if not flag:
                 master_flag = True
         return master_flag
-
-    def _create_playlists(self):
-        playlists_sps = [{'sp': 'sp_get_in_guide', 'name': ''},
-                         {'sp': 'sp_get_common_by_guide', 'name': 'Common Birds'},
-                         {'sp': 'sp_get_common_uncommon_doves_by_guide', 'name': 'Common-Uncommon Doves and Cuckoos'},
-                         {'sp': 'sp_get_common_passerines_by_guide', 'name': 'Common Passerines'},
-                         {'sp': 'sp_get_common_scarce_passerines_by_guide', 'name': 'Common-Scarce Passerines'}]
-        header = '#EXTM3U\n'
-        item_begin = '#EXTINF:'
-        extension = '.mp3\n'
-        folder_phone = 'Birds/'
-        # todo get phone root from database
-        root_phone = '/storage/emulated/0/'
-        playlist_path = self.playlist_root + self.guide_name
-        if not os.path.exists(playlist_path):
-            os.mkdir(playlist_path)
-        for item in playlists_sps:
-            if item['name'] == '':
-                playlist_name = self.guide_name + ' Bird Guide'
-            else:
-                playlist_name = self.guide_name + ' ' + item['name']
-            utilities = SQLUtilities(item['sp'], self.logger, sql_server_connection=self.sql_server_connection,
-                                     params_values=self.guide_id, params='@GuideID=?')
-            birds = utilities.run_sql_return_params()
-            str_file = header
-            for bird in birds:
-                str_file += item_begin
-                str_file += str(bird[2]) + ',' + bird[3] + " - "
-                str_file += bird[0] + ' ' + bird[1] + '\n'
-                str_file += root_phone + folder_phone + bird[0] + ' ' + bird[1] + extension
-            f = open(playlist_path + "\\" + playlist_name + '.m3u', "w")
-            f.write(str_file)
 
 
 class CreateGuide(GuideBase):
@@ -266,15 +234,14 @@ class CreateGuide(GuideBase):
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird',
                                          params='@BirdName=?,@TaxanomicCode=?,@ScientificName=?,@Artist=?')
-                #bird_id = utilities.run_sql_return_params()
-                #add['id'] = bird_id[0][0]
-                add['id'] = 0
+                bird_id = utilities.run_sql_return_params()
+                add['id'] = bird_id[0][0]
                 self.logger.info("Added new bird to database: " + add['name'])
                 params_values = (add['id'], guide_id, 1, 2, target, 5)
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird_guide',
                                          params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,@Endemic=?')
-                #utilities.run_sql_params()
+                utilities.run_sql_params()
                 self.logger.info("Added bird " + add['name'] + ' to the guide: ' + self.guide_name)
                 diction = {'name': add['code'] + ' ' + add['name'], 'scientific': add['scientific']}
                 new_image_list.append(diction)
@@ -305,7 +272,9 @@ class CreateGuide(GuideBase):
             for item in new_image_list:
                 f.write('"' + item['name'] + '"' + ',"' + item['scientific'] + '"' + '\n')
             f.close()
-            self._create_playlists()
+            playlist = BirdUtilities(self.logger, self.sql_server_connection, self.playlist_root,
+                                     guide_id=self.guide_id,guide_name=self.guide_name)
+            playlist.create_playlists()
             self.logger.info("Playlist updated.")
 
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
@@ -389,7 +358,9 @@ class UpdateGuide(GuideBase):
             for item in new_image_list:
                 f.write('"' + item['name'] + '"' + ',"' + item['scientific'] + '"' + '\n')
             f.close()
-            self._create_playlists()
+            playlist = BirdUtilities(self.logger, self.sql_server_connection, self.playlist_root,
+                                     guide_id=self.guide_id, guide_name=self.guide_name)
+            playlist.create_playlists()
             self.logger.info("Playlist updated.")
 
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,

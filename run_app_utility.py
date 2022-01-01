@@ -12,11 +12,11 @@ LOGGER = initialize_logger('bird_guide')
 #compare = Compare(logger=LOGGER, path_one='C:\\temp\\Optimized\\', path_two=None, sql_server_connection=initialize_sqlserver())
 #compare.run_compare_db_directory()
 
-image_list = RecreateImageList(logger=LOGGER, sql_server_connection=initialize_sqlserver())
-image_list.run_recreate_image_list()
+#image_list = RecreateImageList(logger=LOGGER, sql_server_connection=initialize_sqlserver())
+#image_list.run_recreate_image_list()
 
 #rename = Rename(logger=LOGGER, sql_server_connection=initialize_sqlserver(), path_audio='', path_images='')
 #rename.run_rename()
 
-#rename = Rename(LOGGER, initialize_sqlserver(), path_audio='C:\\temp\\Utilities\\', path_images=None)
-#rename.run_rename()
+rename = Rename(LOGGER, initialize_sqlserver(), path_audio='C:\\temp\\Bird Guide\\', path_images=None)
+rename.run_rename()

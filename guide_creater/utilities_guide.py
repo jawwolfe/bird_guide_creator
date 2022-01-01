@@ -100,7 +100,10 @@ class Rename:
         os.chdir(self.path_audio)
         for file in glob.glob('*'):
             old_path = self.path_audio + file
-            new_path = self.path_audio + file[1:].replace('_', "'")
+            if file[0] == 'z':
+                new_path = self.path_audio + file[1:].replace('_', "'")
+            else:
+                new_path = self.path_audio + file.replace('_', "'")
             print(new_path)
             os.rename(old_path, new_path)
             '''
