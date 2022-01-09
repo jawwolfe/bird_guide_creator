@@ -55,10 +55,10 @@ class RecreateImageList:
     def run_recreate_image_list(self):
         # this was to recreate the csv file with the new birds for a guide to create images
         utilities = SQLUtilities(sp='sp_get_new_birds_by_guide', sql_server_connection=self.sql_server_connection,
-                                 params_values=12, params='@GuideID=?', logger=self.logger)
+                                 params_values=1014, params='@GuideID=?', logger=self.logger)
         new_image_list = utilities.run_sql_return_params()
 
-        guide_des = 'New_Guide ' + 'North Tunisia' + '_' + datetime.datetime.today().strftime('%Y-%m-%d')
+        guide_des = 'New_Guide ' + 'Kuala Lumpur and Selangor' + '_' + datetime.datetime.today().strftime('%Y-%m-%d')
         image_path = 'C:\\temp\\Source\\'
 
         f = open(image_path + guide_des + '.csv', "w")

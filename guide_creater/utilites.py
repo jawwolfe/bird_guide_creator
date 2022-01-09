@@ -84,6 +84,8 @@ class BirdUtilities(UtilitiesBase):
 
     def create_playlists(self):
         playlists_sps = [{'sp': 'sp_get_in_guide', 'name': ''},
+                         {'sp': 'sp_get_winter_in_guide', 'name': 'Winter'},
+                         {'sp': 'sp_get_breeding_in_guide', 'name': 'Breeding Season'},
                          {'sp': 'sp_get_common_by_guide', 'name': 'Common Birds'},
                          {'sp': 'sp_get_common_uncommon_doves_by_guide', 'name': 'Common-Uncommon Doves and Cuckoos'},
                          {'sp': 'sp_get_common_passerines_by_guide', 'name': 'Common Passerines'},

@@ -5,12 +5,11 @@ import shutil, datetime, csv, os
 
 
 class GuideBase:
-    def __init__(self, logger, sql_server_connection, guide_name, ebird_files, file_path, audio_path, image_path,
+    def __init__(self, logger, sql_server_connection, guide_name, file_path, audio_path, image_path,
                  playlist_root, test):
         self.logger = logger
         self.sql_server_connection = sql_server_connection
         self.guide_name = guide_name
-        self.ebird_files = ebird_files
         self.file_path = file_path
         self.audio_path = audio_path
         self.image_path = image_path
@@ -38,7 +37,11 @@ class GuideBase:
 
     def _process_ebird_files(self):
         bird_list = []
-        for file in self.ebird_files:
+        utilities = SQLUtilities('sp_get_regions_by_guide_name', self.logger, self.sql_server_connection,
+                                 params=' @GuideName=?', params_values=self.guide_name)
+        regions = utilities.run_sql_return_params()
+        for region in regions:
+            file = region[1].replace(' ', '_') + '_' + region[0].replace(' ', '_') + '_' + 'Ebird.xlsx'
             my_wb = load_workbook(self.file_path + file)
             my_sheetname = "Sheet1"
             my_ws = my_wb[my_sheetname]
@@ -106,17 +109,17 @@ class GuideBase:
 
 
 class CreateGuide(GuideBase):
-    def __init__(self, ebird_files, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
-                 playlist_root, test, exotic_file=None, targets_file=None):
-        self.exotic_file = exotic_file
-        self.targets_file = targets_file
+    def __init__(self, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
+                 playlist_root, test, exotic_name=None):
+        self.exotic_name = exotic_name
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, guide_name=guide_name,
-                           ebird_files=ebird_files, file_path=file_path, audio_path=audio_path, image_path=image_path,
+                           file_path=file_path, audio_path=audio_path, image_path=image_path,
                            playlist_root=playlist_root, test=test)
 
     def _process_exotic_file(self):
         return_list = []
-        wb = load_workbook(self.file_path + self.exotic_file)
+        file = 'Exotic_' + self.exotic_name.replace(' ', '_') + '.xlsx'
+        wb = load_workbook(self.file_path + file)
         sheetname = "Sheet1"
         ws = wb[sheetname]
         for row in ws.iter_rows(min_row=2, values_only=True):
@@ -141,7 +144,8 @@ class CreateGuide(GuideBase):
 
     def _get_targets(self):
         return_list = []
-        wb = load_workbook(self.file_path + self.targets_file)
+        file = 'Exotic_' + self.exotic_name.replace(' ', '_') + '_Targets.xlsx'
+        wb = load_workbook(self.file_path + file)
         sheetname = "Sheet1"
         ws = wb[sheetname]
         for row in ws.iter_rows(min_row=1, values_only=True):
@@ -167,7 +171,7 @@ class CreateGuide(GuideBase):
         clements = self.get_clements()
         guide_id = self.get_guide_id()
         targets = None
-        if self.targets_file:
+        if self.exotic_name:
             targets = self._get_targets()
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                  sp='sp_get_all_birds')
@@ -183,7 +187,7 @@ class CreateGuide(GuideBase):
         # get exotic birds list and match to clements on scientific name, get clements english name and taxon code
         # log birds that don't match and fix these manually
         exotic_birds_clements = None
-        if self.exotic_file:
+        if self.exotic_name:
             exotic_birds_clements = self._process_exotic_file()
 
         # if there are any exotic birds then add the diff to the ebird list (no duplicates)
@@ -193,7 +197,7 @@ class CreateGuide(GuideBase):
             all_birds_clements = ebird_list_clements
 
         # add targets
-        if self.targets_file:
+        if self.exotic_name:
             for target in targets:
                 for bird in all_birds_clements:
                     if 'Pheasant' in bird['name']:
@@ -306,10 +310,10 @@ class CreateGuide(GuideBase):
 
 
 class UpdateGuide(GuideBase):
-    def __init__(self, ebird_files, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
+    def __init__(self, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
                  playlist_root, test):
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection,
-                           guide_name=guide_name, ebird_files=ebird_files, file_path=file_path, audio_path=audio_path,
+                           guide_name=guide_name, file_path=file_path, audio_path=audio_path,
                            image_path=image_path, playlist_root=playlist_root, test=test)
 
     def run_update(self):
