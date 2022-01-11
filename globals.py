@@ -1,6 +1,6 @@
-from guide_creater.configs import config
+from guide_creator.configs import config
 import os, logging, datetime
-from guide_creater.connection import SQLServerConnection
+from guide_creator.connection import SQLServerConnection
 
 '''Get the name of the root directory for the log path and call it APP NAME'''
 dir_path = os.getcwd()

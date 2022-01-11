@@ -1,4 +1,4 @@
-from guide_creater.utilites import SQLUtilities
+from guide_creator.utilites import SQLUtilities
 from openpyxl import load_workbook
 import datetime, os, glob, shutil
 

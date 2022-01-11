@@ -1,6 +1,6 @@
-from guide_creater.utilites import SQLUtilities, BirdUtilities
+from guide_creator.utilites import SQLUtilities, BirdUtilities
 from openpyxl import load_workbook
-from guide_creater.exceptions import TaxonomyException
+from guide_creator.exceptions import TaxonomyException
 import shutil, datetime, csv, os
 
 

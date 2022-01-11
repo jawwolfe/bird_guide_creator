@@ -1,5 +1,5 @@
 import string
-from guide_creater.utilites import SQLUtilities
+from guide_creator.utilites import SQLUtilities
 
 
 class UpdateTaxonomy:

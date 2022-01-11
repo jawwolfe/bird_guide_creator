@@ -1,5 +1,5 @@
-from guide_creater.update_taxonomy import UpdateTaxonomy
-from guide_creater.configs import config
+from guide_creator.update_taxonomy import UpdateTaxonomy
+from guide_creator.configs import config
 from globals import initialize_logger, initialize_sqlserver
 
 SQLSERVER_NAME = config.SQLSERVER_NAME

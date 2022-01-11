@@ -1,7 +1,7 @@
-from guide_creater.utilites import SQLUtilities
+from guide_creator.utilites import SQLUtilities
 import os, glob
 from PIL import Image
-from guide_creater.exceptions import VerifyImageException
+from guide_creator.exceptions import VerifyImageException
 
 
 class GuideBase:

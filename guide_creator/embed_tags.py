@@ -2,16 +2,19 @@ import os, glob, datetime
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3NoHeaderError
 from mutagen.id3 import ID3, USLT, TALB, TIT2, APIC, error, TPE1
-from guide_creater.utilites import SQLUtilities, BirdUtilities
+from guide_creator.utilites import SQLUtilities, BirdUtilities, GoogleAPIUtilities
 
 
 class EmbedTags:
-    def __init__(self, logger, sql_server_connection, audio_path, image_path, playlist_root):
+    def __init__(self, logger, sql_server_connection, audio_path, image_path, playlist_root, google_api_scopes,
+                 google_cred_path):
         self.logger = logger
         self.sql_server_connection = sql_server_connection
         self.audio_path = audio_path
         self.image_path = image_path
         self.playlist_root = playlist_root
+        self.google_api_scopes = google_api_scopes
+        self.google_cred_path = google_cred_path
 
     def parse_length(self, length_string):
         values = length_string.split('-')
@@ -69,6 +72,13 @@ class EmbedTags:
     def run_embed(self):
         self.logger.info("Start script execution to embed tags.")
         os.chdir(self.audio_path)
+
+        google = GoogleAPIUtilities(self.logger, self.google_api_scopes, self.google_cred_path, bird_root='Bird Guide')
+        service = google.authenticate()
+        id = google.get_guide_root_id(service=service)
+
+
+        print(id)
         for file in glob.glob('*'):
             fname = self.audio_path + file
             full_name = file.rsplit(".", 1)[0]
@@ -129,4 +139,5 @@ class EmbedTags:
             playlist = BirdUtilities(self.logger, self.sql_server_connection, self.playlist_root,
                                      guide_id=guide[0], guide_name=guide[1])
             playlist.create_playlists()
+
         self.logger.info("End script execution.")

@@ -1,5 +1,5 @@
-from guide_creater.manage_guide import UpdateGuide
-from guide_creater.configs import config
+from guide_creator.manage_guide import UpdateGuide
+from guide_creator.configs import config
 from globals import initialize_sqlserver, initialize_logger
 
 
