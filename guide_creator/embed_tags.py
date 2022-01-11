@@ -2,7 +2,7 @@ import os, glob, datetime
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3NoHeaderError
 from mutagen.id3 import ID3, USLT, TALB, TIT2, APIC, error, TPE1
-from guide_creator.utilites import SQLUtilities, BirdUtilities, GoogleAPIUtilities
+from guide_creator.utilites import SQLUtilities, BirdUtilities
 
 
 class EmbedTags:
@@ -72,13 +72,6 @@ class EmbedTags:
     def run_embed(self):
         self.logger.info("Start script execution to embed tags.")
         os.chdir(self.audio_path)
-
-        google = GoogleAPIUtilities(self.logger, self.google_api_scopes, self.google_cred_path, bird_root='Bird Guide')
-        service = google.authenticate()
-        id = google.get_guide_root_id(service=service)
-
-
-        print(id)
         for file in glob.glob('*'):
             fname = self.audio_path + file
             full_name = file.rsplit(".", 1)[0]

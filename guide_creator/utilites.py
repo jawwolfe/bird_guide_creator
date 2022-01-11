@@ -150,9 +150,41 @@ class GoogleAPIUtilities(UtilitiesBase):
                 token.write(creds.to_json())
         return build('drive', 'v3', credentials=creds)
 
-    def get_guide_root_id(self, service):
-        files = service.files().list(q="mimeType='application/vnd.google-apps.folder' and name='Bird Guide'",
+    def list_folders_id_by_name(self, service):
+        files = service.files().list(q="mimeType='application/vnd.google-apps.folder' and name='" + self.bird_root + "'",
                                      spaces='drive', fields='nextPageToken, files(id, name)').execute()
-        print(files)
+        # there should only be one but if more this gets the first on
+        return files['files'][0]['id']
 
+    def list_all_folders_py_parent(self, service, file_id):
+        folders = service.files().list(q="mimeType='application/vnd.google-apps.folder' and '" +
+                                       file_id + "' in parents", spaces='drive',
+                                       fields='nextPageToken, files(id, name)').execute()
+        return folders
 
+    def list_permissions_by_file_id(self, service, file_id):
+        permissions = service.permissions().list(fileId=file_id, fields='*').execute()
+        return permissions
+
+    def delete_file_or_directory(self, service, file_id):
+        service.files().delete(fileId=file_id).execute()
+
+    def create_file_or_directory(self, service, item_name, parent_id):
+        file_metadata = {
+            'name': item_name,
+            'parents': [parent_id],
+            'mimeType': 'application/vnd.google-apps.folder'
+        }
+        file = service.files().create(body=file_metadata, fields='id').execute()
+        return file['id']
+
+    def create_media_upload(self, service, media_name, media_path, parent_id):
+        file_metadata = {
+            'name': media_name,
+            'parents': [parent_id]
+        }
+        media = MediaFileUpload(media_path + media_name,
+                                mimetype='image/jpeg',
+                                resumable=True)
+        file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+        return file['id']
