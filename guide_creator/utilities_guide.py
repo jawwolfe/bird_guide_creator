@@ -20,6 +20,20 @@ class Compare:
             return_list.append(data)
         return return_list
 
+    def run_compare_dirs(self):
+        os.chdir(self.path_one)
+        larger = []
+        for file in glob.glob('*'):
+            larger.append(file)
+        os.chdir(self.path_two)
+        for item in larger:
+            flag = False
+            for file in glob.glob('*'):
+                if file == item:
+                    flag = True
+            if not flag:
+                print(item)
+
     def run_compare(self):
         lst_3 = self.process_ebird_file(self.path_one)
         lst_4 = self.process_ebird_file(self.path_two)

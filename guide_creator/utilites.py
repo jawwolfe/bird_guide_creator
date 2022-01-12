@@ -188,3 +188,12 @@ class GoogleAPIUtilities(UtilitiesBase):
                                 resumable=True)
         file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
         return file['id']
+
+    def create_permission(self, service, file_id, email):
+        file_metadata = {
+            'role': 'reader',
+            'type': 'user',
+            'emailAddress': email
+        }
+        permission = service.permissions().create(body=file_metadata, fileId=file_id).execute()
+        return permission

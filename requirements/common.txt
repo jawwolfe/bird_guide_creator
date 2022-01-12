@@ -3,3 +3,6 @@ mutagen~=1.45.1
 openpyxl~=3.0.7
 setuptools~=41.2.0
 Pillow~=7.1.2
+google-api-python-client~=2.30
+google-auth-httplib2~=0.1
+google-auth-oauthlib~=0.4

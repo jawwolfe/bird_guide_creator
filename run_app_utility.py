@@ -9,11 +9,12 @@ IMAGE_PATH = config.IMAGE_PATH_GUIDE
 LOGGER = initialize_logger('bird_guide')
 
 
-#compare = Compare(logger=LOGGER, path_one='C:\\temp\\Optimized\\', path_two=None, sql_server_connection=initialize_sqlserver())
-#compare.run_compare_db_directory()
+compare = Compare(logger=LOGGER, path_one='C:\\temp\\Bird Guide\\', path_two='C:\\temp\\Birds of the World\\',
+                  sql_server_connection=initialize_sqlserver())
+compare.run_compare_dirs()
 
-image_list = RecreateAudioFiles(logger=LOGGER, sql_server_connection=initialize_sqlserver())
-image_list.run_recreate_audio_files()
+#image_list = RecreateAudioFiles(logger=LOGGER, sql_server_connection=initialize_sqlserver())
+#image_list.run_recreate_audio_files()
 
 #rename = Rename(logger=LOGGER, sql_server_connection=initialize_sqlserver(), path_audio='', path_images='')
 #rename.run_rename()
