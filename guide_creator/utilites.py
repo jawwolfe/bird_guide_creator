@@ -156,92 +156,135 @@ class GoogleAPIUtilities(UtilitiesBase):
         return permission
 
 
-class BirdUtilities(GoogleAPIUtilities):
-    def __init__(self, logger, sql_server_connection, playlist_root, drive_root, google_api_scopes=None,
-                 google_cred_path=None):
+class GoogleDriveSuperGuide:
+    def __init__(self, logger, sql_server_connection, audio_path, google_api_scopes, google_cred_path,
+                 root_guide_dir, super_guide_id, super_guide_name):
+        self.logger = logger
+        self.sql_server_connection = sql_server_connection
+        self.audio_path = audio_path
+        self.google_api_scopes = google_api_scopes
+        self.google_cred_path = google_cred_path
+        self.root_guide_dir = root_guide_dir
+        self.super_guide_id = super_guide_id
+        self.super_guide_name = super_guide_name
+
+    def refresh(self):
+        google_api = GoogleAPIUtilities(self.logger, self.google_api_scopes, self.google_cred_path,
+                                        self.root_guide_dir)
+        service = google_api.authenticate()
+        # get root directory id where all the bird directories will be found
+        root_id = google_api.list_folders_id_by_name(service=service)
+        # find this superguide directory if it exists and get permissions then delete
+        folders = google_api.list_all_folders_py_parent(service=service, file_id=root_id)
+        permissions = None
+        file_id = None
+        for folder in folders['files']:
+            if self.super_guide_name == folder['name']:
+                file_id = folder['id']
+                permissions = google_api.list_permissions_by_file_id(service=service, file_id=folder['id'])
+        # then delete directory and all files
+        if file_id:
+            google_api.delete_file_or_directory(service=service, file_id=file_id)
+        # create the directory
+        new_folder_id = google_api.create_file_or_directory(service=service, item_name=self.super_guide_name,
+                                                            parent_id=root_id)
+        emails = []
+        if permissions:
+            for perm in permissions['permissions']:
+                if perm['role'] != 'owner':
+                    emails.append(perm['emailAddress'])
+        if emails:
+            for email in emails:
+                new_perm_id = google_api.create_permission(service=service, file_id=new_folder_id, email=email)
+        utilities = SQLUtilities('sp_get_birds_in_super_guide', self.logger,
+                                 sql_server_connection=self.sql_server_connection,
+                                 params_values=self.super_guide_id, params='@SuperGuideID=?')
+        birds = utilities.run_sql_return_params()
+        # upload audio files
+        for bird in birds:
+            google_api.create_media_upload(service=service, media_name=bird[0] + '.mp3', media_path=self.audio_path,
+                                           parent_id=new_folder_id, mimetype='image/jpeg')
+
+
+class PlaylistsSuperGuide(GoogleAPIUtilities):
+    def __init__(self, logger, sql_server_connection, playlist_root, drive_root, super_guide_id, super_guide_name,
+                 google_api_scopes=None, google_cred_path=None):
         self.sql_server_connection = sql_server_connection
         self.playlist_root = playlist_root
+        self.super_guide_id = super_guide_id
+        self.super_guide_name = super_guide_name
         GoogleAPIUtilities.__init__(self, logger=logger, drive_root=drive_root, cred_path=google_cred_path,
                                     scopes=google_api_scopes)
 
-    def create_playlists(self):
+    def refresh(self):
         google_api = GoogleAPIUtilities(self.logger, self.scopes, self.cred_path,
                                         drive_root=self.drive_root)
         service = google_api.authenticate()
         # get root directory id where all the bird directories will be found
         root_id = google_api.list_folders_id_by_name(service=service)
-
-        folders_old = google_api.list_all_folders_py_parent(service=service, file_id=root_id)
-
-        # for each existing playlist directory capture the directory name and viewer permission emails
-        old_folders = []
-        for folder in folders_old['files']:
-            permissions = google_api.list_permissions_by_file_id(service=service, file_id=folder['id'])
-            perms = []
+        # find this superguide directory if it exists and get permissions then delete
+        folders = google_api.list_all_folders_py_parent(service=service, file_id=root_id)
+        permissions = None
+        file_id = None
+        for folder in folders['files']:
+            if self.super_guide_name == folder['name']:
+                file_id = folder['id']
+                permissions = google_api.list_permissions_by_file_id(service=service, file_id=folder['id'])
+        # then delete directory and all files
+        if file_id:
+            google_api.delete_file_or_directory(service=service, file_id=file_id)
+        # create the directory
+        new_folder_id = google_api.create_file_or_directory(service=service, item_name=self.super_guide_name,
+                                                            parent_id=root_id)
+        emails = []
+        if permissions:
             for perm in permissions['permissions']:
                 if perm['role'] != 'owner':
-                    perms.append(perm['emailAddress'])
-            diction = {'folder_name': folder['name'], 'emails': perms}
-            old_folders.append(diction)
-            # then delete directory and all files
-            google_api.delete_file_or_directory(service=service, file_id=folder['id'])
-
-        # get the new bird directory names (called super guides in db) and their birds from the database
-        utilities = SQLUtilities('sp_get_active_super_guides', self.logger,
+                    emails.append(perm['emailAddress'])
+        if emails:
+            for email in emails:
+                new_perm_id = google_api.create_permission(service=service, file_id=new_folder_id, email=email)
+        # now get a list of active guides in this superguide and create director for each
+        utilities = SQLUtilities('sp_get_active_guides_in_super_guide', self.logger,
+                                 params_values=self.super_guide_id, params='@SuperGuideID=?',
                                  sql_server_connection=self.sql_server_connection)
-        super_guides = utilities.run_sql_return_no_params()
-        for super_guide in super_guides:
-            sg_name = super_guide[0]
-            sg_id = super_guide[1]
-            # create the directory
-            new_folder_id = google_api.create_file_or_directory(service=service, item_name=sg_name, parent_id=root_id)
-            # add the viewer permissions if matched to previous directory name
-            for item in old_folders:
-                if item['folder_name'] == sg_name:
-                    for email in item['emails']:
-                        new_perm_id = google_api.create_permission(service=service, file_id=new_folder_id, email=email)
-            # now get a list of active guides in this superguide and create director for each
-            utilities = SQLUtilities('sp_get_active_guides_in_super_guide', self.logger, params_values=sg_id,
-                                     params='@SuperGuideID=?', sql_server_connection=self.sql_server_connection)
-            guides = utilities.run_sql_return_params()
-            for guide in guides:
-                new_guide_folder_id = google_api.create_file_or_directory(service=service, item_name=guide[0],
-                                                                          parent_id=new_folder_id)
-                playlists_sps = [{'sp': 'sp_get_in_guide', 'name': ''},
-                                 {'sp': 'sp_get_winter_in_guide', 'name': 'Winter'},
-                                 {'sp': 'sp_get_breeding_in_guide', 'name': 'Breeding Season'},
-                                 {'sp': 'sp_get_common_by_guide', 'name': 'Common Birds'},
-                                 {'sp': 'sp_get_common_uncommon_doves_by_guide', 'name': 'Common-Uncommon Doves and Cuckoos'},
-                                 {'sp': 'sp_get_common_passerines_by_guide', 'name': 'Common Passerines'},
-                                 {'sp': 'sp_get_common_scarce_passerines_by_guide', 'name': 'Common-Scarce Passerines'}]
-                header = '#EXTM3U\n'
-                item_begin = '#EXTINF:'
-                extension = '.mp3\n'
-                folder_phone = 'Birds/'
-                # todo get phone root from database
-                root_phone = '/storage/emulated/0/'
-                playlist_path = self.playlist_root + guide[0]
-                if not os.path.exists(playlist_path):
-                    os.mkdir(playlist_path)
-                for item in playlists_sps:
-                    if item['name'] == '':
-                        playlist_name = guide[0] + ' Bird Guide'
-                    else:
-                        playlist_name = guide[0] + ' ' + item['name']
-                    utilities = SQLUtilities(item['sp'], self.logger, sql_server_connection=self.sql_server_connection,
-                                             params_values=guide[1], params='@GuideID=?')
-                    birds = utilities.run_sql_return_params()
-                    str_file = header
-                    for bird in birds:
-                        str_file += item_begin
-                        str_file += str(bird[2]) + ',' + bird[3] + " - "
-                        str_file += bird[0] + ' ' + bird[1] + '\n'
-                        str_file += root_phone + folder_phone + bird[0] + ' ' + bird[1] + extension
-                    file_path = playlist_path + "\\" + playlist_name + '.m3u'
-                    f = open(file_path, "w")
-                    f.write(str_file)
-                    google_api.create_media_upload(service=service, media_name=playlist_name + '.m3u',
-                                                   media_path=playlist_path + '\\', parent_id=new_guide_folder_id,
-                                                   mimetype='audio/x-mpegurl')
-
-
+        guides = utilities.run_sql_return_params()
+        for guide in guides:
+            new_guide_folder_id = google_api.create_file_or_directory(service=service, item_name=guide[0],
+                                                                      parent_id=new_folder_id)
+            playlists_sps = [{'sp': 'sp_get_in_guide', 'name': ''},
+                             {'sp': 'sp_get_winter_in_guide', 'name': 'Winter'},
+                             {'sp': 'sp_get_breeding_in_guide', 'name': 'Breeding Season'},
+                             {'sp': 'sp_get_common_by_guide', 'name': 'Common Birds'},
+                             {'sp': 'sp_get_common_uncommon_doves_by_guide', 'name': 'Common-Uncommon Doves and Cuckoos'},
+                             {'sp': 'sp_get_common_passerines_by_guide', 'name': 'Common Passerines'},
+                             {'sp': 'sp_get_common_scarce_passerines_by_guide', 'name': 'Common-Scarce Passerines'}]
+            header = '#EXTM3U\n'
+            item_begin = '#EXTINF:'
+            extension = '.mp3\n'
+            folder_phone = 'Birds/'
+            # todo get phone root from database
+            root_phone = '/storage/emulated/0/'
+            playlist_path = self.playlist_root + guide[0]
+            if not os.path.exists(playlist_path):
+                os.mkdir(playlist_path)
+            for item in playlists_sps:
+                if item['name'] == '':
+                    playlist_name = guide[0] + ' Bird Guide'
+                else:
+                    playlist_name = guide[0] + ' ' + item['name']
+                utilities = SQLUtilities(item['sp'], self.logger, sql_server_connection=self.sql_server_connection,
+                                         params_values=guide[1], params='@GuideID=?')
+                birds = utilities.run_sql_return_params()
+                str_file = header
+                for bird in birds:
+                    str_file += item_begin
+                    str_file += str(bird[2]) + ',' + bird[3] + " - "
+                    str_file += bird[0] + ' ' + bird[1] + '\n'
+                    str_file += root_phone + folder_phone + bird[0] + ' ' + bird[1] + extension
+                file_path = playlist_path + "\\" + playlist_name + '.m3u'
+                f = open(file_path, "w")
+                f.write(str_file)
+                google_api.create_media_upload(service=service, media_name=playlist_name + '.m3u',
+                                               media_path=playlist_path + '\\', parent_id=new_guide_folder_id,
+                                               mimetype='audio/x-mpegurl')

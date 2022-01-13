@@ -20,11 +20,11 @@ if _requirements_common_file.exists() and _requirements_common_file.is_file():
         print(_warning_string)
 
 setup(
-   name='audioembedder',
-   version='7.1',
+   name='bird_guide_creator',
+   version='8.0',
    description='Makes bird guides for phone music player.',
    author='DCS',
    author_email='jawwolfe@gmail.com',
-   packages=['audioembedder'],
+   packages=['bird_guide_creator'],
    install_requires=_install_requires
 )

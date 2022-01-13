@@ -2,7 +2,7 @@ import os, glob, datetime
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3NoHeaderError
 from mutagen.id3 import ID3, USLT, TALB, TIT2, APIC, error, TPE1
-from guide_creator.utilites import SQLUtilities, BirdUtilities
+from guide_creator.utilites import SQLUtilities, GoogleDriveSuperGuide, PlaylistsSuperGuide
 
 
 class EmbedTags:
@@ -71,66 +71,80 @@ class EmbedTags:
 
     def run_embed(self):
         self.logger.info("Start script execution to embed tags.")
-        os.chdir(self.audio_path)
-        for file in glob.glob('*'):
-            fname = self.audio_path + file
-            full_name = file.rsplit(".", 1)[0]
-            prefix = full_name[:4].strip()
-            name = full_name[4:].strip()
-            params = (name, prefix)
-            utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
-                                     params_values=params, sp='sp_get_guide_data',
-                                     params='@Bird_Name=?, @Taxanomic_Code=?')
-            data_guides = utilities.run_sql_return_params()
-            utilities = SQLUtilities(sp='sp_get_bird_data', logger=self.logger, sql_server_connection=
-                                     self.sql_server_connection, params='@Bird_Name=?, @Taxanomic_Code=?',
-                                     params_values=params)
-            data_bird = utilities.run_sql_return_params()
-            utilities = SQLUtilities(sp='sp_get_artist', logger=self.logger, sql_server_connection=
-                                     self.sql_server_connection, params='@Bird_Name=?, @Taxanomic_Code=?',
-                                     params_values=params)
-            artist_data = utilities.run_sql_return_params()
-            lyrics = self.process_description(data_bird, data_guides, artist_data)
-            if artist_data:
-                artist = artist_data[0][0]
-            else:
-                artist = ''
-            try:
-                tags = ID3(fname)
-            except ID3NoHeaderError:
-                tags = ID3()
-            if len(tags.getall(u"USLT::'en'")) != 0:
-                tags.delall(u"USLT::'en'")
-                tags.save(fname)
-            tags["USLT::'eng'"] = (USLT(encoding=3, lang=u'eng', desc=u'desc', text=lyrics))
-            tags["USLT"] = (USLT(encoding=3, text=lyrics))
-            tags["USLT::XXX"] = (USLT(encoding=3, text=lyrics))
-            tags["TIT2"] = TIT2(encoding=3, text=full_name)
-            tags["TPE1"] = TPE1(encoding=3, text=artist)
-            tags["TALB"] = TALB(encoding=3, text=u'Birds of the World')
-            tags.save(fname)
-            audio = MP3(fname, ID3=ID3)
-            length = int(audio.info.length)
-            params = (length, name, prefix)
-            utilities = SQLUtilities(sp='sp_update_audio_length', logger=self.logger,
-                                     sql_server_connection=self.sql_server_connection, params_values=params,
-                                     params='@Length=?,@Bird_Name=?, @Taxanomic_Code=?')
-            utilities.run_sql_params()
-            try:
-                audio.add_tags()
-            except error:
-                pass
-            cover_file = self.image_path + full_name + '_' + artist + '.jpg'
-            with open(cover_file, 'rb') as f:
-                audio.tags.add(APIC(mime='image/jpeg', type=3, desc=u'Cover', data=open(cover_file, 'rb').read()))
-            audio.save(fname)
-        # update all playlists that have embed = 1 in database
-        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
-                                 sp='sp_get_guides')
-        guides = utilities.run_sql_return_no_params()
-        for guide in guides:
-            playlist = BirdUtilities(self.logger, self.sql_server_connection, self.playlist_root,
-                                     guide_id=guide[0], guide_name=guide[1])
-            playlist.create_playlists()
-
+        utilities = SQLUtilities('sp_get_active_super_guides', self.logger,
+                                 sql_server_connection=self.sql_server_connection)
+        super_guides = utilities.run_sql_return_no_params()
+        for super_guide in super_guides:
+            sg_name = super_guide[0]
+            sg_id = super_guide[1]
+            utilities = SQLUtilities('sp_get_birds_in_super_guide', self.logger,
+                                     sql_server_connection=self.sql_server_connection,
+                                     params_values=sg_id, params='@SuperGuideID=?')
+            birds = utilities.run_sql_return_params()
+            for bird in birds:
+                full_path_name = self.audio_path + bird[1] + '.jpg'
+                prefix = bird[0][:4].strip()
+                name = bird[0][4:].strip()
+                full_name = bird[0]
+                params = (name, prefix, sg_name)
+                utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                         params_values=params, sp='sp_get_guide_data',
+                                         params='@Bird_Name=?, @Taxanomic_Code=?, @SuperGuideName=?')
+                data_guides = utilities.run_sql_return_params()
+                utilities = SQLUtilities(sp='sp_get_bird_data', logger=self.logger, sql_server_connection=
+                                         self.sql_server_connection, params='@Bird_Name=?, @Taxanomic_Code=?',
+                                         params_values=params)
+                data_bird = utilities.run_sql_return_params()
+                utilities = SQLUtilities(sp='sp_get_artist', logger=self.logger, sql_server_connection=
+                                         self.sql_server_connection, params='@Bird_Name=?, @Taxanomic_Code=?',
+                                         params_values=params)
+                artist_data = utilities.run_sql_return_params()
+                lyrics = self.process_description(data_bird, data_guides, artist_data)
+                if artist_data:
+                    artist = artist_data[0][0]
+                else:
+                    artist = ''
+                try:
+                    tags = ID3(full_path_name)
+                except ID3NoHeaderError:
+                    tags = ID3()
+                if len(tags.getall(u"USLT::'en'")) != 0:
+                    tags.delall(u"USLT::'en'")
+                    tags.save(full_path_name)
+                tags["USLT::'eng'"] = (USLT(encoding=3, lang=u'eng', desc=u'desc', text=lyrics))
+                tags["USLT"] = (USLT(encoding=3, text=lyrics))
+                tags["USLT::XXX"] = (USLT(encoding=3, text=lyrics))
+                tags["TIT2"] = TIT2(encoding=3, text=full_name)
+                tags["TPE1"] = TPE1(encoding=3, text=artist)
+                tags["TALB"] = TALB(encoding=3, text=sg_name)
+                tags.save(full_path_name)
+                audio = MP3(full_path_name, ID3=ID3)
+                length = int(audio.info.length)
+                params = (length, name, prefix)
+                utilities = SQLUtilities(sp='sp_update_audio_length', logger=self.logger,
+                                         sql_server_connection=self.sql_server_connection, params_values=params,
+                                         params='@Length=?,@Bird_Name=?, @Taxanomic_Code=?')
+                utilities.run_sql_params()
+                try:
+                    audio.add_tags()
+                except error:
+                    pass
+                cover_file = self.image_path + full_name + '_' + artist + '.jpg'
+                with open(cover_file, 'rb') as f:
+                    audio.tags.add(APIC(mime='image/jpeg', type=3, desc=u'Cover', data=open(cover_file, 'rb').read()))
+                audio.save(full_path_name)
+            # refresh the google drive files for only this supergudie
+            gdrive = GoogleDriveSuperGuide(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                           root_guide_dir='Bird Guide Directories',
+                                           google_api_scopes=self.google_api_scopes,
+                                           google_cred_path=self.google_cred_path, super_guide_id=sg_id,
+                                           super_guide_name=sg_name, audio_path=self.audio_path)
+            gdrive.refresh()
+            # refresh the playlists for this super guide only
+            play = PlaylistsSuperGuide(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                       drive_root='Playlists Directories', playlist_root=self.playlist_root,
+                                       google_api_scopes=self.google_api_scopes,
+                                       google_cred_path=self.google_cred_path, super_guide_id=sg_id,
+                                       super_guide_name=sg_name)
+            play.refresh()
         self.logger.info("End script execution.")
