@@ -1,4 +1,4 @@
-from guide_creator.embed_tags import EmbedTags
+from guide_creator.utilites import BirdUtilities
 from guide_creator.configs import config
 from globals import initialize_logger, initialize_sqlserver
 
@@ -12,8 +12,8 @@ GOOGLE_API_SCOPES = config.GOOGLE_API_SCOPES
 GOOGLE_CRED_PATH = config.GOOGLE_CRED_PATH
 
 
-# todo add drive_root parameter "Playlist Directories"
-embed = EmbedTags(logger=LOGGER, sql_server_connection=initialize_sqlserver(), image_path=IMAGE_PATH_FINAL,
-                  audio_path=AUDIO_PATH_FINAL, playlist_root=PLAYLIST_ROOT, google_api_scopes=GOOGLE_API_SCOPES,
-                  google_cred_path=GOOGLE_CRED_PATH)
-embed.run_embed()
+playlists = BirdUtilities(logger=LOGGER, sql_server_connection=initialize_sqlserver(),
+                          playlist_root=PLAYLIST_ROOT, google_api_scopes=GOOGLE_API_SCOPES,
+                          google_cred_path=GOOGLE_CRED_PATH, drive_root='Playlists Directories')
+
+playlists.create_playlists()

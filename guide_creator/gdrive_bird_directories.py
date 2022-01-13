@@ -54,4 +54,4 @@ class GDriveBirdDirectories:
             # upload audio files matching on Taxonomy and Name for that directory
             for bird in birds:
                 google_api.create_media_upload(service=service, media_name=bird[0] + '.mp3', media_path=self.audio_path,
-                                               parent_id=new_folder_id)
+                                               parent_id=new_folder_id, mimetype='image/jpeg')

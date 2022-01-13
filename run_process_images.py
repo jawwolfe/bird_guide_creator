@@ -1,5 +1,5 @@
-from guide_creater.images_process import Optimize, Verify
-from guide_creater.configs import config
+from guide_creator.images_process import Optimize, Verify
+from guide_creator.configs import config
 from globals import initialize_sqlserver, initialize_logger
 
 
@@ -16,5 +16,3 @@ verify.run_verification()
 
 optum = Optimize(logger=LOGGER, optimize_path=OPTIMIZE_PATH, source_path=SOURCE_PATH)
 optum.run_optimization()
-
-
