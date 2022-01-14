@@ -82,22 +82,23 @@ class EmbedTags:
                                      params_values=sg_id, params='@SuperGuideID=?')
             birds = utilities.run_sql_return_params()
             for bird in birds:
-                full_path_name = self.audio_path + bird[1] + '.jpg'
+                full_path_name = self.audio_path + bird[0] + '.mp3'
                 prefix = bird[0][:4].strip()
                 name = bird[0][4:].strip()
                 full_name = bird[0]
-                params = (name, prefix, sg_name)
+                params_guides = (name, prefix, sg_name)
+                params_birds = (name, prefix)
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
-                                         params_values=params, sp='sp_get_guide_data',
+                                         params_values=params_guides, sp='sp_get_guide_data',
                                          params='@Bird_Name=?, @Taxanomic_Code=?, @SuperGuideName=?')
                 data_guides = utilities.run_sql_return_params()
                 utilities = SQLUtilities(sp='sp_get_bird_data', logger=self.logger, sql_server_connection=
                                          self.sql_server_connection, params='@Bird_Name=?, @Taxanomic_Code=?',
-                                         params_values=params)
+                                         params_values=params_birds)
                 data_bird = utilities.run_sql_return_params()
                 utilities = SQLUtilities(sp='sp_get_artist', logger=self.logger, sql_server_connection=
                                          self.sql_server_connection, params='@Bird_Name=?, @Taxanomic_Code=?',
-                                         params_values=params)
+                                         params_values=params_birds)
                 artist_data = utilities.run_sql_return_params()
                 lyrics = self.process_description(data_bird, data_guides, artist_data)
                 if artist_data:
@@ -133,14 +134,14 @@ class EmbedTags:
                 with open(cover_file, 'rb') as f:
                     audio.tags.add(APIC(mime='image/jpeg', type=3, desc=u'Cover', data=open(cover_file, 'rb').read()))
                 audio.save(full_path_name)
-            # refresh the google drive files for only this supergudie
+            # refresh the google drive files for this super guide
             gdrive = GoogleDriveSuperGuide(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                            root_guide_dir='Bird Guide Directories',
                                            google_api_scopes=self.google_api_scopes,
                                            google_cred_path=self.google_cred_path, super_guide_id=sg_id,
                                            super_guide_name=sg_name, audio_path=self.audio_path)
             gdrive.refresh()
-            # refresh the playlists for this super guide only
+            # refresh the playlists for this super guide
             play = PlaylistsSuperGuide(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                        drive_root='Playlists Directories', playlist_root=self.playlist_root,
                                        google_api_scopes=self.google_api_scopes,
