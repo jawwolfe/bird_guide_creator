@@ -217,6 +217,9 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                                     scopes=google_api_scopes)
 
     def refresh(self):
+        super_guide_path = self.playlist_root + self.super_guide_name + '\\'
+        if not os.path.exists(super_guide_path):
+            os.mkdir(super_guide_path)
         google_api = GoogleAPIUtilities(self.logger, self.scopes, self.cred_path,
                                         drive_root=self.drive_root)
         service = google_api.authenticate()
@@ -262,18 +265,23 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
             header = '#EXTM3U\n'
             item_begin = '#EXTINF:'
             extension = '.mp3\n'
+            # todo config this or make variable based on super guide?
             folder_phone = 'Birds/'
             # todo get phone root from database
             root_phone = '/storage/emulated/0/'
-            playlist_path = self.playlist_root + guide[0]
+            playlist_path = super_guide_path + guide[0]
             if not os.path.exists(playlist_path):
                 os.mkdir(playlist_path)
+            else:
+                for fil in os.listdir(playlist_path):
+                    os.remove(os.path.join(playlist_path, fil))
             for item in playlists_sps:
                 if item['name'] == '':
                     playlist_name = guide[0] + ' Bird Guide'
                 else:
                     playlist_name = guide[0] + ' ' + item['name']
-                utilities = SQLUtilities(item['sp'], self.logger, sql_server_connection=self.sql_server_connection,
+                str_sp = item['sp']
+                utilities = SQLUtilities(sp=str_sp, logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=guide[1], params='@GuideID=?')
                 birds = utilities.run_sql_return_params()
                 str_file = header
@@ -283,8 +291,9 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                     str_file += bird[0] + ' ' + bird[1] + '\n'
                     str_file += root_phone + folder_phone + bird[0] + ' ' + bird[1] + extension
                 file_path = playlist_path + "\\" + playlist_name + '.m3u'
-                f = open(file_path, "w")
-                f.write(str_file)
+                with open(file_path, 'w') as myfile:
+                    myfile.write(str_file)
+                    myfile.close()
                 google_api.create_media_upload(service=service, media_name=playlist_name + '.m3u',
                                                media_path=playlist_path + '\\', parent_id=new_guide_folder_id,
                                                mimetype='audio/x-mpegurl')
