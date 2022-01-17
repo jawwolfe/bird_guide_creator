@@ -18,6 +18,6 @@ class TaxonomyException(Exception):
     pass
 
 
-class VerifyImageException(Exception):
+class VerifyFileException(Exception):
     """Image name has incorrect name or artist"""
     pass
