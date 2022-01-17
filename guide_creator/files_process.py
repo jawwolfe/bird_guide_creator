@@ -80,7 +80,7 @@ class VerifyFileNames(GuideBase):
             raw_name = file.rsplit(".", 1)[0]
             ext = file.rsplit(".", 1)[1]
             if ext != approved_ext:
-                self.logger.error('Not an approved extension!!')
+                self.logger.error(ext + ' is not an approved extension!!')
                 self.logger.info("End script execution.\n")
                 raise VerifyFileException
             # get artist for images only
