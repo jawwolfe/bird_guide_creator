@@ -2,7 +2,7 @@ from guide_creator.files_process import RenameAudioFiles, VerifyFileNames
 from guide_creator.configs import config
 from globals import initialize_sqlserver, initialize_logger
 
-AUDIO_PATH = config.AUDIO_PATH
+AUDIO_PATH = config.AUDIO_PATH_FINISHED
 SOURCE_PATH = config.UTILITIES_PATH
 LOGGER = initialize_logger('bird_guide')
 

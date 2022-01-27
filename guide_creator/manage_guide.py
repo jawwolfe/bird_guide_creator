@@ -1,4 +1,4 @@
-from guide_creator.utilites import SQLUtilities, BirdUtilities
+from guide_creator.utilites import SQLUtilities
 from openpyxl import load_workbook
 from guide_creator.exceptions import TaxonomyException
 import shutil, datetime, csv, os
@@ -6,7 +6,7 @@ import shutil, datetime, csv, os
 
 class GuideBase:
     def __init__(self, logger, sql_server_connection, guide_name, file_path, audio_path, image_path,
-                 playlist_root, test):
+                 playlist_root, test, root):
         self.logger = logger
         self.sql_server_connection = sql_server_connection
         self.guide_name = guide_name
@@ -17,6 +17,7 @@ class GuideBase:
         self.clements = None
         self.guide_id = None
         self.test = test
+        self.root = root
 
     def get_clements(self):
         return self.clements
@@ -110,11 +111,11 @@ class GuideBase:
 
 class CreateGuide(GuideBase):
     def __init__(self, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
-                 playlist_root, test, exotic_name=None):
+                 playlist_root, test, root, exotic_name=None):
         self.exotic_name = exotic_name
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, guide_name=guide_name,
                            file_path=file_path, audio_path=audio_path, image_path=image_path,
-                           playlist_root=playlist_root, test=test)
+                           playlist_root=playlist_root, test=test, root=root)
 
     def _process_exotic_file(self):
         return_list = []
@@ -288,16 +289,10 @@ class CreateGuide(GuideBase):
                 self.logger.info("Added bird " + add['name'] + ' to the guide: ' + self.guide_name)
 
         if self._check_new_add(add_list):
-            f = open(image_path + guide_des + '.csv', "w")
+            f = open(self.root + guide_des + '.csv', "w")
             for item in new_image_list:
                 f.write('"' + item['name'] + '"' + ',"' + item['scientific'] + '"' + '\n')
             f.close()
-            if self.test:
-                pass
-            else:
-                playlist = BirdUtilities(self.logger, self.sql_server_connection, self.playlist_root,
-                                         guide_id=self.guide_id, guide_name=self.guide_name)
-                playlist.create_playlists()
             self.logger.info("Playlist updated.")
 
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
@@ -311,10 +306,10 @@ class CreateGuide(GuideBase):
 
 class UpdateGuide(GuideBase):
     def __init__(self, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
-                 playlist_root, test):
+                 playlist_root, test, root):
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection,
                            guide_name=guide_name, file_path=file_path, audio_path=audio_path,
-                           image_path=image_path, playlist_root=playlist_root, test=test)
+                           image_path=image_path, playlist_root=playlist_root, test=test, root=root)
 
     def run_update(self):
         self.logger.info('Start script execution to update Bird Guide.')
@@ -392,16 +387,10 @@ class UpdateGuide(GuideBase):
                 self.logger.info("Added bird " + ebird['name'] + ' to the guide: ' + self.guide_name)
 
         if self._check_new_update(ebird_list_clements, all_birds):
-            f = open(image_path + guide_des + '.csv', "w")
+            f = open(self.root + guide_des + '.csv', "w")
             for item in new_image_list:
                 f.write('"' + item['name'] + '"' + ',"' + item['scientific'] + '"' + '\n')
             f.close()
-            playlist = BirdUtilities(self.logger, self.sql_server_connection, self.playlist_root,
-                                     guide_id=self.guide_id, guide_name=self.guide_name)
-            if self.test:
-                pass
-            else:
-                playlist.create_playlists()
             self.logger.info("Playlist updated.")
 
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
