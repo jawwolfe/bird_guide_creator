@@ -2,6 +2,7 @@ import pyodbc, os
 from guide_creator.exceptions import DatabaseConnectionException, DatabaseOperationException
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -88,24 +89,9 @@ class GoogleAPIUtilities(UtilitiesBase):
         UtilitiesBase.__init__(self, logger=logger)
 
     def authenticate(self):
-        creds = None
-        # The file token.json stores the user's access and refresh tokens, and is
-        # created automatically when the authorization flow completes for the first
-        # time.
-        if os.path.exists('token.json'):
-            creds = Credentials.from_authorized_user_file('token.json', self.scopes)
-        # If there are no (valid) credentials available, let the user log in.
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    self.cred_path + 'credentials.json', self.scopes)
-                creds = flow.run_local_server(port=0)
-            # Save the credentials for the next run
-            with open('token.json', 'w') as token:
-                token.write(creds.to_json())
-        return build('drive', 'v3', credentials=creds)
+        credentials = service_account.Credentials.from_service_account_file(self.cred_path + 'credentials.json',
+                                                                            scopes=self.scopes)
+        return build('drive', 'v3', credentials=credentials)
 
     def list_folders_id_by_name(self, service):
         files = service.files().list(q="mimeType='application/vnd.google-apps.folder' and name='" + self.drive_root + "'",
@@ -175,6 +161,8 @@ class GoogleDriveSuperGuide:
         # get root directory id where all the bird directories will be found
         root_id = google_api.list_folders_id_by_name(service=service)
         # find this superguide directory if it exists and get permissions then delete
+        # todo remove the superguide directories manually, make permissions a config dictionary, no longer delete
+        # todo directories in code because the service account doesn't have enough permission and it is more risky
         folders = google_api.list_all_folders_py_parent(service=service, file_id=root_id)
         permissions = None
         file_id = None
