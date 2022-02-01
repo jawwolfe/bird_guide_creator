@@ -140,7 +140,7 @@ class GoogleAPIUtilities(UtilitiesBase):
 
 class GoogleDriveSuperGuide:
     def __init__(self, logger, sql_server_connection, audio_path, google_api_scopes, google_cred_path,
-                 root_guide_dir, super_guide_id, super_guide_name):
+                 root_guide_dir, super_guide_id, super_guide_name, super_guide_perm):
         self.logger = logger
         self.sql_server_connection = sql_server_connection
         self.audio_path = audio_path
@@ -149,6 +149,7 @@ class GoogleDriveSuperGuide:
         self.root_guide_dir = root_guide_dir
         self.super_guide_id = super_guide_id
         self.super_guide_name = super_guide_name
+        self.super_guide_perm = super_guide_perm
 
     def refresh(self):
         google_api = GoogleAPIUtilities(self.logger, self.google_api_scopes, self.google_cred_path,
@@ -156,27 +157,16 @@ class GoogleDriveSuperGuide:
         service = google_api.authenticate()
         # get root directory id where all the bird directories will be found
         root_id = google_api.list_folders_id_by_name(service=service)
-        # find this superguide directory if it exists and get permissions then delete
-        # todo remove the superguide directories manually, make permissions a config dictionary, no longer delete
-        # todo directories in code because the service account doesn't have enough permission and it is more risky
-        folders = google_api.list_all_folders_py_parent(service=service, file_id=root_id)
-        permissions = None
-        file_id = None
-        for folder in folders['files']:
-            if self.super_guide_name == folder['name']:
-                file_id = folder['id']
-                permissions = google_api.list_permissions_by_file_id(service=service, file_id=folder['id'])
-        # then delete directory and all files
-        if file_id:
-            google_api.delete_file_or_directory(service=service, file_id=file_id)
+        # todo check for existence of any folder here if exists abort and info message to remove all directories
         # create the directory
         new_folder_id = google_api.create_file_or_directory(service=service, item_name=self.super_guide_name,
                                                             parent_id=root_id)
         emails = []
-        if permissions:
-            for perm in permissions['permissions']:
-                if perm['role'] != 'owner':
-                    emails.append(perm['emailAddress'])
+        # todo check no match superguide name if not match abort and info to add superguide to config
+        for item in self.super_guide_perm:
+            if item['Superguide'] == self.super_guide_name:
+                for email in item['Emails']:
+                    emails.append(email)
         if emails:
             for email in emails:
                 new_perm_id = google_api.create_permission(service=service, file_id=new_folder_id, email=email)
@@ -192,11 +182,12 @@ class GoogleDriveSuperGuide:
 
 class PlaylistsSuperGuide(GoogleAPIUtilities):
     def __init__(self, logger, sql_server_connection, playlist_root, drive_root, super_guide_id, super_guide_name,
-                 google_api_scopes=None, google_cred_path=None):
+                 super_guide_perm, google_api_scopes=None, google_cred_path=None):
         self.sql_server_connection = sql_server_connection
         self.playlist_root = playlist_root
         self.super_guide_id = super_guide_id
         self.super_guide_name = super_guide_name
+        self.super_guide_perm = super_guide_perm
         GoogleAPIUtilities.__init__(self, logger=logger, drive_root=drive_root, cred_path=google_cred_path,
                                     scopes=google_api_scopes)
 
