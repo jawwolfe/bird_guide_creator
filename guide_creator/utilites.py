@@ -200,6 +200,8 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
         service = google_api.authenticate()
         # get root directory id where all the bird directories will be found
         root_id = google_api.list_folders_id_by_name(service=service)
+        # todo make same change here as above
+
         # find this superguide directory if it exists and get permissions then delete
         folders = google_api.list_all_folders_py_parent(service=service, file_id=root_id)
         permissions = None
@@ -219,6 +221,8 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
             for perm in permissions['permissions']:
                 if perm['role'] != 'owner':
                     emails.append(perm['emailAddress'])
+
+
         if emails:
             for email in emails:
                 new_perm_id = google_api.create_permission(service=service, file_id=new_folder_id, email=email)

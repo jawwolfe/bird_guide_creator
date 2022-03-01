@@ -111,8 +111,9 @@ class GuideBase:
 
 class CreateGuide(GuideBase):
     def __init__(self, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
-                 playlist_root, test, root, exotic_name=None):
+                 playlist_root, test, root, targets_only, exotic_name=None):
         self.exotic_name = exotic_name
+        self.targets_only = targets_only
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, guide_name=guide_name,
                            file_path=file_path, audio_path=audio_path, image_path=image_path,
                            playlist_root=playlist_root, test=test, root=root)
@@ -188,12 +189,17 @@ class CreateGuide(GuideBase):
         # get exotic birds list and match to clements on scientific name, get clements english name and taxon code
         # log birds that don't match and fix these manually
         exotic_birds_clements = None
+        all_birds_clements = None
         if self.exotic_name:
             exotic_birds_clements = self._process_exotic_file()
 
         # if there are any exotic birds then add the diff to the ebird list (no duplicates)
-        if exotic_birds_clements:
-            all_birds_clements = self._combine_ebird_exotic(ebird_list_clements, exotic_birds_clements)
+        # but only do this if we have the boolean to only update Targets to NO
+        if not self.targets_only:
+            if exotic_birds_clements:
+                all_birds_clements = self._combine_ebird_exotic(ebird_list_clements, exotic_birds_clements)
+            else:
+                all_birds_clements = ebird_list_clements
         else:
             all_birds_clements = ebird_list_clements
 
@@ -201,8 +207,6 @@ class CreateGuide(GuideBase):
         if self.exotic_name:
             for target in targets:
                 for bird in all_birds_clements:
-                    if 'Pheasant' in bird['name']:
-                        pass
                     if target['scientific'] == bird['scientific']:
                         bird['target'] = 'TARGET'
 
