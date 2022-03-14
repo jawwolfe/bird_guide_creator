@@ -256,6 +256,7 @@ class CreateGuide(GuideBase):
                 else:
                     add['id'] = bird_id[0][0]
                 self.logger.info("Added new bird to database: " + add['name'])
+                # todo calculate the Residency and Endemic status by looking at adjacent regions guides for this bird
                 params_values = (add['id'], guide_id, 1, 2, target, 5)
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params_values, sp='sp_insert_bird_guide',
