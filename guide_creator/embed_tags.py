@@ -38,10 +38,6 @@ class EmbedTags:
                 return_data += '; wingspan ' + item[2] + ' in. '
             if 'Least' not in item[3]:
                 return_data += '; ' + item[3] + ' '
-            if item[5]:
-                return_data += '\nHABITAT: ' + item[5]
-            if item[7]:
-                return_data += '\nSONG: ' + item[7]
             return_data += '\n'
             for island in data_islands:
                 return_data += island[1] + '; ' + island[2] + '; ' + island[0]
@@ -52,11 +48,15 @@ class EmbedTags:
                     return_data += '; ' + island[5]
                 return_data += '\n'
             return_data = return_data[:-1]
+            if item[5]:
+                return_data += '\nHABITAT: ' + item[5]
+            if item[7]:
+                return_data += '\nSONG: ' + item[7]
             if item[6]:
                 return_data += '\nCONSERVATION: ' + item[6]
             if item[4]:
                 return_data += '\nDESCRIPTION & MISC: ' + item[4]
-            return_data += '\nRANGE: ' + item[10]
+            return_data += '\n\nRANGE: ' + item[10]
             return_data += '\n\nCREDITS:  '
             # these credits are the same no matter which guide
             return_data += '\nData from "Birds of the World", Cornell University.'

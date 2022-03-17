@@ -10,7 +10,7 @@ ROOT_PATH = config.ROOT_PATH
 LOGGER = initialize_logger('bird_guide')
 
 
-guide = CreateGuide(guide_name='Bangkok', exotic_name='', file_path=RAW_FILE_PATH, logger=LOGGER,
+guide = CreateGuide(guide_name='Capital PH', exotic_name='', file_path=RAW_FILE_PATH, logger=LOGGER,
                     sql_server_connection=initialize_sqlserver(), image_path=IMAGE_PATH, audio_path=AUDIO_PATH,
-                    playlist_root=PLAYLIST_PATH, test=1, root=ROOT_PATH, targets_only=1)
+                    playlist_root=PLAYLIST_PATH, test=0, root=ROOT_PATH, targets_only=1)
 guide.run_create()
