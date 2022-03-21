@@ -152,3 +152,30 @@ class EmbedTags:
                                        super_guide_name=sg_name, super_guide_perm=self.super_guide_perm)
             play.refresh()
         self.logger.info("End script execution.")
+
+
+class RefreshPlaylists:
+    def __init__(self, logger, sql_server_connection, playlist_root, google_api_scopes,
+                 google_cred_path, super_guide_perm):
+        self.logger = logger
+        self.sql_server_connection = sql_server_connection
+        self.playlist_root = playlist_root
+        self.google_api_scopes = google_api_scopes
+        self.google_cred_path = google_cred_path
+        self.super_guide_perm = super_guide_perm
+
+    def run_refresh(self):
+        self.logger.info("Start script execution to refresh playlists.")
+        utilities = SQLUtilities('sp_get_active_super_guides', self.logger,
+                                 sql_server_connection=self.sql_server_connection)
+        super_guides = utilities.run_sql_return_no_params()
+        for super_guide in super_guides:
+            sg_name = super_guide[0]
+            sg_id = super_guide[1]
+            play = PlaylistsSuperGuide(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                       drive_root='Playlists Directories', playlist_root=self.playlist_root,
+                                       google_api_scopes=self.google_api_scopes,
+                                       google_cred_path=self.google_cred_path, super_guide_id=sg_id,
+                                       super_guide_name=sg_name, super_guide_perm=self.super_guide_perm)
+            play.refresh()
+        self.logger.info("End script execution.")

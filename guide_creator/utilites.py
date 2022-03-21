@@ -222,7 +222,6 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                 if perm['role'] != 'owner':
                     emails.append(perm['emailAddress'])
 
-
         if emails:
             for email in emails:
                 new_perm_id = google_api.create_permission(service=service, file_id=new_folder_id, email=email)
