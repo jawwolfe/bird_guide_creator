@@ -3,6 +3,9 @@ from guide_creator.exceptions import DatabaseConnectionException, DatabaseOperat
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
+from bs4 import BeautifulSoup
+import pandas as pd
+import requests
 
 
 class UtilitiesBase:
@@ -275,3 +278,64 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                 google_api.create_media_upload(service=service, media_name=playlist_name + '.m3u',
                                                media_path=playlist_path + '\\', parent_id=new_guide_folder_id,
                                                mimetype='audio/x-mpegurl')
+
+
+class EbirdBarchartParseUtility(UtilitiesBase):
+    def __init__(self, logger, ebird_base_url, abundance_matrix, sql_server_connection):
+        self.ebird_base_url = ebird_base_url
+        self.abundance_matrix = abundance_matrix
+        self.sql_server_connection = sql_server_connection
+        self.barchart_suffix = '&yr=all&m='
+        self.table_target = "table class=\"barChart\""
+        self.bird_row_target = "rC_Row"
+        UtilitiesBase.__init__(self, logger=logger)
+
+    def parse_all_regions(self):
+        self.logger.info('Start Execution.')
+        utilities = SQLUtilities(sp='sp_get_ebird_region_codes', logger=self.logger,
+                                 sql_server_connection=self.sql_server_connection,
+                                 params_values='', params='')
+        regions = utilities.run_sql_return_no_params()
+        for region in regions:
+            region_id = region[0]
+            url = self.ebird_base_url + region[1] + self.barchart_suffix
+            website = requests.get(url)
+            soup = BeautifulSoup(website.content,'html5lib')
+            barchart_tables = soup.findAll("table",{"class":"barChart"})
+            # skip first table
+            my_table = barchart_tables[1]
+            rows = my_table.findChildren(['tr'])
+            row_ct = 0
+            for row in rows:
+                # skip first row of month labels
+                td_ct = 0
+                bird_name = None
+                if row_ct > 0:
+                    week_num = 0
+                    skip_non_species = False
+                    tds = row.find_all('td')
+                    for td in tds:
+                        td_ct += 1
+                        # bird name is at first TD cell
+                        if td_ct == 1:
+                            # catch the non species birds as NoneType Attribute errors b/c there are no anchor tags
+                            try:
+                                bird_name = td.find('a').contents[0]
+                            except AttributeError as err:
+                                skip_non_species = True
+                                pass
+                        # 12 months are in rows 4-15
+                        if td_ct >= 4 or td_ct <= 15:
+                            if not skip_non_species:
+                                weeks = td.findAll("div")
+                                for week in weeks:
+                                    week_num += 1
+                                    abundance = None
+                                    raw_abun = str(week)[12:14]
+                                    if raw_abun == 'sp':
+                                        abundance = 0
+                                    if raw_abun[0] == 'b':
+                                        abundance = raw_abun[1]
+                                    print('region: ' + str(region_id) + ', bird: ' + bird_name.strip() + ', week: '
+                                          + str(week_num) + ', abundacne: ' + str(abundance))
+                row_ct += 1
