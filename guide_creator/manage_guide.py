@@ -2,22 +2,19 @@ from guide_creator.utilites import SQLUtilities
 from openpyxl import load_workbook
 from guide_creator.exceptions import TaxonomyException
 import shutil, datetime, csv, os
+from bs4 import BeautifulSoup
+import requests, json
 
 
 class GuideBase:
-    def __init__(self, logger, sql_server_connection, guide_name, file_path, audio_path, image_path,
-                 playlist_root, test, root):
+    def __init__(self, logger, sql_server_connection, guide_name, file_path):
         self.logger = logger
         self.sql_server_connection = sql_server_connection
-        self.guide_name = guide_name
-        self.file_path = file_path
-        self.audio_path = audio_path
-        self.image_path = image_path
-        self.playlist_root = playlist_root
         self.clements = None
         self.guide_id = None
-        self.test = test
-        self.root = root
+        self.all_birds = None
+        self.guide_name = guide_name
+        self.file_path = file_path
 
     def get_clements(self):
         return self.clements
@@ -30,11 +27,18 @@ class GuideBase:
     def set_guide_id(self):
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                  sp='sp_get_guide_id', params=' @GuideName=?', params_values=self.guide_name)
-        a = utilities.run_sql_return_params()
         self.guide_id = utilities.run_sql_return_params()[0][0]
 
     def get_guide_id(self):
         return self.guide_id
+
+    def set_all_birds(self):
+        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                 sp='sp_get_all_birds')
+        self.all_birds = utilities.run_sql_return_no_params()
+
+    def get_all_birds(self):
+        return self.all_birds
 
     def _process_ebird_files(self):
         bird_list = []
@@ -109,14 +113,134 @@ class GuideBase:
         return master_flag
 
 
+class EbirdBarchartParseUtility(GuideBase):
+    def __init__(self, logger, ebird_base_url, abundance_matrix, sql_server_connection, guide_name=None,
+                 file_path=None):
+        self.ebird_base_url = ebird_base_url
+        self.abundance_matrix = abundance_matrix
+        self.sql_server_connection = sql_server_connection
+        self.barchart_suffix = '&yr=all&m='
+        self.table_target = "table class=\"barChart\""
+        self.bird_row_target = "rC_Row"
+        self.guide_name = guide_name
+        self.file_path = file_path
+        GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, guide_name=guide_name,
+                           file_path=file_path)
+
+    def parse_all_regions(self):
+        self.logger.info('Start Execution.')
+        self.set_clements()
+        self.set_all_birds()
+        utilities = SQLUtilities(sp='sp_get_ebird_region_codes', logger=self.logger,
+                                 sql_server_connection=self.sql_server_connection,
+                                 params_values='', params='')
+        regions = utilities.run_sql_return_no_params()
+        for region in regions:
+            region_id = region[0]
+            url = self.ebird_base_url + region[1] + self.barchart_suffix
+            website = requests.get(url)
+            soup = BeautifulSoup(website.content, 'html5lib')
+            barchart_tables = soup.findAll("table", {"class": "barChart"})
+            # Page has 2 tables with the class name skip first table
+            my_table = barchart_tables[1]
+            rows = my_table.findChildren(['tr'])
+            row_ct = 0
+            for row in rows:
+                # skip first row of month labels
+                td_ct = 0
+                bird_name = ''
+                flag_clement_match = False
+                flag_all_birds_match = False
+                code = None
+                bird_id = None
+                scientific = None
+                skip_non_species = False
+                scores = []
+                if row_ct > 0:
+                    week_num = 0
+                    tds = row.find_all('td')
+                    for td in tds:
+                        td_ct += 1
+                        # bird name is at first TD cell
+                        if td_ct == 1:
+                            # catch the non species birds as NoneType Attribute errors b/c there are no anchor tags
+                            try:
+                                bird_name = td.find('a').contents[0]
+                            except AttributeError as err:
+                                skip_non_species = True
+                                continue
+                        # 12 months are in rows 4-15
+                        if td_ct >= 4 or td_ct <= 15:
+                            if not skip_non_species and bird_name:
+                                for taxon in self.get_clements():
+                                    if taxon[1] == bird_name.strip():
+                                        flag_clement_match = True
+                                        code = taxon[4]
+                                        scientific = taxon[2]
+                                if not flag_clement_match:
+                                    msg = 'This bird is not in the Clements Taxonomy by Common Name: ' + bird_name
+                                    self.logger.error(msg)
+                                    raise TaxonomyException(msg)
+                                else:
+                                    # get bird id, if not in Birds table add it
+                                    pass
+                                weeks = td.findAll("div")
+                                for week in weeks:
+                                    week_num += 1
+                                    abundance = None
+                                    # get the 2 char class from the div tag (which has abundance number)
+                                    raw_abun = str(week)[12:14]
+                                    if raw_abun == 'sp':
+                                        abundance = 0
+                                    if raw_abun[0] == 'b':
+                                        # remove the leading b top get number 1-9
+                                        abundance = raw_abun[1]
+                                        if abundance == 'u':
+                                            abundance = 0
+                                    diction = {int(week_num): int(abundance)}
+                                    scores.append(diction)
+                if not skip_non_species and bird_name:
+                    # print(code + '  ' + scientific)
+                    for bird in self.all_birds:
+                        if bird[1] == bird_name.strip():
+                            flag_all_birds_match = True
+                            bird_id = bird[0]
+                    if not flag_all_birds_match:
+                        params = (bird_name.strip(), code, scientific, 1006)
+                        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                                 sp='sp_insert_bird',
+                                                 params=' @BirdName=?,@TaxanomicCode=?,@ScientificName=?,@Artist=?',
+                                                 params_values=params)
+                        bird_id = utilities.run_sql_return_params()[0][0]
+                        self.get_all_birds()
+                    # get bird id with common name
+                    # if not in birds table add it and return id
+                    scores = json.dumps(scores)
+                    # print(str(region_id) + ', ' + str(bird_id) + '  ' + str(scores))
+                    params = (bird_id, region_id, str(scores))
+                    utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                             sp='sp_insert_region_abundance',
+                                             params=' @BirdID=?,@RegionID=?,@WeeksScores=?',
+                                             params_values=params)
+                    utilities.run_sql_params()
+                    pass
+                row_ct += 1
+
+
 class CreateGuide(GuideBase):
     def __init__(self, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
                  playlist_root, test, root, targets_only, exotic_name=None):
         self.exotic_name = exotic_name
         self.targets_only = targets_only
+        self.guide_name = guide_name
+        self.file_path = file_path
+        self.audio_path = audio_path
+        self.image_path = image_path
+        self.playlist_root = playlist_root
+        self.test = test
+        self.root = root
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, guide_name=guide_name,
-                           file_path=file_path, audio_path=audio_path, image_path=image_path,
-                           playlist_root=playlist_root, test=test, root=root)
+                           file_path=file_path)
 
     def _process_exotic_file(self):
         return_list = []
@@ -312,9 +436,14 @@ class CreateGuide(GuideBase):
 class UpdateGuide(GuideBase):
     def __init__(self, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
                  playlist_root, test, root):
-        GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection,
-                           guide_name=guide_name, file_path=file_path, audio_path=audio_path,
-                           image_path=image_path, playlist_root=playlist_root, test=test, root=root)
+        self.guide_name = guide_name
+        self.file_path = file_path
+        self.audio_path = audio_path
+        self.image_path = image_path
+        self.playlist_root = playlist_root
+        self.test = test
+        self.root = root
+        GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection)
 
     def run_update(self):
         self.logger.info('Start script execution to update Bird Guide.')

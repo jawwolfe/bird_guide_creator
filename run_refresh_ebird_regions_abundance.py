@@ -1,4 +1,4 @@
-from guide_creator.utilites import EbirdBarchartParseUtility
+from guide_creator.manage_guide import EbirdBarchartParseUtility
 from guide_creator.configs import config
 from globals import initialize_sqlserver, initialize_logger
 
