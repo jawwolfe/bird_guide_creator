@@ -25,6 +25,11 @@ class EmbedTags:
             return_value = length_string
         return return_value
 
+    def calculate_region_abundance(self, bird_id, guide_id):
+        # return series of 12 strings to represent the abundance of this bird in the guide for each month
+        # for example:   ___rsUCACs__
+        return '___rsUCACs__'
+
     def process_description(self, data_birds, data_islands, artist_data):
         return_data = ''
         for item in data_birds:
@@ -40,12 +45,15 @@ class EmbedTags:
                 return_data += '; ' + item[3] + ' '
             return_data += '\n'
             for island in data_islands:
-                return_data += island[1] + '; ' + island[2] + '; ' + island[0]
+                # todo get region abundance data for this guide and bird print here
+                strAbundance = self.calculate_region_abundance(1, 1)
+                return_data += island[1] + '; ' + island[2]
                 if island[3]:
                     return_data += '; Target'
                 # Endemic
                 if island[5].strip() != 'Not Endemic':
                     return_data += '; ' + island[5]
+                return_data += '; ' + strAbundance
                 return_data += '\n'
             return_data = return_data[:-1]
             if item[5]:
@@ -57,6 +65,7 @@ class EmbedTags:
             if item[4]:
                 return_data += '\nDESCRIPTION & MISC: ' + item[4]
             return_data += '\n\nRANGE: ' + item[10]
+            # todo put all the regions abundance data here for all the guides label them with guide and region name
             return_data += '\n\nCREDITS:  '
             # these credits are the same no matter which guide
             return_data += '\nData from "Birds of the World", Cornell University.'

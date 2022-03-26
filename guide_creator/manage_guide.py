@@ -13,6 +13,7 @@ class GuideBase:
         self.clements = None
         self.guide_id = None
         self.all_birds = None
+        self.regions_birds = None
         self.guide_name = guide_name
         self.file_path = file_path
 
@@ -39,6 +40,14 @@ class GuideBase:
 
     def get_all_birds(self):
         return self.all_birds
+
+    def set_regions_birds(self):
+        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                 sp='sp_get_regions_birds')
+        self.regions_birds = utilities.run_sql_return_no_params()
+
+    def get_regions_birds(self):
+        return self.regions_birds
 
     def _process_ebird_files(self):
         bird_list = []
@@ -131,6 +140,7 @@ class EbirdBarchartParseUtility(GuideBase):
         self.logger.info('Start Execution.')
         self.set_clements()
         self.set_all_birds()
+        self.set_regions_birds()
         utilities = SQLUtilities(sp='sp_get_ebird_region_codes', logger=self.logger,
                                  sql_server_connection=self.sql_server_connection,
                                  params_values='', params='')
@@ -172,18 +182,6 @@ class EbirdBarchartParseUtility(GuideBase):
                         # 12 months are in rows 4-15
                         if td_ct >= 4 or td_ct <= 15:
                             if not skip_non_species and bird_name:
-                                for taxon in self.get_clements():
-                                    if taxon[1] == bird_name.strip():
-                                        flag_clement_match = True
-                                        code = taxon[4]
-                                        scientific = taxon[2]
-                                if not flag_clement_match:
-                                    msg = 'This bird is not in the Clements Taxonomy by Common Name: ' + bird_name
-                                    self.logger.error(msg)
-                                    raise TaxonomyException(msg)
-                                else:
-                                    # get bird id, if not in Birds table add it
-                                    pass
                                 weeks = td.findAll("div")
                                 for week in weeks:
                                     week_num += 1
@@ -200,7 +198,25 @@ class EbirdBarchartParseUtility(GuideBase):
                                     diction = {int(week_num): int(abundance)}
                                     scores.append(diction)
                 if not skip_non_species and bird_name:
-                    # print(code + '  ' + scientific)
+                    scores = json.dumps(scores)
+                    bird_name = bird_name.strip()
+                    # match this bird common name to Clements taxonomy
+                    for taxon in self.get_clements():
+                        if taxon[1] == bird_name.strip():
+                            flag_clement_match = True
+                            code = taxon[4]
+                            scientific = taxon[2]
+                    if not flag_clement_match:
+                        # add this bird to error table and break out of loop and go to next bird
+                        params = (bird_name, region_id, str(scores))
+                        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                                 sp='sp_insert_region_abundance_err',
+                                                 params=' @BirdName=?,@RegionID=?,@WeeksScores=?',
+                                                 params_values=params)
+                        utilities.run_sql_params()
+                        break
+                    # get bird id with common name
+                    # if not in birds table add it and return id
                     for bird in self.all_birds:
                         if bird[1] == bird_name.strip():
                             flag_all_birds_match = True
@@ -212,18 +228,28 @@ class EbirdBarchartParseUtility(GuideBase):
                                                  params=' @BirdName=?,@TaxanomicCode=?,@ScientificName=?,@Artist=?',
                                                  params_values=params)
                         bird_id = utilities.run_sql_return_params()[0][0]
+                        # refresh the all birds so this bird is not added again
                         self.get_all_birds()
-                    # get bird id with common name
-                    # if not in birds table add it and return id
-                    scores = json.dumps(scores)
-                    # print(str(region_id) + ', ' + str(bird_id) + '  ' + str(scores))
-                    params = (bird_id, region_id, str(scores))
-                    utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
-                                             sp='sp_insert_region_abundance',
-                                             params=' @BirdID=?,@RegionID=?,@WeeksScores=?',
-                                             params_values=params)
-                    utilities.run_sql_params()
-                    pass
+                    # todo check to see if this combination of region and bird id is already in the database
+                    # if already in update not not insert
+                    fl_regions_birds = False
+                    for item in self.regions_birds:
+                        if item[0] == region_id and item[1] == bird_id:
+                            fl_regions_birds = True
+                    if not fl_regions_birds:
+                        params = (bird_id, region_id, str(scores))
+                        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                                 sp='sp_insert_region_abundance',
+                                                 params=' @BirdID=?,@RegionID=?,@WeeksScores=?',
+                                                 params_values=params)
+                        utilities.run_sql_params()
+                    else:
+                        params = (bird_id, region_id, str(scores))
+                        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                                 sp='sp_update_region_abundance',
+                                                 params=' @BirdID=?,@RegionID=?,@WeeksScores=?',
+                                                 params_values=params)
+                        utilities.run_sql_params()
                 row_ct += 1
 
 
