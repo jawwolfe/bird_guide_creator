@@ -185,17 +185,17 @@ class EbirdBarchartParseUtility(GuideBase):
                                 weeks = td.findAll("div")
                                 for week in weeks:
                                     week_num += 1
-                                    abundance = None
+                                    abundance = ''
                                     # get the 2 char class from the div tag (which has abundance number)
                                     raw_abun = str(week)[12:14]
                                     if raw_abun == 'sp':
-                                        abundance = 0
+                                        abundance = '0'
                                     if raw_abun[0] == 'b':
                                         # remove the leading b top get number 1-9
                                         abundance = raw_abun[1]
                                         if abundance == 'u':
-                                            abundance = 0
-                                    diction = {int(week_num): int(abundance)}
+                                            abundance = ''
+                                    diction = {str(week_num): str(abundance)}
                                     scores.append(diction)
                 if not skip_non_species and bird_name:
                     scores = json.dumps(scores)

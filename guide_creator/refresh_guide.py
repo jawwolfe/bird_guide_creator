@@ -1,4 +1,4 @@
-import datetime
+import datetime, json
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3NoHeaderError
 from mutagen.id3 import ID3, USLT, TALB, TIT2, APIC, error, TPE1
@@ -7,7 +7,7 @@ from guide_creator.utilites import SQLUtilities, GoogleDriveSuperGuide, Playlist
 
 class EmbedTags:
     def __init__(self, logger, sql_server_connection, audio_path, image_path, playlist_root, google_api_scopes,
-                 google_cred_path, super_guide_perm):
+                 google_cred_path, super_guide_perm, ebird_matrix):
         self.logger = logger
         self.sql_server_connection = sql_server_connection
         self.audio_path = audio_path
@@ -16,6 +16,7 @@ class EmbedTags:
         self.google_api_scopes = google_api_scopes
         self.google_cred_path = google_cred_path
         self.super_guide_perm = super_guide_perm
+        self.ebird_matrix = ebird_matrix
 
     def parse_length(self, length_string):
         values = length_string.split('-')
@@ -27,8 +28,39 @@ class EmbedTags:
 
     def calculate_region_abundance(self, bird_id, guide_id):
         # return series of 12 strings to represent the abundance of this bird in the guide for each month
-        # for example:   ___rsUCACs__
-        return '___rsUCACs__'
+        # for example:   ___rsUCACs__ one for each month: JFMAMJJASOND
+        str_regions_abundance = ''
+        params = (bird_id, guide_id)
+        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                 params_values=params, sp='sp_get_abundance_data',
+                                 params='@BirdID=?, @GuideID=?')
+        regions_abundance = utilities.run_sql_return_params()
+        abundance_raw = []
+        for region in regions_abundance:
+            c = 0
+            big_list = json.loads(region[2])
+            n = 4
+            lists_of_lists = [big_list[i:i + n] for i in range(0, len(big_list), n)]
+            for four_list in lists_of_lists:
+                this_item = []
+                for dict in four_list:
+                    for key, value in dict.items():
+                        this_item.append(value)
+                my_result = max(this_item)
+                if len(abundance_raw) >= 12:
+                    if my_result > abundance_raw[c]:
+                        abundance_raw[c] = my_result
+                else:
+                    abundance_raw.append(my_result)
+                c += 1
+        for myData in abundance_raw:
+            for item in self.ebird_matrix:
+                for key, val in item.items():
+                    if val[0] < int(myData) <= val[1]:
+                        str_regions_abundance = str_regions_abundance + key
+            if myData == '0':
+                str_regions_abundance = str_regions_abundance + '_'
+        return str_regions_abundance
 
     def process_description(self, data_birds, data_islands, artist_data):
         return_data = ''
@@ -45,8 +77,7 @@ class EmbedTags:
                 return_data += '; ' + item[3] + ' '
             return_data += '\n'
             for island in data_islands:
-                # todo get region abundance data for this guide and bird print here
-                strAbundance = self.calculate_region_abundance(1, 1)
+                strAbundance = self.calculate_region_abundance(item[11], island[6])
                 return_data += island[1] + '; ' + island[2]
                 if island[3]:
                     return_data += '; Target'
