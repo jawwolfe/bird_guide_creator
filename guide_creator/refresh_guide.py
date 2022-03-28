@@ -30,6 +30,7 @@ class EmbedTags:
         # return series of 12 strings to represent the abundance of this bird in the guide for each month
         # for example:   ___rsUCACs__ one for each month: JFMAMJJASOND
         str_regions_abundance = ''
+        lst_regions_abundance = []
         params = (bird_id, guide_id)
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                  params_values=params, sp='sp_get_abundance_data',
@@ -56,8 +57,9 @@ class EmbedTags:
         for myData in abundance_raw:
             for item in self.ebird_matrix:
                 for key, val in item.items():
-                    if val[0] < int(myData) <= val[1]:
-                        str_regions_abundance = str_regions_abundance + key
+                    if myData != '':
+                        if val[0] < int(myData) <= val[1]:
+                            str_regions_abundance = str_regions_abundance + key
             if myData == '0':
                 str_regions_abundance = str_regions_abundance + '_'
         return str_regions_abundance
@@ -83,8 +85,8 @@ class EmbedTags:
                     return_data += '; Target'
                 # Endemic
                 if island[5].strip() != 'Not Endemic':
-                    return_data += '; ' + island[5]
-                return_data += '; ' + strAbundance
+                    return_data += '; ' + island[0]
+                return_data += '; ' + strAbundance + '  ' + island[0]
                 return_data += '\n'
             return_data = return_data[:-1]
             if item[5]:

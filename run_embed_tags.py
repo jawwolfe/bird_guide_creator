@@ -19,7 +19,4 @@ embed = EmbedTags(logger=LOGGER, sql_server_connection=initialize_sqlserver(), i
                   audio_path=AUDIO_PATH_FINAL, playlist_root=PLAYLIST_ROOT, google_api_scopes=GOOGLE_API_SCOPES,
                   google_cred_path=GOOGLE_CRED_PATH, super_guide_perm=SUPER_GUIDE_PERMISSIONS,
                   ebird_matrix=EBIRD_MAXTRIX)
-#embed.run_embed()
-# GSF 410  Mindoro Hornbill 1623  mindoro guide 5
-myString = embed.calculate_region_abundance(501, 5)
-print(myString)
+embed.run_embed()
