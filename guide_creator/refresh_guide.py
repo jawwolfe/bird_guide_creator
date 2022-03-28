@@ -35,9 +35,9 @@ class EmbedTags:
                     if myData != '':
                         if val[0] < int(myData) <= val[1]:
                             return_data = return_data + key
-            # has sufficient data but no observations stored as 0, show hyphen
+            # has sufficient data but no observations stored as 0, show hyphen and space
             if myData == '0':
-                return_data= return_data + '-'
+                return_data= return_data + '- '
             # insufficient data, stored as empty string, show asterisk
             if myData == '':
                 return_data = return_data + '*'
@@ -45,7 +45,7 @@ class EmbedTags:
 
     def calculate_region_abundance(self, bird_id, guide_id):
         # return series of 12 strings to represent the abundance of this bird in the guide for each month
-        # for example:   -*-rsUCCs-- one for each month: JFMAMJJASOND, hpyhen = no observations,
+        # for example:   -*-rsUCCs-- one for each month: JFMAMJJASOND, hpyhen + space = no observations,
         # * = insufficient data
         # max of each week in each month, max of each region
         str_regions_abundance = ''
