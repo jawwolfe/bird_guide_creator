@@ -145,6 +145,7 @@ class EbirdBarchartParseUtility(GuideBase):
                                  sql_server_connection=self.sql_server_connection,
                                  params_values='', params='')
         regions = utilities.run_sql_return_no_params()
+        bird_ids_added = []
         for region in regions:
             region_id = region[0]
             url = self.ebird_base_url + region[1] + self.barchart_suffix
@@ -228,6 +229,9 @@ class EbirdBarchartParseUtility(GuideBase):
                                                  params=' @BirdName=?,@TaxanomicCode=?,@ScientificName=?,@Artist=?',
                                                  params_values=params)
                         bird_id = utilities.run_sql_return_params()[0][0]
+                        bird_ids_added.append(bird_id)
+                        self.logger.info("Added a new bird to the Birds table: " + bird_name.strip() +
+                                         ' ,id: ' + str(bird_id))
                         # refresh the all birds so this bird is not added again
                         self.get_all_birds()
                     # todo check to see if this combination of region and bird id is already in the database
@@ -251,6 +255,8 @@ class EbirdBarchartParseUtility(GuideBase):
                                                  params_values=params)
                         utilities.run_sql_params()
                 row_ct += 1
+        # add the new bird added to the file.
+        self.logger.info("End script execution.")
 
 
 class CreateGuide(GuideBase):
@@ -551,7 +557,7 @@ class UpdateGuide(GuideBase):
             for item in new_image_list:
                 f.write('"' + item['name'] + '"' + ',"' + item['scientific'] + '"' + '\n')
             f.close()
-            self.logger.info("Playlist updated.")
+            self.logger.info("New birds added to file.")
 
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                  params_values=guide_id, params='@GuideID=?', sp='sp_update_guide_last_update')
