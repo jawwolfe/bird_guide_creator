@@ -26,9 +26,28 @@ class EmbedTags:
             return_value = length_string
         return return_value
 
+    def translate_regions_abundance(self, raw_data):
+        return_data = ''
+        for myData in raw_data:
+            for item in self.ebird_matrix:
+                for key, val in item.items():
+                    # insufficient data stored as empty string
+                    if myData != '':
+                        if val[0] < int(myData) <= val[1]:
+                            return_data = return_data + key
+            # has sufficient data but no observations stored as 0, show hyphen
+            if myData == '0':
+                return_data= return_data + '-'
+            # insufficient data, stored as empty string, show asterisk
+            if myData == '':
+                return_data = return_data + '*'
+        return return_data
+
     def calculate_region_abundance(self, bird_id, guide_id):
         # return series of 12 strings to represent the abundance of this bird in the guide for each month
-        # for example:   ___rsUCACs__ one for each month: JFMAMJJASOND
+        # for example:   -*-rsUCCs-- one for each month: JFMAMJJASOND, hpyhen = no observations,
+        # * = insufficient data
+        # max of each week in each month, max of each region
         str_regions_abundance = ''
         lst_regions_abundance = []
         params = (bird_id, guide_id)
@@ -39,30 +58,39 @@ class EmbedTags:
         abundance_raw = []
         for region in regions_abundance:
             c = 0
+            abundance_raw_list = []
+            # convert stored json string to json object
             big_list = json.loads(region[2])
+            # split into 12 moth groups of 4 weeks each
             n = 4
             lists_of_lists = [big_list[i:i + n] for i in range(0, len(big_list), n)]
             for four_list in lists_of_lists:
+                # create a list of the four values in each month and find the maximum value
                 this_item = []
                 for dict in four_list:
                     for key, value in dict.items():
                         this_item.append(value)
                 my_result = max(this_item)
+                abundance_raw_list.append(my_result)
+            trans_data = self.translate_regions_abundance(abundance_raw_list)
+            diction = {'region': region[1], 'country': region[0], 'data': trans_data}
+            lst_regions_abundance.append(diction)
+            for four_list in lists_of_lists:
+                # create a list of the four values in each month and find the maximum value
+                this_item = []
+                for dict in four_list:
+                    for key, value in dict.items():
+                        this_item.append(value)
+                my_result = max(this_item)
+                # take the highest value from each set of 12
                 if len(abundance_raw) >= 12:
                     if my_result > abundance_raw[c]:
                         abundance_raw[c] = my_result
                 else:
                     abundance_raw.append(my_result)
                 c += 1
-        for myData in abundance_raw:
-            for item in self.ebird_matrix:
-                for key, val in item.items():
-                    if myData != '':
-                        if val[0] < int(myData) <= val[1]:
-                            str_regions_abundance = str_regions_abundance + key
-            if myData == '0':
-                str_regions_abundance = str_regions_abundance + '_'
-        return str_regions_abundance
+        str_regions_abundance = self.translate_regions_abundance(abundance_raw)
+        return [str_regions_abundance, lst_regions_abundance]
 
     def process_description(self, data_birds, data_islands, artist_data):
         return_data = ''
@@ -79,14 +107,14 @@ class EmbedTags:
                 return_data += '; ' + item[3] + ' '
             return_data += '\n'
             for island in data_islands:
-                strAbundance = self.calculate_region_abundance(item[11], island[6])
                 return_data += island[1] + '; ' + island[2]
                 if island[3]:
                     return_data += '; Target'
                 # Endemic
                 if island[5].strip() != 'Not Endemic':
-                    return_data += '; ' + island[0]
-                return_data += '; ' + strAbundance + '  ' + island[0]
+                    return_data += '; ' + island[5]
+                str_abundance = self.calculate_region_abundance(item[11], island[6])
+                return_data += '; ' + str_abundance[0] + '  ' + island[0]
                 return_data += '\n'
             return_data = return_data[:-1]
             if item[5]:
@@ -98,7 +126,13 @@ class EmbedTags:
             if item[4]:
                 return_data += '\nDESCRIPTION & MISC: ' + item[4]
             return_data += '\n\nRANGE: ' + item[10]
-            # todo put all the regions abundance data here for all the guides label them with guide and region name
+            # put all the region abundance data here for all the guides label them with guide and region name
+            return_data += '\n\nDETAIL ABUNDANCE REGIONS:'
+            for guide in data_islands:
+                return_data += '\n' + guide[1] + '\n'
+                str_abundance = self.calculate_region_abundance(item[11], guide[6])
+                for abun in str_abundance[1]:
+                    return_data += abun['region'] + ', ' + abun['country'] + ': ' + abun['data'] + '\n'
             return_data += '\n\nCREDITS:  '
             # these credits are the same no matter which guide
             return_data += '\nData from "Birds of the World", Cornell University.'
