@@ -122,6 +122,93 @@ class GuideBase:
         return master_flag
 
 
+class ExoticParseUtility(GuideBase):
+    def __init__(self, logger, exotic_base_url, sql_server_connection, guide_name=None,
+                 file_path=None):
+        self.exotic_base_url = exotic_base_url
+        self.sql_server_connection = sql_server_connection
+        self.guide_name = guide_name
+        self.file_path = file_path
+        self.pages = ['/checklist.html', '/target-birds.html', '/special-birds.html']
+        self.char_map = {'/': 2, '\\': 3, '|': 8, '#': 7, '<': 6, '(': 4, '{': 5, '[': 9}
+        GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, guide_name=guide_name,
+                           file_path=file_path)
+
+    def parse_chars(self, first_char):
+        return_value = ''
+        flag = False
+        for key, val in self.char_map.items():
+            if first_char == key:
+                return_value = val
+                flag = True
+        if not flag:
+            return_value = 1
+        return return_value
+
+    def parse_all_guides(self):
+        self.logger.info('Start Execution.')
+        self.set_clements()
+        self.set_all_birds()
+        utilities = SQLUtilities(sp='sp_get_guides', logger=self.logger,
+                                 sql_server_connection=self.sql_server_connection,
+                                 params_values='', params='')
+        guides = utilities.run_sql_return_no_params()
+        c = 0
+        for guide in guides:
+            guide_id = guide[0]
+            # Get the checklist for this guide from exotic website
+            url = self.exotic_base_url + guide[2] + self.pages[0]
+            website = requests.get(url)
+            soup = BeautifulSoup(website.content, 'html5lib')
+            my_tables = soup.findAll("table")
+            rows = my_tables[1].findChildren(['tr'])
+            row_ct = 0
+            for row in rows:
+                if row_ct > 0:
+                    tds = row.find_all('td')
+                    if len(tds) > 1:
+                        bird_id = None
+                        bird_name = None
+                        flag_clement_match = False
+                        flag_birds_match = False
+                        scientific_name = tds[2].find('i').contents[0]
+                        c += 1
+                        for taxon in self.get_clements():
+                            if taxon[2] == scientific_name.strip():
+                                flag_clement_match = True
+                                code = taxon[4]
+                                bird_name = taxon[1]
+                        bird_name = tds[1].contents[0].strip()
+                        first_char = bird_name[0]
+                        res_status_id = self.parse_chars(first_char)
+                        print(guide[1] + ', ' + bird_name + ', ')
+                        if not flag_clement_match:
+                            # add this bird to error table and break out of loop and go to next bird
+                            self.logger.info('Exotic bird name not found in Clements: ' + bird_name)
+                            params = (bird_name, guide_id, res_status_id, scientific_name)
+                            utilities = SQLUtilities(logger=self.logger,
+                                                     sql_server_connection=self.sql_server_connection,
+                                                     sp='sp_insert_exotic_error',
+                                                     params=' @BirdName=?,@GuideID=?,@ResidentStatusID=?, '
+                                                            '@ScientificName=?',
+                                                     params_values=params)
+                            # utilities.run_sql_params()
+                            continue
+                        # get the bird ID with scientific name
+                        for bird in self.all_birds:
+                            if bird[3] == scientific_name.strip():
+                                flag_birds_match = True
+                                bird_id = bird[0]
+                        if flag_birds_match:
+                            # enter into exotic table
+                            pass
+                        else:
+                            # enter into birds table then exotic table
+                            pass
+                row_ct += 1
+        print(str(c))
+
+
 class EbirdBarchartParseUtility(GuideBase):
     def __init__(self, logger, ebird_base_url, abundance_matrix, sql_server_connection, guide_name=None,
                  file_path=None):
@@ -215,7 +302,7 @@ class EbirdBarchartParseUtility(GuideBase):
                                                  params=' @BirdName=?,@RegionID=?,@WeeksScores=?',
                                                  params_values=params)
                         utilities.run_sql_params()
-                        break
+                        continue
                     # get bird id with common name
                     # if not in birds table add it and return id
                     for bird in self.all_birds:
