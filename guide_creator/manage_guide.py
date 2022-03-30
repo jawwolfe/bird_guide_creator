@@ -7,7 +7,7 @@ import requests, json, sys
 
 
 class GuideBase:
-    def __init__(self, logger, sql_server_connection, guide_name, file_path):
+    def __init__(self, logger, sql_server_connection, file_path):
         self.logger = logger
         self.sql_server_connection = sql_server_connection
         self.clements = None
@@ -15,7 +15,6 @@ class GuideBase:
         self.all_birds = None
         self.regions_birds = None
         self.exotic_guides_birds = None
-        self.guide_name = guide_name
         self.file_path = file_path
 
     def get_clements(self):
@@ -131,19 +130,58 @@ class GuideBase:
         return master_flag
 
 
+class CreateImageAudioTodoList(GuideBase):
+    def __init__(self, logger, audio_guide_path, sql_server_connection, todo_path, file_path=None):
+        GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, file_path=file_path)
+        self.audio_guide_path = audio_guide_path
+        self.todo_path = todo_path
+
+    def run(self):
+        self.logger.info("Begin script execution.")
+        utilities = SQLUtilities(sp='sp_get_all_birds', logger=self.logger,
+                                 sql_server_connection=self.sql_server_connection,
+                                 params_values='', params='')
+        birds_database = utilities.run_sql_return_no_params()
+        f = open(self.todo_path + '\\' + 'Images_Needed' + '.csv', "w")
+        # delete all blank images before refreshing
+        for audio in os.listdir(self.todo_path + '\\Audio'):
+            os.remove(self.todo_path + '\\Audio\\' + audio)
+        for bird in birds_database:
+            flag = False
+            for file in os.listdir(self.audio_guide_path):
+                if file.endswith(".mp3"):
+                    prefix = file[0:4].strip()
+                    name = file[5:][:-4]
+                    if bird[1] == name and bird[2] == prefix:
+                        flag = True
+            if not flag:
+                f.write('"' + bird[2] + ' ' + bird[1] + '"' + ',"' + bird[3]+ '"' + '\n')
+                shutil.copy(self.todo_path + '//blank.mp3', self.todo_path + '\\Audio\\' + bird[2] + ' ' + bird[1] + '.mp3')
+        f.close()
+        self.logger.info("End script execution.")
+
+
 class ExoticParseUtility(GuideBase):
-    def __init__(self, logger, exotic_base_url, sql_server_connection, guide_name=None,
-                 file_path=None):
+    def __init__(self, logger, exotic_base_url, sql_server_connection, file_path=None):
         self.exotic_base_url = exotic_base_url
         self.sql_server_connection = sql_server_connection
-        self.guide_name = guide_name
         self.file_path = file_path
         self.targets = None
         self.specialities = None
+        self.errors = None
         self.pages = ['/checklist.html', '/target-birds.html', '/special-birds.html']
         self.char_map = {'/': 2, '\\': 3, '|': 8, '#': 7, '<': 6, '(': 4, '{': 5, '[': 9}
-        GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, guide_name=guide_name,
-                           file_path=file_path)
+        GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, file_path=file_path)
+
+    def get_errors(self):
+        return self.errors
+
+    def set_errors(self):
+        utilities = SQLUtilities(sp='sp_get_exotic_errors', logger=self.logger,
+                                 sql_server_connection=self.sql_server_connection,
+                                 params_values='', params='')
+        errors = utilities.run_sql_return_no_params()
+        self.errors = errors
 
     def get_targets(self, guide_id, scientific):
         return_data = []
@@ -248,6 +286,7 @@ class ExoticParseUtility(GuideBase):
         c = 0
         for guide in guides:
             guide_id = guide[0]
+            self.set_errors()
             # Get the checklist for this guide from exotic website
             url = self.exotic_base_url + guide[2] + self.pages[0]
             website = requests.get(url)
@@ -276,17 +315,23 @@ class ExoticParseUtility(GuideBase):
                         res_status_id = self.parse_chars(first_char)
                         #print(guide[1] + ', ' + bird_name + ', ')
                         if not flag_clement_match:
+                            self.logger.info('Exotic bird name not found in Clements: ' + bird_name_exotic +
+                                             ' checking for duplicate error.')
                             # add this bird to error table and break out of loop and go to next bird
-                            # todo check for duplicates
-                            self.logger.info('Exotic bird name not found in Clements: ' + bird_name_exotic)
-                            params = (bird_name_exotic, guide_id, res_status_id, scientific_name)
-                            utilities = SQLUtilities(logger=self.logger,
-                                                     sql_server_connection=self.sql_server_connection,
-                                                     sp='sp_insert_exotic_error',
-                                                     params=' @BirdName=?,@GuideID=?,@ResidentStatusID=?, '
-                                                            '@ScientificName=?',
-                                                     params_values=params)
-                            # utilities.run_sql_params()
+                            # check for duplicates
+                            fl_error = False
+                            for error in self.get_errors():
+                                if error[1] == scientific_name and error[3] == guide_id:
+                                    fl_error = True
+                            if not fl_error:
+                                params = (bird_name_exotic, guide_id, res_status_id, scientific_name)
+                                utilities = SQLUtilities(logger=self.logger,
+                                                         sql_server_connection=self.sql_server_connection,
+                                                         sp='sp_insert_exotic_error',
+                                                         params=' @BirdName=?,@GuideID=?,@ResidentStatusID=?, '
+                                                                '@ScientificName=?',
+                                                         params_values=params)
+                                utilities.run_sql_params()
                             continue
                         # get the bird ID with scientific name
                         for bird in self.all_birds:
@@ -325,18 +370,15 @@ class ExoticParseUtility(GuideBase):
 
 
 class EbirdBarchartParseUtility(GuideBase):
-    def __init__(self, logger, ebird_base_url, abundance_matrix, sql_server_connection, guide_name=None,
-                 file_path=None):
+    def __init__(self, logger, ebird_base_url, abundance_matrix, sql_server_connection, file_path=None):
         self.ebird_base_url = ebird_base_url
         self.abundance_matrix = abundance_matrix
         self.sql_server_connection = sql_server_connection
         self.barchart_suffix = '&yr=all&m='
         self.table_target = "table class=\"barChart\""
         self.bird_row_target = "rC_Row"
-        self.guide_name = guide_name
         self.file_path = file_path
-        GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, guide_name=guide_name,
-                           file_path=file_path)
+        GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, file_path=file_path)
 
     def parse_all_regions(self):
         self.logger.info('Start Execution.')
@@ -411,7 +453,6 @@ class EbirdBarchartParseUtility(GuideBase):
                             scientific = taxon[2]
                     if not flag_clement_match:
                         # add this bird to error table and break out of loop and go to next bird
-                        # todo check for duplicates
                         params = (bird_name, region_id, str(scores))
                         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                                  sp='sp_insert_region_abundance_err',
@@ -474,8 +515,8 @@ class CreateGuide(GuideBase):
         self.playlist_root = playlist_root
         self.test = test
         self.root = root
-        GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, guide_name=guide_name,
-                           file_path=file_path)
+        self.guide_name = guide_name
+        GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, file_path=file_path)
 
     def _process_exotic_file(self):
         return_list = []
@@ -672,13 +713,13 @@ class UpdateGuide(GuideBase):
     def __init__(self, file_path, logger, sql_server_connection, guide_name, audio_path, image_path,
                  playlist_root, test, root):
         self.guide_name = guide_name
-        self.file_path = file_path
         self.audio_path = audio_path
         self.image_path = image_path
         self.playlist_root = playlist_root
         self.test = test
         self.root = root
-        GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection)
+        self.guide_name = guide_name
+        GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, file_path=file_path)
 
     def run_update(self):
         self.logger.info('Start script execution to update Bird Guide.')
