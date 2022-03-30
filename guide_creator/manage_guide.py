@@ -259,6 +259,7 @@ class ExoticParseUtility(GuideBase):
                 if row_ct > 0:
                     bird_id = None
                     code = ''
+                    bird_name_clements = ''
                     tds = row.find_all('td')
                     if len(tds) > 1:
                         flag_clement_match = False
@@ -269,15 +270,16 @@ class ExoticParseUtility(GuideBase):
                             if taxon[2] == scientific_name.strip():
                                 flag_clement_match = True
                                 code = taxon[4]
-                                bird_name = taxon[1]
-                        bird_name = tds[1].contents[0].strip()
-                        first_char = bird_name[0]
+                                bird_name_clements = taxon[1]
+                        bird_name_exotic = tds[1].contents[0].strip()
+                        first_char = bird_name_exotic[0]
                         res_status_id = self.parse_chars(first_char)
                         #print(guide[1] + ', ' + bird_name + ', ')
                         if not flag_clement_match:
                             # add this bird to error table and break out of loop and go to next bird
-                            self.logger.info('Exotic bird name not found in Clements: ' + bird_name)
-                            params = (bird_name, guide_id, res_status_id, scientific_name)
+                            # todo check for duplicates
+                            self.logger.info('Exotic bird name not found in Clements: ' + bird_name_exotic)
+                            params = (bird_name_exotic, guide_id, res_status_id, scientific_name)
                             utilities = SQLUtilities(logger=self.logger,
                                                      sql_server_connection=self.sql_server_connection,
                                                      sp='sp_insert_exotic_error',
@@ -293,16 +295,16 @@ class ExoticParseUtility(GuideBase):
                                 bird_id = bird[0]
                         if not flag_birds_match:
                             # enter into birds table then exotic table
-                            params = (bird_name.strip(), code, scientific_name, 1006)
+                            params = (bird_name_clements.strip(), code, scientific_name, 1006)
                             utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                                      sp='sp_insert_bird',
                                                      params=' @BirdName=?,@TaxanomicCode=?,@ScientificName=?,@Artist=?',
                                                      params_values=params)
                             bird_id = utilities.run_sql_return_params()[0][0]
-                            self.logger.info("Added a new bird to the Birds table: " + bird_name.strip() +
+                            self.logger.info("Added a new bird to the Birds table: " + bird_name_clements.strip() +
                                              ' ,id: ' + str(bird_id))
                             # refresh the all birds so this bird is not added again
-                            self.get_all_birds()
+                            self.set_all_birds()
                         fl_exotic = False
                         for item in self.exotic_guides_birds:
                             if item[0] == bird_id and item[1] == guide_id:
@@ -409,6 +411,7 @@ class EbirdBarchartParseUtility(GuideBase):
                             scientific = taxon[2]
                     if not flag_clement_match:
                         # add this bird to error table and break out of loop and go to next bird
+                        # todo check for duplicates
                         params = (bird_name, region_id, str(scores))
                         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                                  sp='sp_insert_region_abundance_err',
@@ -433,7 +436,7 @@ class EbirdBarchartParseUtility(GuideBase):
                         self.logger.info("Added a new bird to the Birds table: " + bird_name.strip() +
                                          ' ,id: ' + str(bird_id))
                         # refresh the all birds so this bird is not added again
-                        self.get_all_birds()
+                        self.set_all_birds()
                     # check to see if this combination of region and bird id is already in the database
                     # if already in update not not insert
                     fl_regions_birds = False
