@@ -3,7 +3,7 @@ from openpyxl import load_workbook
 from guide_creator.exceptions import TaxonomyException
 import shutil, datetime, csv, os
 from bs4 import BeautifulSoup
-import requests, json
+import requests, json, sys
 
 
 class GuideBase:
@@ -14,6 +14,7 @@ class GuideBase:
         self.guide_id = None
         self.all_birds = None
         self.regions_birds = None
+        self.exotic_guides_birds = None
         self.guide_name = guide_name
         self.file_path = file_path
 
@@ -45,6 +46,14 @@ class GuideBase:
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                  sp='sp_get_regions_birds')
         self.regions_birds = utilities.run_sql_return_no_params()
+
+    def get_exotic_guides_birds(self):
+        return self.exotic_guides_birds
+
+    def set_exotic_guides_birds(self):
+        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                     sp='sp_get_exotic_guides_birds')
+        self.exotic_guides_birds = utilities.run_sql_return_no_params()
 
     def get_regions_birds(self):
         return self.regions_birds
@@ -129,10 +138,90 @@ class ExoticParseUtility(GuideBase):
         self.sql_server_connection = sql_server_connection
         self.guide_name = guide_name
         self.file_path = file_path
+        self.targets = None
+        self.specialities = None
         self.pages = ['/checklist.html', '/target-birds.html', '/special-birds.html']
         self.char_map = {'/': 2, '\\': 3, '|': 8, '#': 7, '<': 6, '(': 4, '{': 5, '[': 9}
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, guide_name=guide_name,
                            file_path=file_path)
+
+    def get_targets(self, guide_id, scientific):
+        return_data = []
+        flag = False
+        for item in self.targets:
+            if item['scientific'] == scientific and item['guide'] == guide_id:
+                flag = True
+                return_data.append(item['likelihood'])
+                return_data.append(1)
+        if not flag:
+            return_data.append('')
+            return_data.append(0)
+        return return_data
+
+    def get_specialities(self, guide_id, scientific):
+        return_data = []
+        flag = False
+        endemic_map = {'E': 1, 'NE': 2}
+        conservation_map = {'NT': 2, 'V': 3, 'EN': 4, 'CR': 5}
+        for item in self.specialities:
+            if item['scientific'] == scientific and item['guide'] == guide_id:
+                flag = True
+                edem_val = ''
+                cons_val = ''
+                for key, val in endemic_map.items():
+                    if key == item['endemic']:
+                        edem_val = val
+                for key, val in conservation_map.items():
+                    if key == item['conservation']:
+                        cons_val = val
+                return_data.append(edem_val)
+                return_data.append(cons_val)
+        if not flag:
+            return_data.append(5)
+            return_data.append(1)
+        return return_data
+
+    def set_targets(self):
+        all_data = []
+        utilities = SQLUtilities(sp='sp_get_guides', logger=self.logger,
+                                 sql_server_connection=self.sql_server_connection,
+                                 params_values='', params='')
+        guides = utilities.run_sql_return_no_params()
+        for guide in guides:
+            guide_id = guide[0]
+            # Get the checklist for this guide from exotic website
+            url = self.exotic_base_url + guide[2] + self.pages[1]
+            website = requests.get(url)
+            soup = BeautifulSoup(website.content, 'html5lib')
+            my_tables = soup.findAll("table")
+            rows = my_tables[1].findChildren(['tr'])
+            for row in rows:
+                tds = row.find_all('td')
+                diction = {'guide': guide_id, 'scientific': str(tds[2].find('i').contents[0].strip()),
+                           'likelihood': str(tds[3].contents[0].strip())}
+                all_data.append(diction)
+        self.targets = all_data
+
+    def set_specialities(self):
+        all_data = []
+        utilities = SQLUtilities(sp='sp_get_guides', logger=self.logger,
+                                 sql_server_connection=self.sql_server_connection,
+                                 params_values='', params='')
+        guides = utilities.run_sql_return_no_params()
+        for guide in guides:
+            guide_id = guide[0]
+            # Get the checklist for this guide from exotic website
+            url = self.exotic_base_url + guide[2] + self.pages[2]
+            website = requests.get(url)
+            soup = BeautifulSoup(website.content, 'html5lib')
+            my_tables = soup.findAll("table")
+            rows = my_tables[1].findChildren(['tr'])
+            for row in rows:
+                tds = row.find_all('td')
+                diction = {'guide': guide_id, 'scientific': str(tds[2].find('i').contents[0].strip()),
+                           'endemic': str(tds[3].contents[0].strip()), 'conservation': str(tds[4].contents[0].strip())}
+                all_data.append(diction)
+        self.specialities = all_data
 
     def parse_chars(self, first_char):
         return_value = ''
@@ -149,6 +238,9 @@ class ExoticParseUtility(GuideBase):
         self.logger.info('Start Execution.')
         self.set_clements()
         self.set_all_birds()
+        self.set_exotic_guides_birds()
+        self.set_targets()
+        self.set_specialities()
         utilities = SQLUtilities(sp='sp_get_guides', logger=self.logger,
                                  sql_server_connection=self.sql_server_connection,
                                  params_values='', params='')
@@ -165,10 +257,10 @@ class ExoticParseUtility(GuideBase):
             row_ct = 0
             for row in rows:
                 if row_ct > 0:
+                    bird_id = None
+                    code = ''
                     tds = row.find_all('td')
                     if len(tds) > 1:
-                        bird_id = None
-                        bird_name = None
                         flag_clement_match = False
                         flag_birds_match = False
                         scientific_name = tds[2].find('i').contents[0]
@@ -181,7 +273,7 @@ class ExoticParseUtility(GuideBase):
                         bird_name = tds[1].contents[0].strip()
                         first_char = bird_name[0]
                         res_status_id = self.parse_chars(first_char)
-                        print(guide[1] + ', ' + bird_name + ', ')
+                        #print(guide[1] + ', ' + bird_name + ', ')
                         if not flag_clement_match:
                             # add this bird to error table and break out of loop and go to next bird
                             self.logger.info('Exotic bird name not found in Clements: ' + bird_name)
@@ -199,12 +291,33 @@ class ExoticParseUtility(GuideBase):
                             if bird[3] == scientific_name.strip():
                                 flag_birds_match = True
                                 bird_id = bird[0]
-                        if flag_birds_match:
-                            # enter into exotic table
-                            pass
-                        else:
+                        if not flag_birds_match:
                             # enter into birds table then exotic table
-                            pass
+                            params = (bird_name.strip(), code, scientific_name, 1006)
+                            utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                                     sp='sp_insert_bird',
+                                                     params=' @BirdName=?,@TaxanomicCode=?,@ScientificName=?,@Artist=?',
+                                                     params_values=params)
+                            bird_id = utilities.run_sql_return_params()[0][0]
+                            self.logger.info("Added a new bird to the Birds table: " + bird_name.strip() +
+                                             ' ,id: ' + str(bird_id))
+                            # refresh the all birds so this bird is not added again
+                            self.get_all_birds()
+                        fl_exotic = False
+                        for item in self.exotic_guides_birds:
+                            if item[0] == bird_id and item[1] == guide_id:
+                                fl_exotic = True
+                        if not fl_exotic:
+                            target_data = self.get_targets(guide_id, scientific_name)
+                            speciality_data = self.get_specialities(guide_id, scientific_name)
+                            params = (bird_id, guide_id, res_status_id, target_data[1], target_data[0],
+                                      speciality_data[0], speciality_data[1])
+                            utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                                     sp='sp_insert_exotic_checklist',
+                                                     params=' @BirdID=?, @GuideID=?, @ResidentStatusID=?, @Target=?, '
+                                                            '@Likelihood=?, @EndemicStatus=?, @ConservationStatus=?',
+                                                     params_values=params)
+                            utilities.run_sql_params()
                 row_ct += 1
         print(str(c))
 
@@ -321,7 +434,7 @@ class EbirdBarchartParseUtility(GuideBase):
                                          ' ,id: ' + str(bird_id))
                         # refresh the all birds so this bird is not added again
                         self.get_all_birds()
-                    # todo check to see if this combination of region and bird id is already in the database
+                    # check to see if this combination of region and bird id is already in the database
                     # if already in update not not insert
                     fl_regions_birds = False
                     for item in self.regions_birds:
