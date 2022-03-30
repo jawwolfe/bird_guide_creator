@@ -142,10 +142,10 @@ class CreateImageAudioTodoList(GuideBase):
                                  sql_server_connection=self.sql_server_connection,
                                  params_values='', params='')
         birds_database = utilities.run_sql_return_no_params()
-        f = open(self.todo_path + '\\' + 'Images_Needed' + '.csv', "w")
+        f = open(self.todo_path + 'Images_Needed' + '.csv', "w")
         # delete all blank images before refreshing
-        for audio in os.listdir(self.todo_path + '\\Audio'):
-            os.remove(self.todo_path + '\\Audio\\' + audio)
+        for audio in os.listdir(self.todo_path + 'Audio'):
+            os.remove(self.todo_path + 'Audio\\' + audio)
         for bird in birds_database:
             flag = False
             for file in os.listdir(self.audio_guide_path):
@@ -156,7 +156,7 @@ class CreateImageAudioTodoList(GuideBase):
                         flag = True
             if not flag:
                 f.write('"' + bird[2] + ' ' + bird[1] + '"' + ',"' + bird[3]+ '"' + '\n')
-                shutil.copy(self.todo_path + '//blank.mp3', self.todo_path + '\\Audio\\' + bird[2] + ' ' + bird[1] + '.mp3')
+                shutil.copy(self.todo_path + 'blank.mp3', self.todo_path + 'Audio\\' + bird[2] + ' ' + bird[1] + '.mp3')
         f.close()
         self.logger.info("End script execution.")
 
@@ -170,6 +170,7 @@ class ExoticParseUtility(GuideBase):
         self.specialities = None
         self.errors = None
         self.pages = ['/checklist.html', '/target-birds.html', '/special-birds.html']
+        self.exclude = ['Streptopelia bitorquata', 'Aerodramus vanikorensis']
         self.char_map = {'/': 2, '\\': 3, '|': 8, '#': 7, '<': 6, '(': 4, '{': 5, '[': 9}
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection, file_path=file_path)
 
@@ -303,17 +304,27 @@ class ExoticParseUtility(GuideBase):
                     if len(tds) > 1:
                         flag_clement_match = False
                         flag_birds_match = False
-                        scientific_name = tds[2].find('i').contents[0]
+                        scientific_name = tds[2].find('i').contents[0].strip()
                         c += 1
+                        bird_name_exotic_raw = tds[1].contents[0].strip()
+                        if bird_name_exotic_raw[0] in ['/', '\\', '|', '#', '(', '{', '[', '<'] and bird_name_exotic_raw[:-1][-2:] == '**':
+                            bird_name_exotic = bird_name_exotic_raw[1:-1]
+                            bird_name_exotic = bird_name_exotic[:-2]
+                        elif bird_name_exotic_raw[0] in ['/', '\\', '|', '#', '(', '{', '[', '<']:
+                            bird_name_exotic = bird_name_exotic_raw[1:-1]
+                        elif bird_name_exotic_raw[-2:] == '**':
+                            bird_name_exotic = bird_name_exotic_raw[:-2]
+                        else:
+                            bird_name_exotic = bird_name_exotic_raw
                         for taxon in self.get_clements():
-                            if taxon[2] == scientific_name.strip():
-                                flag_clement_match = True
-                                code = taxon[4]
-                                bird_name_clements = taxon[1]
-                        bird_name_exotic = tds[1].contents[0].strip()
+                            # need to match on both Scientific and common name
+                            if taxon[2] == scientific_name.strip() and taxon[1] == bird_name_exotic:
+                                if taxon[2] not in self.exclude:
+                                    flag_clement_match = True
+                                    code = taxon[4]
+                                    bird_name_clements = taxon[1]
                         first_char = bird_name_exotic[0]
                         res_status_id = self.parse_chars(first_char)
-                        #print(guide[1] + ', ' + bird_name + ', ')
                         if not flag_clement_match:
                             self.logger.info('Exotic bird name not found in Clements: ' + bird_name_exotic +
                                              ' checking for duplicate error.')
@@ -366,7 +377,6 @@ class ExoticParseUtility(GuideBase):
                                                      params_values=params)
                             utilities.run_sql_params()
                 row_ct += 1
-        print(str(c))
 
 
 class EbirdBarchartParseUtility(GuideBase):
