@@ -148,6 +148,7 @@ class CreateImageAudioTodoList(GuideBase):
             os.remove(self.todo_path + 'Audio\\' + audio)
         for bird in birds_database:
             flag = False
+            str_rg = ''
             for file in os.listdir(self.audio_guide_path):
                 if file.endswith(".mp3"):
                     prefix = file[0:4].strip()
@@ -155,7 +156,14 @@ class CreateImageAudioTodoList(GuideBase):
                     if bird[1] == name and bird[2] == prefix:
                         flag = True
             if not flag:
-                f.write('"' + bird[2] + ' ' + bird[1] + '"' + ',"' + bird[3]+ '"' + '\n')
+                params = (bird[0])
+                utilities = SQLUtilities(sp='sp_get_guides_regions_new', logger=self.logger,
+                                         sql_server_connection=self.sql_server_connection,
+                                         params_values=params, params=' @BirdID=?')
+                regions_guides = utilities.run_sql_return_params()
+                for rg in regions_guides:
+                    str_rg += rg[0] + ', '
+                f.write('"' + bird[2] + ' ' + bird[1] + '"' + ',"' + bird[3] + '"' + ',"' + str_rg + '"' + '\n')
                 shutil.copy(self.todo_path + 'blank.mp3', self.todo_path + 'Audio\\' + bird[2] + ' ' + bird[1] + '.mp3')
         f.close()
         self.logger.info("End script execution.")
@@ -511,6 +519,10 @@ class EbirdBarchartParseUtility(GuideBase):
                 row_ct += 1
         # add the new bird added to the file.
         self.logger.info("End script execution.")
+
+#class UpdateGuides(GuideBase):
+
+
 
 
 class CreateGuide(GuideBase):

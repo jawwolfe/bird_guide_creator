@@ -3,6 +3,8 @@ from guide_creator.exceptions import DatabaseConnectionException, DatabaseOperat
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
+from bs4 import BeautifulSoup
+import requests
 
 
 class UtilitiesBase:
@@ -275,3 +277,48 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                 google_api.create_media_upload(service=service, media_name=playlist_name + '.m3u',
                                                media_path=playlist_path + '\\', parent_id=new_guide_folder_id,
                                                mimetype='audio/x-mpegurl')
+
+
+class ParseEbirdRegions(UtilitiesBase):
+    def __init__(self, logger, country, ebird_base_url, sql_server_connection):
+        self.country = country
+        self.ebird_base_url = ebird_base_url
+        self.suffix = '/regions?yr=all&m='
+        self.sql_server_connection = sql_server_connection
+        UtilitiesBase.__init__(self, logger=logger)
+
+    def run(self):
+        self.logger.info('Start script execution.')
+        url = self.ebird_base_url + self.country + self.suffix
+        website = requests.get(url)
+        soup = BeautifulSoup(website.content, 'html5lib')
+        table = soup.find("table", {"class": "Table Table--noBorder Table--clearRows"})
+        rows = table.findChildren('tr')
+        row_ct = 0
+        for row in rows:
+            if row_ct > 0:
+                td_ct = 0
+                tds = row.find_all('td')
+                for td in tds:
+                    if td_ct == 1:
+                        link = td.find('a')
+                        region_name = link.contents[0]
+                        href = link.attrs['href']
+                        href_spl = href.split('?')
+                        region_code = href_spl[0][14:]
+                        # if country and region code don't exist in regions table row add it now
+                        utilities = SQLUtilities(sp='sp_get_region', logger=self.logger,
+                                                 sql_server_connection=self.sql_server_connection,
+                                                 params_values=(region_code, self.country),
+                                                 params=' @RegionCode=?, @Country=?')
+                        region = utilities.run_sql_return_params()
+                        if not region:
+                            utilities = SQLUtilities(sp='sp_insert_ebird_region', logger=self.logger,
+                                                     sql_server_connection=self.sql_server_connection,
+                                                     params_values=(self.country, region_code, region_name),
+                                                     params=' @Country=?, @RegionCode=?, @RegionName=?')
+                            utilities.run_sql_params()
+                            self.logger.info("Added a new Ebird Region for " + self.country + ": " + region_name)
+                    td_ct += 1
+            row_ct += 1
+        self.logger.info('End script execution.')
