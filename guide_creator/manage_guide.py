@@ -331,7 +331,7 @@ class ExoticParseUtility(GuideBase):
                                     flag_clement_match = True
                                     code = taxon[4]
                                     bird_name_clements = taxon[1]
-                        first_char = bird_name_exotic[0]
+                        first_char = bird_name_exotic_raw[0]
                         res_status_id = self.parse_chars(first_char)
                         if not flag_clement_match:
                             self.logger.info('Exotic bird name not found in Clements: ' + bird_name_exotic +

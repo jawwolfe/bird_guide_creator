@@ -8,7 +8,7 @@ EXOTIC_ROOT = config.EXOTIC_ROOT
 TODO_PATH = config.TODO_PATH
 AUDIO_GUIDE_PATH = config.AUDIO_PATH_GUIDE
 LOGGER = initialize_logger('bird_guide')
-
+'''
 update = EbirdBarchartParseUtility(logger=LOGGER, sql_server_connection=initialize_sqlserver(),
                                    ebird_base_url=EBIRD_BARCHART_ROOT,
                                    abundance_matrix=EBIRD_ABUNDANCE_DIFFICULTY_MATRIX)
@@ -23,3 +23,4 @@ update.parse_all_guides()
 update = CreateImageAudioTodoList(logger=LOGGER, sql_server_connection=initialize_sqlserver(),
                                   audio_guide_path=AUDIO_GUIDE_PATH, todo_path=TODO_PATH)
 update.run()
+'''
