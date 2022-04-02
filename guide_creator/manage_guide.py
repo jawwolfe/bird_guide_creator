@@ -1,4 +1,4 @@
-from guide_creator.utilites import SQLUtilities
+from guide_creator.utilites import SQLUtilities, ParseGuideAbundance
 from openpyxl import load_workbook
 from guide_creator.exceptions import TaxonomyException
 from collections import Counter
@@ -476,8 +476,8 @@ class EbirdBarchartParseUtility(GuideBase):
 
 
 class UpdateGuides(GuideBase):
-    def __init__(self, logger, sql_server_connection):
-        self.sql_server_connection = sql_server_connection
+    def __init__(self, logger, sql_server_connection, ebird_matrix):
+        self.ebird_matrix = ebird_matrix
         self.map_difficulties = [{'AS': 1, 'US': 2, 'SS': 3, 'OS': 4, 'RS': 5}]
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection)
 
@@ -501,6 +501,28 @@ class UpdateGuides(GuideBase):
                                  params_values=(guide_id), params=' @GuideID=?')
         birds_ebird = utilities.run_sql_return_params()
         return birds_ebird
+
+    def process_abundance(self, abundance):
+        c = 0
+        summer = 0
+        winter1 = 0
+        winter2 = 0
+        for char in abundance:
+            if char == '':
+                char = 0
+            c += 1
+            if c == 1:
+                winter1 = char
+            if c == 7:
+                summer = char
+            elif c == 12:
+                winter2 = char
+        total_winter = int(winter1) + int(winter2)
+        average_winter = total_winter / 2
+        if int(summer) == 0 and average_winter > 1:
+            return 2
+        else:
+            return 1
 
     def run(self):
         self.logger.info("Start script execution.")
@@ -563,9 +585,18 @@ class UpdateGuides(GuideBase):
                         status_list.append(item[0])
                     best_status = self.most_frequent(status_list)
                     if best_status == 0:
-                        # todo cant find this bird's residency from other data so try to get it from ebird abundance data
-                        pass
-                    print(str(guide[1]) + ',  ' + str(ebird[0]) + ',  ' + str(best_status))
+                        # cant find this bird's residency from other data so try to get it from ebird abundance data
+                        parse_abundance = ParseGuideAbundance(self.logger, self.sql_server_connection,
+                                                              self.ebird_matrix)
+                        str_abundance = parse_abundance.calculate_region_abundance(ebird[0], guide[0])
+                        best_status = self.process_abundance(str_abundance[2])
+                        params_values = (ebird[0], guide[0], best_status, 2, 0, 5)
+                        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                                 params_values=params_values, sp='sp_insert_bird_guide',
+                                                 params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,'
+                                                        '@Endemic=?')
+                        utilities.run_sql_params()
+
 
 
 
