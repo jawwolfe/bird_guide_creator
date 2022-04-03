@@ -94,23 +94,32 @@ class CreateImageAudioTodoList(GuideBase):
 
     def run(self):
         self.logger.info("Begin script execution.")
+        self.set_guides()
+        finished_birds = []
+        for file in os.listdir(self.audio_guide_path):
+            if file.endswith(".mp3"):
+                prefix = file[0:4].strip()
+                name = file[5:][:-4]
+                diction = {'name': name, 'prefix': prefix}
+                finished_birds.append(diction)
         utilities = SQLUtilities(sp='sp_get_all_birds', logger=self.logger,
                                  sql_server_connection=self.sql_server_connection,
                                  params_values='', params='')
         birds_database = utilities.run_sql_return_no_params()
-        f = open(self.todo_path + 'Images_Needed' + '.csv', "w")
         # delete all blank images before refreshing
         for audio in os.listdir(self.todo_path + 'Audio'):
             os.remove(self.todo_path + 'Audio\\' + audio)
+        # delete all the list to dos.
+        for todo_file in os.listdir(self.todo_path):
+            if todo_file.endswith('csv'):
+                os.remove(self.todo_path + todo_file)
+        file = open(self.todo_path + 'Images_Needed' + '.csv', "w")
         for bird in birds_database:
             flag = False
             str_rg = ''
-            for file in os.listdir(self.audio_guide_path):
-                if file.endswith(".mp3"):
-                    prefix = file[0:4].strip()
-                    name = file[5:][:-4]
-                    if bird[1] == name and bird[2] == prefix:
-                        flag = True
+            for item in finished_birds:
+                if bird[1] == item['name'] and bird[2] == item['prefix']:
+                    flag = True
             if not flag:
                 params = (bird[0])
                 utilities = SQLUtilities(sp='sp_get_guides_regions_new', logger=self.logger,
@@ -119,9 +128,30 @@ class CreateImageAudioTodoList(GuideBase):
                 regions_guides = utilities.run_sql_return_params()
                 for rg in regions_guides:
                     str_rg += rg[0] + ', '
-                f.write('"' + bird[2] + ' ' + bird[1] + '"' + ',"' + bird[3] + '"' + ',"' + str_rg + '"' + '\n')
+                file.write('"' + bird[2] + ' ' + bird[1] + '"' + ',"' + bird[3] + '"' + ',"' + str_rg + '"' + '\n')
                 shutil.copy(self.todo_path + 'blank.mp3', self.todo_path + 'Audio\\' + bird[2] + ' ' + bird[1] + '.mp3')
-        f.close()
+        file.close()
+        for guide in self.get_guides():
+            utilities = SQLUtilities(sp='sp_get_birds_guide', logger=self.logger,
+                                     sql_server_connection=self.sql_server_connection,
+                                     params_values=guide[0], params=' @GuideID=?')
+            birds_guide = utilities.run_sql_return_params()
+            c = 0
+            add_list = []
+            for bird in birds_guide:
+                flag = False
+                for fin in finished_birds:
+                    if bird[5] == fin['name']:
+                        flag = True
+                if not flag:
+                    diction = {'code': bird[6], 'name': bird[5], 'scientific': bird[7]}
+                    add_list.append(diction)
+                    c += 1
+            if c > 0:
+                f = open(self.todo_path + guide[1] + '.csv', "w")
+                for item in add_list:
+                    f.write('"' + item['code'] + ' ' + item['name'] + '"' + ',"' + item['scientific'] + '"' + '\n')
+                f.close()
         self.logger.info("End script execution.")
 
 
@@ -596,14 +626,6 @@ class UpdateGuides(GuideBase):
                                                  params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,'
                                                         '@Endemic=?')
                         utilities.run_sql_params()
-
-
-
-
-                    # update guide last updated
-                    #utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
-                    #                         params_values=guide_id, params='@GuideID=?', sp='sp_update_guide_last_update')
-
-
-            # todo use Exotic bird data to add conservation status to new birds added with min length = null and or habitat = null
-            # these are all defaulted to least concern
+        # todo use Exotic bird data to add conservation status to new birds added with min length = null and or habitat = null
+        # these are all defaulted to least concern, Used SQl TO DO THIS.
+        self.logger.info("End script execution. ")
