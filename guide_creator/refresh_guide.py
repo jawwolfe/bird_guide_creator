@@ -85,6 +85,7 @@ class EmbedTags:
     def run_embed(self):
         self.logger.info("Start script execution to embed tags.")
         # todo execute code to clean audio files (remove apostrophe) in the finished Directory
+        # is this in case I forget to run process audio before refreshing guides?
         utilities = SQLUtilities('sp_get_active_super_guides', self.logger,
                                  sql_server_connection=self.sql_server_connection)
         super_guides = utilities.run_sql_return_no_params()

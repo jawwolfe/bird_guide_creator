@@ -194,6 +194,7 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                                     scopes=google_api_scopes)
 
     def refresh(self):
+        # todo stop making playists also in the file directory on local PC, Google Drive only
         super_guide_path = self.playlist_root + self.super_guide_name + '\\'
         if not os.path.exists(super_guide_path):
             os.mkdir(super_guide_path)
