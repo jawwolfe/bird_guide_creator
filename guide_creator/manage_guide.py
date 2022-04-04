@@ -1,5 +1,4 @@
 from guide_creator.utilites import SQLUtilities, ParseGuideAbundance
-from openpyxl import load_workbook
 from guide_creator.exceptions import TaxonomyException
 from collections import Counter
 import shutil, datetime, os
@@ -592,7 +591,7 @@ class UpdateGuides(GuideBase):
                                      endemic_id)
                     utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                              params_values=params_values, sp='sp_insert_bird_guide',
-                                             params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,'
+                                             params='@BirdID=?,@GuideID=?,@ResidentID=?,@Target=?,'
                                                     '@Endemic=?')
                     utilities.run_sql_params()
             # refresh birds guides
@@ -623,7 +622,7 @@ class UpdateGuides(GuideBase):
                     params_values = (ebird[0], guide[0], best_status, 2, 0, 5)
                     utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                              params_values=params_values, sp='sp_insert_bird_guide',
-                                             params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,'
+                                             params='@BirdID=?,@GuideID=?,@ResidentID=?,@Target=?,'
                                                     '@Endemic=?')
                     utilities.run_sql_params()
         # todo use Exotic bird data to add conservation status to new birds added with min length = null and or habitat = null
