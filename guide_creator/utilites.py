@@ -257,9 +257,9 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                     os.remove(os.path.join(playlist_path, fil))
             for item in playlists_sps:
                 if item['name'] == '':
-                    playlist_name = guide[0] + ' Bird Guide'
+                    playlist_name = guide[2] + ' Bird Guide'
                 else:
-                    playlist_name = guide[0] + ' ' + item['name']
+                    playlist_name = guide[2] + ' ' + item['name']
                 str_sp = item['sp']
                 utilities = SQLUtilities(sp=str_sp, logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=guide[1], params='@GuideID=?')

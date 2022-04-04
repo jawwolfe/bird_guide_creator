@@ -41,7 +41,7 @@ class EmbedTags:
                 return_data += '; ' + item[3] + ' '
             return_data += '\n'
             for island in data_islands:
-                return_data += island[1] + '; ' + island[2]
+                return_data += island[7] + '; ' + island[2]
                 if island[3]:
                     return_data += '; Target'
                 # Endemic
@@ -54,7 +54,7 @@ class EmbedTags:
                 else:
                     return_data += '; 0 Ebird records'
                 return_data += '\n'
-            return_data = return_data[:-1]
+            return_data = return_data[:-2]
             if item[5]:
                 return_data += '\nHABITAT: ' + item[5]
             if item[7]:
@@ -66,13 +66,18 @@ class EmbedTags:
             return_data += '\n\nRANGE: ' + item[10]
             # put all the region abundance data here for all the guides label them with guide and region name
             return_data += '\n\nDETAIL ABUNDANCE REGIONS:'
+            guide_present = False
             for guide in data_islands:
                 parse_abundance = ParseGuideAbundance(self.logger, self.sql_server_connection, self.ebird_matrix)
                 str_abundance = parse_abundance.calculate_region_abundance(item[11], guide[6])
                 if len(str_abundance[1]) > 1:
+                    guide_present = True
                     return_data += '\n' + guide[1] + '\n'
                     for abun in str_abundance[1]:
                         return_data += abun['region'] + ', ' + abun['country'] + ': ' + abun['data'] + '\n'
+            if not guide_present:
+                # remove the heading for Detail Abundance because no guides has more than one region
+                return_data = return_data[:-29]
             return_data += '\n\nCREDITS:  '
             # these credits are the same no matter which guide
             return_data += '\nData from "Birds of the World", Cornell University.'

@@ -620,12 +620,12 @@ class UpdateGuides(GuideBase):
                                                               self.ebird_matrix)
                         str_abundance = parse_abundance.calculate_region_abundance(ebird[0], guide[0])
                         best_status = self.process_abundance(str_abundance[2])
-                        params_values = (ebird[0], guide[0], best_status, 2, 0, 5)
-                        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
-                                                 params_values=params_values, sp='sp_insert_bird_guide',
-                                                 params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,'
-                                                        '@Endemic=?')
-                        utilities.run_sql_params()
+                    params_values = (ebird[0], guide[0], best_status, 2, 0, 5)
+                    utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                             params_values=params_values, sp='sp_insert_bird_guide',
+                                             params='@BirdID=?,@GuideID=?,@ResidentID=?,@Difficulty=?,@Target=?,'
+                                                    '@Endemic=?')
+                    utilities.run_sql_params()
         # todo use Exotic bird data to add conservation status to new birds added with min length = null and or habitat = null
         # these are all defaulted to least concern, Used SQl TO DO THIS.
         self.logger.info("End script execution. ")
