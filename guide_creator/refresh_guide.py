@@ -52,7 +52,7 @@ class EmbedTags:
                 if str_abundance[0].strip():
                     return_data += '; ' + str_abundance[0]
                 else:
-                    return_data += '; No Ebird sightings.'
+                    return_data += '; 0 Ebird records'
                 return_data += '\n'
             return_data = return_data[:-1]
             if item[5]:
