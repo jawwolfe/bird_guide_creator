@@ -26,6 +26,12 @@ class EmbedTags:
             return_value = length_string
         return return_value
 
+    def get_region_count(self, guide_id):
+        utilities = SQLUtilities('sp_get_count_regions', self.logger, params_values=guide_id,
+                                 sql_server_connection=self.sql_server_connection, params=' @GuideID=?')
+        region_count = utilities.run_sql_return_params()
+        return region_count[0][0]
+
     def process_description(self, data_birds, data_islands, artist_data):
         return_data = ''
         for item in data_birds:
@@ -70,7 +76,11 @@ class EmbedTags:
             for guide in data_islands:
                 parse_abundance = ParseGuideAbundance(self.logger, self.sql_server_connection, self.ebird_matrix)
                 str_abundance = parse_abundance.calculate_region_abundance(item[11], guide[6])
-                if len(str_abundance[1]) > 1:
+                num_regions = self.get_region_count(guide[6])
+                # only show if more than one region
+                # but if there is only one region but the guide has more than one region then show it anyhow
+                # so user knows which region the data comes from
+                if len(str_abundance[1]) > 1 or (len(str_abundance[1]) == 1 and num_regions > 1):
                     guide_present = True
                     return_data += '\n' + guide[1] + '\n'
                     for abun in str_abundance[1]:
