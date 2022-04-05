@@ -107,7 +107,7 @@ class CreateImageAudioTodoList(GuideBase):
         birds_database = utilities.run_sql_return_no_params()
         # delete all blank images before refreshing
         for audio in os.listdir(self.todo_path + 'Audio'):
-            os.remove(self.todo_path + 'Audio\\' + audio)
+            shutil.rmtree(self.todo_path + 'Audio\\' + audio)
         # delete all the list to dos.
         for todo_file in os.listdir(self.todo_path):
             if todo_file.endswith('csv'):
@@ -128,7 +128,6 @@ class CreateImageAudioTodoList(GuideBase):
                 for rg in regions_guides:
                     str_rg += rg[0] + ', '
                 file.write('"' + bird[2] + ' ' + bird[1] + '"' + ',"' + bird[3] + '"' + ',"' + str_rg + '"' + '\n')
-                shutil.copy(self.todo_path + 'blank.mp3', self.todo_path + 'Audio\\' + bird[2] + ' ' + bird[1] + '.mp3')
         file.close()
         for guide in self.get_guides():
             utilities = SQLUtilities(sp='sp_get_birds_guide', logger=self.logger,
@@ -147,8 +146,14 @@ class CreateImageAudioTodoList(GuideBase):
                     add_list.append(diction)
                     c += 1
             if c > 0:
+                # create a directory for audio files
+                os.mkdir(self.todo_path + 'Audio\\' + guide[1])
                 f = open(self.todo_path + guide[1] + '.csv', "w")
+                add_list = sorted(add_list, key=lambda d: d['code'])
                 for item in add_list:
+                    # move audio files into Audio guide dir
+                    shutil.copy(self.todo_path + 'blank.mp3', self.todo_path + 'Audio\\' + guide[1] + '\\'
+                                + item['code'] + ' ' + item['name'] + '.mp3')
                     f.write('"' + item['code'] + ' ' + item['name'] + '"' + ',"' + item['scientific'] + '"' + '\n')
                 f.close()
         self.logger.info("End script execution.")
