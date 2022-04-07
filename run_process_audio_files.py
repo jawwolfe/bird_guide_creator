@@ -12,5 +12,4 @@ rename.run_rename()
 verify = VerifyFileNames(logger=LOGGER, sql_server_connection=initialize_sqlserver(), source_path=SOURCE_PATH,
                          is_image=0)
 verify.run_verification()
-
 rename.run_move()
