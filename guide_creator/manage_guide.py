@@ -59,31 +59,6 @@ class GuideBase:
         guides = utilities.run_sql_return_no_params()
         self.guides = guides
 
-    def _remove_ebird_duplicates(self, mylist):
-        distinct_ebird_data = []
-        for bird in mylist:
-            if bird not in distinct_ebird_data:
-                distinct_ebird_data.append(bird)
-        return distinct_ebird_data
-
-    def _check_new_add(self, mylist):
-        flag = False
-        for item in mylist:
-            if item['add'] == 'ADD':
-                flag = True
-        return flag
-
-    def _check_new_update(self, ebird, database):
-        master_flag = False
-        for bird in ebird:
-            flag = False
-            for name in database:
-                if bird['name'] == name[1]:
-                    flag = True
-            if not flag:
-                master_flag = True
-        return master_flag
-
 
 class CreateImageAudioTodoList(GuideBase):
     def __init__(self, logger, audio_guide_path, sql_server_connection, todo_path):
