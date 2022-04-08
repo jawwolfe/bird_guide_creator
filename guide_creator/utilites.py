@@ -330,7 +330,7 @@ class ParseGuideAbundance(UtilitiesBase):
         self.ebird_matrix = ebird_matrix
         UtilitiesBase.__init__(self, logger=logger)
 
-    def translate_regions_abundance(self, raw_data):
+    def _translate_regions_abundance(self, raw_data):
         return_data = ''
         for myData in raw_data:
             for item in self.ebird_matrix:
@@ -346,6 +346,27 @@ class ParseGuideAbundance(UtilitiesBase):
             if myData == '':
                 return_data = return_data + '*'
         return return_data
+
+    def _get_difficulty_id(self, abundance_string):
+        return_int = 0
+        ct_a = abundance_string.count('A')
+        ct_c = abundance_string.count('C')
+        ct_u = abundance_string.count('U')
+        ct_s = abundance_string.count('s')
+        ct_r = abundance_string.count('r')
+        if ct_a >= 2:
+            return_int = 1
+        elif (ct_c >=2 or ct_a == 1) and ct_a <= 1:
+            return_int = 2
+        elif (ct_u >= 2 or ct_c == 1) and ct_c <=1 and ct_a == 0:
+            return_int = 3
+        elif (ct_s >= 2 or ct_u == 1) and ct_u <=1 and ct_c == 0 and ct_a == 0:
+            return_int = 4
+        elif (ct_r >= 1 or ct_s == 1) and ct_s <=1 and ct_u == 0 and ct_c == 0 and ct_a == 0:
+            return_int = 5
+        else:
+            return 0
+        return return_int
 
     def calculate_region_abundance(self, bird_id, guide_id):
         # return series of 12 strings to represent the abundance of this bird in the guide for each month
@@ -376,8 +397,8 @@ class ParseGuideAbundance(UtilitiesBase):
                         this_item.append(value)
                 my_result = max(this_item)
                 abundance_raw_list.append(my_result)
-            trans_data = self.translate_regions_abundance(abundance_raw_list)
-            diction = {'region': region[1], 'country': region[0], 'data': trans_data}
+            trans_data = self._translate_regions_abundance(abundance_raw_list)
+            diction = {'region': region[1], 'country': region[0], 'data': trans_data, 'region_id': region[3]}
             lst_regions_abundance.append(diction)
             for four_list in lists_of_lists:
                 # create a list of the four values in each month and find the maximum value
@@ -393,5 +414,38 @@ class ParseGuideAbundance(UtilitiesBase):
                 else:
                     abundance_raw.append(my_result)
                 c += 1
-        str_regions_abundance = self.translate_regions_abundance(abundance_raw)
+        str_regions_abundance = self._translate_regions_abundance(abundance_raw)
         return [str_regions_abundance, lst_regions_abundance, abundance_raw]
+
+    def update_abundance_calc(self):
+        self.logger.info("Start script execution.")
+        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                 params_values='', sp='sp_get_all_brids_guides_ids',
+                                 params='')
+        ids = utilities.run_sql_return_no_params()
+        for id in ids:
+            difficulty_id = 0
+            abundance_data = self.calculate_region_abundance(bird_id=id[0], guide_id=id[1])
+            if abundance_data[0]:
+                params = (id[1], id[0], abundance_data[0])
+                utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                         params_values=params, sp='sp_update_guide_abundance_string',
+                                         params=' @GuideID=?, @BirdID=?, @AbundanceString=?')
+                #utilities.run_sql_params()
+                for region in abundance_data[1]:
+                    params = (region['region_id'], id[0], region['data'])
+                    utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                             params_values=params, sp='sp_update_regions_abundance_string',
+                                             params=' @RegionID=?, @BirdID=?, @AbundanceString=?')
+                    #utilities.run_sql_params()
+                # calculate the difficulty ID from abundance data
+                difficulty_id = self._get_difficulty_id(abundance_data[0])
+            else:
+                # no ebird data, make the difficulty ID = 7 (no ebird data)
+                difficulty_id = 7
+            params = (id[1], id[0], difficulty_id)
+            # in stored procedure if difficulty is 6 it stays 6 otherwise it updates it
+            utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                     params_values=params, sp='sp_update_bird_guide_difficulty',
+                                     params=' @GuideID=?, @BirdID=?, @DifficultyID=?')
+            utilities.run_sql_params()

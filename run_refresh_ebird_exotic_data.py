@@ -1,4 +1,5 @@
 from guide_creator.manage_guide import EbirdBarchartParseUtility, ExoticParseUtility
+from guide_creator.utilites import ParseGuideAbundance
 from guide_creator.configs import config
 from globals import initialize_sqlserver, initialize_logger
 
@@ -16,3 +17,7 @@ update.parse_all_regions()
 update = ExoticParseUtility(logger=LOGGER, sql_server_connection=initialize_sqlserver(),
                             exotic_base_url=EXOTIC_ROOT)
 update.parse_all_guides()
+
+update = ParseGuideAbundance(logger=LOGGER, sql_server_connection=initialize_sqlserver(),
+                             ebird_matrix=EBIRD_ABUNDANCE_DIFFICULTY_MATRIX)
+data = update.update_abundance_calc()
