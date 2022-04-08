@@ -57,8 +57,8 @@ class EmbedTags:
                 str_abundance = parse_abundance.calculate_region_abundance(item[11], island[6])
                 if str_abundance[0].strip():
                     return_data += '; ' + str_abundance[0]
-                else:
-                    return_data += '; 0 Ebird records'
+                if island[4] in (6,7):
+                    return_data += '; ' + island[0]
                 return_data += '\n'
             return_data = return_data[:-2]
             if item[5]:
