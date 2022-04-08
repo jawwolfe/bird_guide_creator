@@ -199,18 +199,19 @@ class ExoticParseUtility(GuideBase):
                                  params_values='', params='')
         guides = utilities.run_sql_return_no_params()
         for guide in guides:
-            guide_id = guide[0]
-            # Get the checklist for this guide from exotic website
-            url = self.exotic_base_url + guide[2] + self.pages[1]
-            website = requests.get(url)
-            soup = BeautifulSoup(website.content, 'html5lib')
-            my_tables = soup.findAll("table")
-            rows = my_tables[1].findChildren(['tr'])
-            for row in rows:
-                tds = row.find_all('td')
-                diction = {'guide': guide_id, 'scientific': str(tds[2].find('i').contents[0].strip()),
-                           'likelihood': str(tds[3].contents[0].strip())}
-                all_data.append(diction)
+            if guide[2]:
+                guide_id = guide[0]
+                # Get the checklist for this guide from exotic website
+                url = self.exotic_base_url + guide[2] + self.pages[1]
+                website = requests.get(url)
+                soup = BeautifulSoup(website.content, 'html5lib')
+                my_tables = soup.findAll("table")
+                rows = my_tables[1].findChildren(['tr'])
+                for row in rows:
+                    tds = row.find_all('td')
+                    diction = {'guide': guide_id, 'scientific': str(tds[2].find('i').contents[0].strip()),
+                               'likelihood': str(tds[3].contents[0].strip())}
+                    all_data.append(diction)
         self.targets = all_data
 
     def set_specialities(self):
@@ -220,18 +221,19 @@ class ExoticParseUtility(GuideBase):
                                  params_values='', params='')
         guides = utilities.run_sql_return_no_params()
         for guide in guides:
-            guide_id = guide[0]
-            # Get the checklist for this guide from exotic website
-            url = self.exotic_base_url + guide[2] + self.pages[2]
-            website = requests.get(url)
-            soup = BeautifulSoup(website.content, 'html5lib')
-            my_tables = soup.findAll("table")
-            rows = my_tables[1].findChildren(['tr'])
-            for row in rows:
-                tds = row.find_all('td')
-                diction = {'guide': guide_id, 'scientific': str(tds[2].find('i').contents[0].strip()),
-                           'endemic': str(tds[3].contents[0].strip()), 'conservation': str(tds[4].contents[0].strip())}
-                all_data.append(diction)
+            if guide[2]:
+                guide_id = guide[0]
+                # Get the checklist for this guide from exotic website
+                url = self.exotic_base_url + guide[2] + self.pages[2]
+                website = requests.get(url)
+                soup = BeautifulSoup(website.content, 'html5lib')
+                my_tables = soup.findAll("table")
+                rows = my_tables[1].findChildren(['tr'])
+                for row in rows:
+                    tds = row.find_all('td')
+                    diction = {'guide': guide_id, 'scientific': str(tds[2].find('i').contents[0].strip()),
+                               'endemic': str(tds[3].contents[0].strip()), 'conservation': str(tds[4].contents[0].strip())}
+                    all_data.append(diction)
         self.specialities = all_data
 
     def parse_chars(self, first_char):
@@ -244,6 +246,29 @@ class ExoticParseUtility(GuideBase):
         if not flag:
             return_value = 1
         return return_value
+
+    def parse_exotic_errors(self):
+        self.set_errors()
+        self.set_targets()
+        self.set_specialities()
+        self.set_exotic_guides_birds()
+        for error in self.get_errors():
+            fl_exotic = False
+            for item in self.exotic_guides_birds:
+                if item[0] == error[7] and item[1] == error[3]:
+                    fl_exotic = True
+            if not fl_exotic:
+                target_data = self.get_targets(error[3], error[1])
+                speciality_data = self.get_specialities(error[3], error[1])
+                params = (error[7], error[3], error[4], target_data[1], target_data[0],
+                          speciality_data[0], speciality_data[1])
+                utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                         sp='sp_insert_exotic_checklist',
+                                         params=' @BirdID=?, @GuideID=?, @ResidentStatusID=?, @Target=?, '
+                                                '@Likelihood=?, @EndemicStatus=?, @ConservationStatus=?',
+                                         params_values=params)
+                utilities.run_sql_params()
+                # todo set the entered = 1 to the errors table
 
     def parse_all_guides(self):
         self.logger.info('Start Execution.')
