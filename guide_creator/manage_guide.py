@@ -632,6 +632,4 @@ class UpdateGuides(GuideBase):
                                              params='@BirdID=?,@GuideID=?,@ResidentID=?,@Target=?,'
                                                     '@Endemic=?')
                     utilities.run_sql_params()
-        # todo use Exotic bird data to add conservation status to new birds added with min length = null and or habitat = null
-        # these are all defaulted to least concern, Used SQl TO DO THIS.
         self.logger.info("End script execution. ")
