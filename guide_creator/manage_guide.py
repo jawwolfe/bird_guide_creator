@@ -564,6 +564,8 @@ class UpdateGuides(GuideBase):
         self.set_exotic_guides_birds()
         self.set_all_birds()
         guides = self.get_guides()
+        # todo Handle removing a region(s) from a guide. Now it is only additive. Maybe a merge query then updates for
+        # todo calculating resident status
         for guide in guides:
             # first get all the birds already in this guide
             birds_guide = self.get_birds_in_guide(guide[0])

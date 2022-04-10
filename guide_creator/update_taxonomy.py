@@ -1,4 +1,5 @@
-import string
+import string, csv
+from openpyxl import load_workbook
 from guide_creator.utilites import SQLUtilities
 
 
@@ -66,7 +67,7 @@ class UpdateTaxonomy:
         utilities = SQLUtilities(sp='sp_get_clements_species_subspecies', logger=self.logger,
                                  sql_server_connection=self.sql_server_connection)
         cl_species_subspecies = utilities.run_sql_return_no_params()
-        # generats the unique sortable alpha numeric code list for all bird families in Clements taxonomy
+        # generates the unique sortable alpha numeric code list for all bird families in Clements taxonomy
         add_list = self.generate_code(cl_species)
         # get all the subspecies so collect the scientific name and range
         for item in cl_species_subspecies:
@@ -100,3 +101,50 @@ class UpdateTaxonomy:
                                      sql_server_connection=self.sql_server_connection)
             utilities.run_sql_params()
         self.logger.info("End script execution.")
+
+
+class UpdateBLIConservation:
+    def __init__(self, logger, sql_server_connection):
+        self.logger = logger
+        self.sql_server_connection = sql_server_connection
+
+    def match_code(self, code):
+        return_value = ''
+        value_map = {'LC': 1, 'VU': 3, 'NT': 2, 'CR': 5, 'DD': 6, 'EN': 4, 'EW': 7, 'EX': 0, 'CR (PE)': 5}
+        for k, v in value_map.items():
+            if code == k:
+                return_value = v
+        return return_value
+
+    def run(self):
+        conservation_data = []
+        with open('C:\\Users\\Andrew\\PycharmProjects\\bird_guide_creator\\data\\BLI_v6.csv') as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            line_count = 0
+            for row in csv_reader:
+                line_count += 1
+                if line_count > 0:
+                    diction = {'english': row[2], 'scientific': row[3], 'code': row[4]}
+                    conservation_data.append(diction)
+        utilities = SQLUtilities(sp='sp_get_all_birds', logger=self.logger,
+                                 sql_server_connection=self.sql_server_connection)
+        all_birds = utilities.run_sql_return_no_params()
+        for bird in all_birds:
+            flag = False
+            for taxon in conservation_data:
+                if bird[3].strip() == taxon['scientific'].strip():
+                    flag = True
+                    my_code = self.match_code(taxon['code'])
+                    utilities = SQLUtilities(sp='sp_update_conservation', logger=self.logger,
+                                             sql_server_connection=self.sql_server_connection,
+                                             params_values=(bird[0], my_code), params=' @BirdID=?, @ConservationID=?')
+                    utilities.run_sql_params()
+            if not flag:
+                for item in conservation_data:
+                    if item['english'] == bird[1]:
+                        my_code = self.match_code(item['code'])
+                        utilities = SQLUtilities(sp='sp_update_conservation', logger=self.logger,
+                                                 sql_server_connection=self.sql_server_connection,
+                                                 params_values=(bird[0], my_code),
+                                                 params=' @BirdID=?, @ConservationID=?')
+                        utilities.run_sql_params()
