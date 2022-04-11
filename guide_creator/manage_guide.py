@@ -209,8 +209,7 @@ class ExoticParseUtility(GuideBase):
                 rows = my_tables[1].findChildren(['tr'])
                 for row in rows:
                     tds = row.find_all('td')
-                    diction = {'guide': guide_id, 'scientific': str(tds[2].find('i').contents[0].strip()),
-                               'likelihood': str(tds[3].contents[0].strip())}
+                    diction = {'guide': guide_id, 'scientific': str(tds[2].find('i').contents[0].strip())}
                     all_data.append(diction)
         self.targets = all_data
 
@@ -260,15 +259,17 @@ class ExoticParseUtility(GuideBase):
             if not fl_exotic:
                 target_data = self.get_targets(error[3], error[1])
                 speciality_data = self.get_specialities(error[3], error[1])
-                params = (error[7], error[3], error[4], target_data[1], target_data[0],
+                params = (error[7], error[3], error[4], target_data[1],
                           speciality_data[0], speciality_data[1])
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          sp='sp_insert_exotic_checklist',
                                          params=' @BirdID=?, @GuideID=?, @ResidentStatusID=?, @Target=?, '
-                                                '@Likelihood=?, @EndemicStatus=?, @ConservationStatus=?',
-                                         params_values=params)
+                                                '@EndemicStatus=?, @ConservationStatus=?', params_values=params)
                 utilities.run_sql_params()
-                # todo set the entered = 1 to the errors table
+                utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                         sp='sp_update_fix_exotic_error',
+                                         params=' @ID=?', params_values=error[0])
+                utilities.run_sql_params()
 
     def parse_all_guides(self):
         self.logger.info('Start Execution.')
@@ -364,12 +365,12 @@ class ExoticParseUtility(GuideBase):
                             if not fl_exotic:
                                 target_data = self.get_targets(guide_id, scientific_name)
                                 speciality_data = self.get_specialities(guide_id, scientific_name)
-                                params = (bird_id, guide_id, res_status_id, target_data[1], target_data[0],
+                                params = (bird_id, guide_id, res_status_id, target_data[1],
                                           speciality_data[0], speciality_data[1])
                                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                                          sp='sp_insert_exotic_checklist',
                                                          params=' @BirdID=?, @GuideID=?, @ResidentStatusID=?, @Target=?, '
-                                                                '@Likelihood=?, @EndemicStatus=?, @ConservationStatus=?',
+                                                                '@EndemicStatus=?, @ConservationStatus=?',
                                                          params_values=params)
                                 utilities.run_sql_params()
                     row_ct += 1
@@ -512,7 +513,6 @@ class EbirdBarchartParseUtility(GuideBase):
 class UpdateGuides(GuideBase):
     def __init__(self, logger, sql_server_connection, ebird_matrix):
         self.ebird_matrix = ebird_matrix
-        self.map_difficulties = [{'AS': 1, 'US': 2, 'SS': 3, 'OS': 4, 'RS': 5}]
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection)
 
     def most_frequent(self, List):
@@ -564,8 +564,9 @@ class UpdateGuides(GuideBase):
         self.set_exotic_guides_birds()
         self.set_all_birds()
         guides = self.get_guides()
-        # todo Handle removing a region(s) from a guide. Now it is only additive. Maybe a merge query then updates for
-        # todo calculating resident status
+        # todo new plan:  1) run sp_merge_birds_guides_raw_data; 2) In code use these 3 steps to update Resident Status
+        # todo 1) If in Exotic Checklists, use that ID; 2) Otherwise use sp_get_resident_by_world_region; 
+        # todo 3) If not other data, then use parse_abundance.calculate_region_abundance from abundance data
         for guide in guides:
             # first get all the birds already in this guide
             birds_guide = self.get_birds_in_guide(guide[0])
@@ -574,8 +575,8 @@ class UpdateGuides(GuideBase):
             exotic_guide = []
             for item in self.exotic_guides_birds:
                 if item[1] == guide[0]:
-                    diction = {'bird_id': item[0], 'resident': item[2], 'target': item[3], 'endemic': item[5],
-                               'conservation': item[6], 'likelihood': item[4]}
+                    diction = {'bird_id': item[0], 'resident': item[2], 'target': item[3], 'endemic': item[4],
+                               'conservation': item[5]}
                     exotic_guide.append(diction)
             for bird_ex in exotic_guide:
                 flag = False
@@ -584,17 +585,10 @@ class UpdateGuides(GuideBase):
                     if bird_ex['bird_id'] == bird[0]:
                         flag = True
                 if not flag:
-                    if bird_ex['likelihood'].strip():
-                        for item in self.map_difficulties:
-                            for k,v in item.items():
-                                if k == bird_ex['likelihood'].strip():
-                                    difficulty = v
-                    if bird_ex['likelihood'].strip() == '' or bird_ex['likelihood'] == None:
-                        difficulty = 2
                     endemic_id = bird_ex['endemic']
                     if bird_ex['endemic'] == 0:
                         endemic_id = 5
-                    params_values = (bird_ex['bird_id'], guide[0], bird_ex['resident'], difficulty, bird_ex['target'],
+                    params_values = (bird_ex['bird_id'], guide[0], bird_ex['resident'], bird_ex['target'],
                                      endemic_id)
                     utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                              params_values=params_values, sp='sp_insert_bird_guide',
@@ -621,7 +615,7 @@ class UpdateGuides(GuideBase):
                         status_list.append(item[0])
                     best_status = self.most_frequent(status_list)
                     if best_status == 0:
-                        # cant find this bird's residency from other data so try to get it from ebird abundance data
+                        # can't find this bird's residency from other data so try to get it from ebird abundance data
                         parse_abundance = ParseGuideAbundance(self.logger, self.sql_server_connection,
                                                               self.ebird_matrix)
                         str_abundance = parse_abundance.calculate_region_abundance(ebird[0], guide[0])

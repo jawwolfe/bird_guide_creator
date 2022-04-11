@@ -420,7 +420,7 @@ class ParseGuideAbundance(UtilitiesBase):
     def update_abundance_calc(self):
         self.logger.info("Start script execution.")
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
-                                 params_values='', sp='sp_get_all_brids_guides_ids',
+                                 params_values='', sp='sp_get_all_birds_guides_ids',
                                  params='')
         ids = utilities.run_sql_return_no_params()
         for id in ids:
