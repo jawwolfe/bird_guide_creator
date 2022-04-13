@@ -1,5 +1,5 @@
 from guide_creator.utilites import SQLUtilities, ParseGuideAbundance
-from guide_creator.exceptions import TaxonomyException
+from guide_creator.exceptions import TaxonomyException, DatabaseOperationException
 from collections import Counter
 import shutil, datetime, os, sys
 from bs4 import BeautifulSoup
@@ -246,11 +246,15 @@ class ExoticParseUtility(GuideBase):
             return_value = 1
         return return_value
 
-    def parse_exotic_errors(self):
+    def parse_all_errors(self):
         self.set_errors()
         self.set_targets()
         self.set_specialities()
         self.set_exotic_guides_birds()
+        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                 sp='manual_fix_abundance_errors',
+                                 params='', params_values='')
+        utilities.run_sql()
         for error in self.get_errors():
             # only process if this has not been entered before (entered = 0)
             if error[5] == 0:
@@ -571,7 +575,10 @@ class UpdateGuides(GuideBase):
             utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                      params_values=guide[0], sp='sp_merge_birds_guides_raw_data',
                                      params=' @GuideID=?')
-            utilities.run_sql_params()
+            try:
+                utilities.run_sql_params()
+            except DatabaseOperationException as err:
+                self.logger.error(str(err) + ' guide: ' + str(guide))
             new_list = []
             birds_guides = self.get_birds_in_guide(guide[0])
             # get new birds just added in above merge query
@@ -605,4 +612,4 @@ class UpdateGuides(GuideBase):
                                              params_values=params_values, sp='sp_update_bird_guide_residency',
                                              params='@BirdID=?,@GuideID=?,@ResidentID=?')
                     utilities.run_sql_params()
-            self.logger.info("End script execution. ")
+        self.logger.info("End script execution. ")

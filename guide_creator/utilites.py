@@ -71,6 +71,19 @@ class SQLUtilities(UtilitiesBase):
         my_params = self.params_values
         try:
             cursor.execute(sql, my_params)
+        except (pyodbc.IntegrityError, pyodbc.ProgrammingError) as err:
+            msg = "An error occurred executing a sql server command, message: " + str(err)
+            raise DatabaseOperationException(msg)
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+    def run_sql(self):
+        conn = self.connect_sqlserver(self.sql_server_connection)
+        cursor = conn.cursor()
+        sql = "EXEC " + self.sp + ';'
+        try:
+            cursor.execute(sql)
         except pyodbc.ProgrammingError as err:
             msg = "An error occurred executing a sql server command"
             raise DatabaseOperationException(msg)

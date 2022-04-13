@@ -1,21 +1,25 @@
-BEGIN HERE TO CERATE A BRAND NEW GUIDE
+BEGIN HERE TO CREATE A NEW GUIDE
 1) Add the ebird regions that your guide will contain. Manually or use run_get_eibrd_regions.py
-2) Using Access Databse, add your guide to the guides table selecting the regions. If your guide has an Exotic Birding areas that matches your region add that name to the guides table.
+2) Using Access Database, add your guide to the guides table selecting the regions. If your guide has an Exotic Birding area that matches your guide add that name to the guides table.
 
 BEGIN HERE TO ONLY REFRESH A GUIDE WITH NEW EBIRD DATA...
-3) run_refresh_ebird_exotic_data.py  (pulls all the data from ebird website and the Exotic website if applicable.)
-4) run_update_guides.py (adds the data from ebird and exotic raw data to the birds guides table)
-5) run_update_todos.py (creates lists of the birds new to the database that will need images and audio files)
+3) run_refresh_ebird_exotic_data.py (pulls all the data from ebird (and exotic website if applicable).
+4) check error tables for Exotic and Ebird, fix all taxonomic errors before proceeding. 
+5) run_process_exotic_errors.py if necessary
+6) run_update_guides.py (adds the data from ebird and exotic raw data to the birds guides table)
+7) run_refresh_ebird_abundance.py (creates abundance strings in BirdsGuides and BirdsRegionsAbdundance using raw abundance data and updates Difficulty ID)
+8) run_update_todos.py (creates lists of the birds new to the database that will need images and audio files)
 
-ONLY COMPLETE 6-10 IF YOUR REFRESH RESULTS IN NEW BIRDS W/O IMAGES OR AUDIO
+ONLY COMPLETE 6-10 IF PREVIOUS STEPS RESULT IN NEW BIRDS W/O IMAGES OR AUDIO
 6) Create all the images and put finished raw images into local Sources directory. Name them per the csv file using cut/paste.  Append the Artist after an underscore. 
 7) Create all the audio files using the blank templates with the bird name. Put them into the Utilities directory.
 8) run_process_audio_files.py (fixes apostrophes from drive download and checks names moves them to Audio Finished directory)
 9) run_process_photo_files (optimized the images and moves them to Optimized directory)
 10) Using the Access database and Birds of the World website, for the new birds, add the description data (habitat, conservation status,etc...)
 
+CONTINUE HERE FOR REFRESH
 11) Using the Access database review all the birds in the guide to ensure accurate guide data (residency, endemic, target)
-SUPER GUIDE SETTINGS:  WHICH SUPERGUIES TO REFRESH TAGS AND UPLOAD
+SUPER GUIDE SETTINGS:  WHICH SUPERGUIES TO REFRESH TAGS AND UPLOAD, SET GUIDES IN SUPERGUIDES
 GUIDE REGIONS SETTINGS:  WHICH GUIDES WILL SHOW UP IN THE DESCRIPTION
 12) run_embed_tags (add all the meta data to the audio file and uploads files to drive per the super guide settings.)
 13) Run the DriveSync application on your phone to refresh you local directory. 
