@@ -293,12 +293,28 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
 
 
 class ParseEbirdRegions(UtilitiesBase):
-    def __init__(self, logger, country, ebird_base_url, sql_server_connection):
+    def __init__(self, logger, country, ebird_base_url, sql_server_connection, counties):
         self.country = country
+        self.counties = counties
         self.ebird_base_url = ebird_base_url
         self.suffix = '/regions?yr=all&m='
         self.sql_server_connection = sql_server_connection
         UtilitiesBase.__init__(self, logger=logger)
+
+    def _enter_region(self, item_name, item_code):
+        # if country and region code don't exist in regions table row add it now
+        utilities = SQLUtilities(sp='sp_get_region', logger=self.logger,
+                                 sql_server_connection=self.sql_server_connection,
+                                 params_values=(item_code, self.country),
+                                 params=' @RegionCode=?, @Country=?')
+        region = utilities.run_sql_return_params()
+        if not region:
+            utilities = SQLUtilities(sp='sp_insert_ebird_region', logger=self.logger,
+                                     sql_server_connection=self.sql_server_connection,
+                                     params_values=(self.country, item_code, item_name),
+                                     params=' @Country=?, @RegionCode=?, @RegionName=?')
+            utilities.run_sql_params()
+            self.logger.info("Added a new Ebird Region for " + self.country + ": " + item_name)
 
     def run(self):
         self.logger.info('Start script execution.')
@@ -307,6 +323,7 @@ class ParseEbirdRegions(UtilitiesBase):
         soup = BeautifulSoup(website.content, 'html5lib')
         table = soup.find("table", {"class": "Table Table--noBorder Table--clearRows"})
         rows = table.findChildren('tr')
+        c = 0
         row_ct = 0
         for row in rows:
             if row_ct > 0:
@@ -319,19 +336,30 @@ class ParseEbirdRegions(UtilitiesBase):
                         href = link.attrs['href']
                         href_spl = href.split('?')
                         region_code = href_spl[0][14:]
-                        # if country and region code don't exist in regions table row add it now
-                        utilities = SQLUtilities(sp='sp_get_region', logger=self.logger,
-                                                 sql_server_connection=self.sql_server_connection,
-                                                 params_values=(region_code, self.country),
-                                                 params=' @RegionCode=?, @Country=?')
-                        region = utilities.run_sql_return_params()
-                        if not region:
-                            utilities = SQLUtilities(sp='sp_insert_ebird_region', logger=self.logger,
-                                                     sql_server_connection=self.sql_server_connection,
-                                                     params_values=(self.country, region_code, region_name),
-                                                     params=' @Country=?, @RegionCode=?, @RegionName=?')
-                            utilities.run_sql_params()
-                            self.logger.info("Added a new Ebird Region for " + self.country + ": " + region_name)
+                        if self.counties:
+                            url = self.ebird_base_url + region_code + self.suffix
+                            website = requests.get(url)
+                            soup = BeautifulSoup(website.content, 'html5lib')
+                            table = soup.find("table", {"class": "Table Table--noBorder Table--clearRows"})
+                            rows = table.findChildren('tr')
+                            ct_row_ct = 0
+                            for row in rows:
+                                if ct_row_ct > 0:
+                                    ct_td_ct = 0
+                                    tds = row.find_all('td')
+                                    for td in tds:
+                                        if ct_td_ct == 1:
+                                            c += 1
+                                            link = td.find('a')
+                                            county_name = link.contents[0]
+                                            href = link.attrs['href']
+                                            href_spl = href.split('?')
+                                            county_code = href_spl[0][14:]
+                                            self._enter_region(county_name, county_code)
+                                        ct_td_ct += 1
+                                ct_row_ct += 1
+                        else:
+                            self._enter_region(region_name, region_code)
                     td_ct += 1
             row_ct += 1
         self.logger.info('End script execution.')
@@ -361,7 +389,6 @@ class ParseGuideAbundance(UtilitiesBase):
         return return_data
 
     def _get_difficulty_id(self, abundance_string):
-        return_int = 0
         ct_a = abundance_string.count('A')
         ct_c = abundance_string.count('C')
         ct_u = abundance_string.count('U')
@@ -437,20 +464,19 @@ class ParseGuideAbundance(UtilitiesBase):
                                  params='')
         ids = utilities.run_sql_return_no_params()
         for id in ids:
-            difficulty_id = 0
             abundance_data = self.calculate_region_abundance(bird_id=id[0], guide_id=id[1])
             if abundance_data[0]:
                 params = (id[1], id[0], abundance_data[0])
                 utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                          params_values=params, sp='sp_update_guide_abundance_string',
                                          params=' @GuideID=?, @BirdID=?, @AbundanceString=?')
-                #utilities.run_sql_params()
+                utilities.run_sql_params()
                 for region in abundance_data[1]:
                     params = (region['region_id'], id[0], region['data'])
                     utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                              params_values=params, sp='sp_update_regions_abundance_string',
                                              params=' @RegionID=?, @BirdID=?, @AbundanceString=?')
-                    #utilities.run_sql_params()
+                    utilities.run_sql_params()
                 # calculate the difficulty ID from abundance data
                 difficulty_id = self._get_difficulty_id(abundance_data[0])
             else:
