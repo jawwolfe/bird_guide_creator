@@ -248,13 +248,21 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
         for guide in guides:
             new_guide_folder_id = google_api.create_file_or_directory(service=service, item_name=guide[0],
                                                                       parent_id=new_folder_id)
-            playlists_sps = [{'sp': 'sp_get_in_guide', 'name': ''},
-                             {'sp': 'sp_get_winter_in_guide', 'name': 'Winter'},
-                             {'sp': 'sp_get_breeding_in_guide', 'name': 'Breeding Season'},
-                             {'sp': 'sp_get_common_by_guide', 'name': 'Common Birds'},
-                             {'sp': 'sp_get_common_uncommon_doves_by_guide', 'name': 'Common-Uncommon Doves and Cuckoos'},
-                             {'sp': 'sp_get_common_passerines_by_guide', 'name': 'Common Passerines'},
-                             {'sp': 'sp_get_common_scarce_passerines_by_guide', 'name': 'Common-Scarce Passerines'}]
+            playlists_sps = [{'sp': 'sp_get_pl_breeding', 'name': 'Breeding'},
+                             {'sp': 'sp_get_pl_common', 'name': 'Common'},
+                             {'sp': 'sp_get_pl_common_passerines', 'name': 'Passerines C-A'},
+                             {'sp': 'sp_get_pl_common_scarce_passerines', 'name': 'Passerines s-A'},
+                             {'sp': 'sp_get_pl_common_uncommon_doves', 'name': 'Doves Cuckoos UC-A'},
+                             {'sp': 'sp_get_pl_doves', 'name': 'Doves Cuckoos'},
+                             {'sp': 'sp_get_pl_guide', 'name': ''},
+                             {'sp': 'sp_get_pl_hawks', 'name': 'Hawks Owls'},
+                             {'sp': 'sp_get_pl_herons', 'name': 'Rails Herons'},
+                             {'sp': 'sp_get_pl_kingfishers', 'name': 'Kingfihsers'},
+                             {'sp': 'sp_get_pl_passerines', 'name': 'Passerines'},
+                             {'sp': 'sp_get_pl_seabirds', 'name': 'Seabirds'},
+                             {'sp': 'sp_get_pl_shorebirds', 'name': 'Shorebirds'},
+                             {'sp': 'sp_get_pl_swifts', 'name': 'Swifts Nightjars'},
+                             {'sp': 'sp_get_pl_winter', 'name': 'Winter'}]
             header = '#EXTM3U\n'
             item_begin = '#EXTINF:'
             extension = '.mp3\n'
@@ -270,7 +278,7 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                     os.remove(os.path.join(playlist_path, fil))
             for item in playlists_sps:
                 if item['name'] == '':
-                    playlist_name = guide[2] + ' Bird Guide'
+                    playlist_name = guide[2] + ' Guide'
                 else:
                     playlist_name = guide[2] + ' ' + item['name']
                 str_sp = item['sp']
