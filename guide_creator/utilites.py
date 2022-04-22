@@ -26,11 +26,12 @@ class UtilitiesBase:
 
 
 class SQLUtilities(UtilitiesBase):
-    def __init__(self, sp, logger, sql_server_connection, params=None, params_values=None):
+    def __init__(self, logger, sql_server_connection, sp=None, sql=None, params=None, params_values=None):
         self.params = params
         self.params_values = params_values
         self.sql_server_connection = sql_server_connection
         self.sp = sp
+        self.sql = sql
         UtilitiesBase.__init__(self, logger=logger)
 
     def run_sql_return_no_params(self):
@@ -90,6 +91,21 @@ class SQLUtilities(UtilitiesBase):
         conn.commit()
         cursor.close()
         conn.close()
+
+    def run_plain_sql_return(self):
+        conn = self.connect_sqlserver(self.sql_server_connection)
+        cursor = conn.cursor()
+        sql = self.sql
+        try:
+            cursor.execute(sql)
+            data = cursor.fetchall()
+        except pyodbc.ProgrammingError as err:
+            msg = "An error occurred executing a sql server command"
+            raise DatabaseOperationException(msg)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return data
 
 
 class GoogleAPIUtilities(UtilitiesBase):

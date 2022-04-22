@@ -66,6 +66,31 @@ class CreateImageAudioTodoList(GuideBase):
         self.audio_guide_path = audio_guide_path
         self.todo_path = todo_path
 
+    def _write_audio(self, my_name, my_list):
+        # create a directory for audio files
+        os.mkdir(self.todo_path + 'Audio\\' + my_name)
+        f = open(self.todo_path + my_name + '.csv', "w")
+        add_list = sorted(my_list, key=lambda d: d['code'])
+        for item in my_list:
+            # move audio files into Audio guide dir
+            shutil.copy(self.todo_path + 'blank.mp3', self.todo_path + 'Audio\\' + my_name + '\\'
+                        + item['code'] + ' ' + item['name'] + '.mp3')
+            f.write('"' + item['code'] + ' ' + item['name'] + '"' + ',"' + item['scientific'] + '"' + '\n')
+        f.close()
+
+    def run_query(self):
+        add_list = []
+        my_sql = 'SELECT [BirdName], [TaxanomicCode], [ScientificName] FROM [BirdGuide].[dbo].[Birds] ' \
+                 'where artist = 1002 and AudioLength = 1;'
+        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                 sql=my_sql)
+        raw_data = utilities.run_plain_sql_return()
+        for item in raw_data:
+            diction = {'code': item[1], 'name': item[0], 'scientific': item[2]}
+            add_list.append(diction)
+        self._write_audio(my_name='Sibley', my_list=add_list)
+        pass
+
     def run(self):
         self.logger.info("Begin script execution.")
         self.set_guides()
@@ -121,16 +146,7 @@ class CreateImageAudioTodoList(GuideBase):
                     add_list.append(diction)
                     c += 1
             if c > 0:
-                # create a directory for audio files
-                os.mkdir(self.todo_path + 'Audio\\' + guide[1])
-                f = open(self.todo_path + guide[1] + '.csv', "w")
-                add_list = sorted(add_list, key=lambda d: d['code'])
-                for item in add_list:
-                    # move audio files into Audio guide dir
-                    shutil.copy(self.todo_path + 'blank.mp3', self.todo_path + 'Audio\\' + guide[1] + '\\'
-                                + item['code'] + ' ' + item['name'] + '.mp3')
-                    f.write('"' + item['code'] + ' ' + item['name'] + '"' + ',"' + item['scientific'] + '"' + '\n')
-                f.close()
+                self._write_audio(guide[1], add_list)
         self.logger.info("End script execution.")
 
 
