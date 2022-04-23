@@ -201,7 +201,7 @@ class GoogleDriveSuperGuide:
         if emails:
             for email in emails:
                 new_perm_id = google_api.create_permission(service=service, file_id=new_folder_id, email=email)
-        utilities = SQLUtilities('sp_get_birds_in_super_guide', self.logger,
+        utilities = SQLUtilities(sp='sp_get_birds_in_super_guide', logger=self.logger,
                                  sql_server_connection=self.sql_server_connection,
                                  params_values=self.super_guide_id, params='@SuperGuideID=?')
         birds = utilities.run_sql_return_params()
@@ -257,7 +257,7 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
             for email in emails:
                 new_perm_id = google_api.create_permission(service=service, file_id=new_folder_id, email=email)
         # now get a list of active guides in this superguide and create director for each
-        utilities = SQLUtilities('sp_get_active_guides_in_super_guide', self.logger,
+        utilities = SQLUtilities(sp='sp_get_active_guides_in_super_guide', logger=self.logger,
                                  params_values=self.super_guide_id, params='@SuperGuideID=?',
                                  sql_server_connection=self.sql_server_connection)
         guides = utilities.run_sql_return_params()

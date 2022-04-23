@@ -89,7 +89,8 @@ class VerifyFileNames(GuideBase):
             prefix = full_name[:4].strip()
             name = full_name[4:].strip()
             params = (name, prefix)
-            utilities = SQLUtilities('sp_get_bird_id', self.logger, self.sql_server_connection,
+            utilities = SQLUtilities(sp='sp_get_bird_id', logger=self.logger,
+                                     sql_server_connection=self.sql_server_connection,
                                      params='@BirdName=?,@TaxanomicCode=?', params_values=params)
             bird_id = utilities.run_sql_return_params()
             if not bird_id:
@@ -102,7 +103,8 @@ class VerifyFileNames(GuideBase):
                 except IndexError as err:
                     self.logger.error("Artist name not separated properly. " + full_name)
                     raise VerifyFileException
-                utilities = SQLUtilities('sp_get_artist_id', self.logger, self.sql_server_connection,
+                utilities = SQLUtilities(sp='sp_get_artist_id', logger=self.logger,
+                                         sql_server_connection=self.sql_server_connection,
                                          params='@ArtistName=?', params_values=artist_name)
                 artist_id = utilities.run_sql_return_params()
                 if not artist_id:
@@ -110,7 +112,8 @@ class VerifyFileNames(GuideBase):
                     self.logger.info("End script execution.\n")
                     raise VerifyFileException
                 params = (bird_id[0][0], artist_id[0][0])
-                utilities = SQLUtilities('sp_update_bird_artist', self.logger, self.sql_server_connection,
+                utilities = SQLUtilities(sp='sp_update_bird_artist', logger=self.logger,
+                                         sql_server_connection=self.sql_server_connection,
                                          params='@BirdID=?, @ArtistID=?', params_values=params)
                 utilities.run_sql_params()
         self.logger.info("End script execution.\n")

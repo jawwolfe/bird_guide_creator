@@ -1,6 +1,7 @@
 BEGIN HERE TO CREATE A NEW GUIDE
 1) Add the ebird regions that your guide will contain. Manually or use run_get_eibrd_regions.py
-2) Using Access Database, add your guide to the guides table selecting the regions. If your guide has an Exotic Birding area that matches your guide add that name to the guides table.
+2) Make sure the country or countries that your guide's regions are in has a World Region associated with it. 
+3) Using Access Database, add your guide to the guides table selecting the regions. If your guide has an Exotic Birding area that matches your guide add that name to the guides table.
 
 BEGIN HERE TO ONLY REFRESH A GUIDE WITH NEW EBIRD DATA...
 3) run_refresh_ebird_exotic_data.py (pulls all the data from ebird (and exotic website if applicable).

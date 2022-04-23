@@ -46,7 +46,7 @@ class GuideBase:
 
     def set_exotic_guides_birds(self):
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
-                                     sp='sp_get_exotic_guides_birds')
+                                 sp='sp_get_exotic_guides_birds')
         self.exotic_guides_birds = utilities.run_sql_return_no_params()
 
     def get_guides(self):

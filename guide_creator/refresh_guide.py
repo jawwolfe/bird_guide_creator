@@ -27,7 +27,7 @@ class EmbedTags:
         return return_value
 
     def get_region_count(self, guide_id):
-        utilities = SQLUtilities('sp_get_count_regions', self.logger, params_values=guide_id,
+        utilities = SQLUtilities(sp='sp_get_count_regions', logger=self.logger, params_values=guide_id,
                                  sql_server_connection=self.sql_server_connection, params=' @GuideID=?')
         region_count = utilities.run_sql_return_params()
         return region_count[0][0]
@@ -105,13 +105,13 @@ class EmbedTags:
         self.logger.info("Start script execution to embed tags.")
         # todo execute code to clean audio files (remove apostrophe) in the finished Directory
         # is this in case I forget to run process audio before refreshing guides?
-        utilities = SQLUtilities('sp_get_active_super_guides', self.logger,
+        utilities = SQLUtilities(sp='sp_get_active_super_guides', logger=self.logger,
                                  sql_server_connection=self.sql_server_connection)
         super_guides = utilities.run_sql_return_no_params()
         for super_guide in super_guides:
             sg_name = super_guide[0]
             sg_id = super_guide[1]
-            utilities = SQLUtilities('sp_get_birds_in_super_guide', self.logger,
+            utilities = SQLUtilities(sp='sp_get_birds_in_super_guide', logger=self.logger,
                                      sql_server_connection=self.sql_server_connection,
                                      params_values=sg_id, params='@SuperGuideID=?')
             birds = utilities.run_sql_return_params()
@@ -126,12 +126,14 @@ class EmbedTags:
                                          params_values=params_guides, sp='sp_get_guide_data',
                                          params='@Bird_Name=?, @Taxanomic_Code=?, @SuperGuideName=?')
                 data_guides = utilities.run_sql_return_params()
-                utilities = SQLUtilities(sp='sp_get_bird_data', logger=self.logger, sql_server_connection=
-                                         self.sql_server_connection, params='@Bird_Name=?, @Taxanomic_Code=?',
+                utilities = SQLUtilities(sp='sp_get_bird_data', logger=self.logger,
+                                         sql_server_connection=self.sql_server_connection,
+                                         params='@Bird_Name=?, @Taxanomic_Code=?',
                                          params_values=params_birds)
                 data_bird = utilities.run_sql_return_params()
-                utilities = SQLUtilities(sp='sp_get_artist', logger=self.logger, sql_server_connection=
-                                         self.sql_server_connection, params='@Bird_Name=?, @Taxanomic_Code=?',
+                utilities = SQLUtilities(sp='sp_get_artist', logger=self.logger,
+                                         sql_server_connection=self.sql_server_connection,
+                                         params='@Bird_Name=?, @Taxanomic_Code=?',
                                          params_values=params_birds)
                 artist_data = utilities.run_sql_return_params()
                 lyrics = self.process_description(data_bird, data_guides, artist_data)
@@ -198,7 +200,7 @@ class RefreshPlaylists:
 
     def run_refresh(self):
         self.logger.info("Start script execution to refresh playlists.")
-        utilities = SQLUtilities('sp_get_active_super_guides', self.logger,
+        utilities = SQLUtilities(sp='sp_get_active_super_guides', logger=self.logger,
                                  sql_server_connection=self.sql_server_connection)
         super_guides = utilities.run_sql_return_no_params()
         for super_guide in super_guides:
