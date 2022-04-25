@@ -565,20 +565,26 @@ class UpdateGuides(GuideBase):
         summer = 0
         winter1 = 0
         winter2 = 0
+        # determine if the abundance data can predict a Boreal Visitor
         for char in abundance:
             if char == '':
                 char = 0
             c += 1
+            # January is Winter
             if c == 1:
                 winter1 = char
+            # July is Summer
             if c == 7:
                 summer = char
+            # December is winter
             elif c == 12:
                 winter2 = char
         total_winter = int(winter1) + int(winter2)
         average_winter = total_winter / 2
+        # Boreal visitor if there is no July abundance and avg Jan and Dec is > 1 (Scarce or better)
         if int(summer) == 0 and average_winter > 1:
             return 2
+        # Otherwise a Resident
         else:
             return 1
 
