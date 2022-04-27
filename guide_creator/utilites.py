@@ -211,6 +211,21 @@ class GoogleDriveSuperGuide:
                                            parent_id=new_folder_id, mimetype='image/jpeg')
 
 
+class AbundanceChartSuperGuide(GoogleAPIUtilities):
+    def __init__(self, logger, sql_server_connection, drive_root, super_guide_id, super_guide_name,
+                 super_guide_perm, chart_root, google_api_scopes=None, google_cred_path=None):
+        self.sql_server_connection = sql_server_connection
+        self.chart_root = chart_root
+        self.super_guide_id = super_guide_id
+        self.super_guide_name = super_guide_name
+        self.super_guide_perm = super_guide_perm
+        GoogleAPIUtilities.__init__(self, logger=logger, drive_root=drive_root, cred_path=google_cred_path,
+                                    scopes=google_api_scopes)
+
+    def refresh(self):
+        pass
+
+
 class PlaylistsSuperGuide(GoogleAPIUtilities):
     def __init__(self, logger, sql_server_connection, playlist_root, drive_root, super_guide_id, super_guide_name,
                  super_guide_perm, google_api_scopes=None, google_cred_path=None):
@@ -223,9 +238,9 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                                     scopes=google_api_scopes)
 
     def refresh(self):
-        super_guide_path = self.playlist_root + self.super_guide_name + '\\'
-        if not os.path.exists(super_guide_path):
-            os.mkdir(super_guide_path)
+        super_guide_playlist_path = self.playlist_root + self.super_guide_name + '\\'
+        if not os.path.exists(super_guide_playlist_path):
+            os.mkdir(super_guide_playlist_path)
         google_api = GoogleAPIUtilities(self.logger, self.scopes, self.cred_path,
                                         drive_root=self.drive_root)
         service = google_api.authenticate()
@@ -256,7 +271,7 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
         if emails:
             for email in emails:
                 new_perm_id = google_api.create_permission(service=service, file_id=new_folder_id, email=email)
-        # now get a list of active guides in this superguide and create director for each
+        # now get a list of active guides in this superguide and create directory for each
         utilities = SQLUtilities(sp='sp_get_active_guides_in_super_guide', logger=self.logger,
                                  params_values=self.super_guide_id, params='@SuperGuideID=?',
                                  sql_server_connection=self.sql_server_connection)
@@ -286,7 +301,7 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
             folder_phone = 'Birds/'
             # todo get phone root from database
             root_phone = '/storage/emulated/0/'
-            playlist_path = super_guide_path + guide[0]
+            playlist_path = super_guide_playlist_path + guide[0]
             if not os.path.exists(playlist_path):
                 os.mkdir(playlist_path)
             else:
@@ -413,6 +428,9 @@ class ParseGuideAbundance(UtilitiesBase):
         return return_data
 
     def _get_difficulty_id(self, abundance_string):
+        # this takes the abundance data from ebird and determines an average/overall difficulty ID
+        # need two months or more with abundant to be abundant (1)
+        # need two or more months with common and 1 or less with abundant to be abundant, etc...
         ct_a = abundance_string.count('A')
         ct_c = abundance_string.count('C')
         ct_u = abundance_string.count('U')
