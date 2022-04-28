@@ -249,16 +249,12 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                 if perm['role'] != 'owner':
                     emails.append(perm['emailAddress'])
         if emails:
-            for email in emails:
-                new_perm_id = google_api.create_permission(service=service, file_id=new_folder_id, email=email)
             # now get a list of active guides in this superguide and create directory for each
             utilities = SQLUtilities(sp='sp_get_active_guides_in_super_guide', logger=self.logger,
                                      params_values=self.super_guide_id, params='@SuperGuideID=?',
                                      sql_server_connection=self.sql_server_connection)
             guides = utilities.run_sql_return_params()
             for guide in guides:
-                new_guide_folder_id = google_api.create_file_or_directory(service=service, item_name=guide[0],
-                                                                          parent_id=new_folder_id)
                 chart_path = super_guide_chart_path
                 chart_name = guide[2] + ' Abundance Chart'
                 file = open(chart_path + '\\' + chart_name + '.csv', "w")
@@ -269,8 +265,9 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                 for bird in birds:
                     file.write('"' + bird[0] + ' ' + bird[1] + '"' + ',"' + bird[4] + '"' + '\n')
                 file.close()
-
-
+                google_api.create_media_upload(service=service, media_name=chart_name,
+                                               media_path=chart_path + '\\', parent_id=new_folder_id,
+                                               mimetype='audio/x-mpegurl')
 
 
 class PlaylistsSuperGuide(GoogleAPIUtilities):
