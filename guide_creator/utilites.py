@@ -148,6 +148,16 @@ class GoogleAPIUtilities(UtilitiesBase):
         file = service.files().create(body=file_metadata, fields='id').execute()
         return file['id']
 
+    def create_document_upload(self, service, doc_name, doc_path, parent_id, mimetype, meta_mine_type):
+        file_metadata = {
+            'name': doc_name,
+            'mimeType': meta_mine_type,
+            'parents': [parent_id]
+        }
+        media = MediaFileUpload(doc_path + doc_name, mimetype="'" + mimetype + "'", resumable=True)
+        file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+        return file['id']
+
     def create_media_upload(self, service, media_name, media_path, parent_id, mimetype):
         file_metadata = {
             'name': media_name,
@@ -265,9 +275,10 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                 for bird in birds:
                     file.write('"' + bird[0] + ' ' + bird[1] + '"' + ',"' + bird[4] + '"' + '\n')
                 file.close()
-                google_api.create_media_upload(service=service, media_name=chart_name + '.csv',
-                                               media_path=chart_path, parent_id=new_folder_id,
-                                               mimetype='audio/x-mpegurl')
+                google_api.create_document_upload(service=service, doc_name=chart_name,
+                                                  doc_path=chart_path, parent_id=new_folder_id,
+                                                  mimetype='text/csv',
+                                                  meta_mine_type='application/vnd.google-apps.spreadsheet')
 
 
 class PlaylistsSuperGuide(GoogleAPIUtilities):

@@ -65,11 +65,11 @@ class EmbedTags:
                 return_data += '\nHABITAT: ' + item[5]
             if item[7]:
                 return_data += '\nSONG: ' + item[7]
+            if item[4]:
+                return_data += '\nBREEDING: ' + item[4]
             if item[6]:
                 return_data += '\nCONSERVATION: ' + item[6]
-            if item[4]:
-                return_data += '\nDESCRIPTION & MISC: ' + item[4]
-            return_data += '\n\nRANGE: ' + item[10]
+            return_data += '\n\nRANGE (CLEMENTS): ' + item[10]
             # put all the region abundance data here for all the guides label them with guide and region name
             return_data += '\n\nDETAIL ABUNDANCE REGIONS:'
             guide_present = False
