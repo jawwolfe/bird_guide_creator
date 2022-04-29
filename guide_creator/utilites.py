@@ -223,7 +223,7 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                                     scopes=google_api_scopes)
 
     def refresh(self):
-        super_guide_chart_path = self.chart_root + '\\'
+        super_guide_chart_path = self.chart_root
         if not os.path.exists(super_guide_chart_path):
             os.mkdir(super_guide_chart_path)
         google_api = GoogleAPIUtilities(self.logger, self.scopes, self.cred_path,
@@ -265,8 +265,8 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                 for bird in birds:
                     file.write('"' + bird[0] + ' ' + bird[1] + '"' + ',"' + bird[4] + '"' + '\n')
                 file.close()
-                google_api.create_media_upload(service=service, media_name=chart_name,
-                                               media_path=chart_path + '\\', parent_id=new_folder_id,
+                google_api.create_media_upload(service=service, media_name=chart_name + '.csv',
+                                               media_path=chart_path, parent_id=new_folder_id,
                                                mimetype='audio/x-mpegurl')
 
 
