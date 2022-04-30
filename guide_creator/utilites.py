@@ -273,12 +273,12 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                                          params='@GuideID=?')
                 birds = utilities.run_sql_return_params()
                 for bird in birds:
-                    file.write('"' + bird[0] + ' ' + bird[1] + '"' + ',"' + bird[4] + '"' + '\n')
+                    file.write('"' + bird[1] + '"' + ',"' + bird[4] + '"' + '\n')
                 file.close()
-                google_api.create_document_upload(service=service, doc_name=chart_name,
+                google_api.create_document_upload(service=service, doc_name=chart_name + '.csv',
                                                   doc_path=chart_path, parent_id=new_folder_id,
                                                   mimetype='text/csv',
-                                                  meta_mine_type='application/vnd.google-apps.spreadsheet')
+                                                  meta_mine_type='application/vnd.google-apps.document')
 
 
 class PlaylistsSuperGuide(GoogleAPIUtilities):
