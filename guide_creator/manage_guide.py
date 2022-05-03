@@ -81,7 +81,7 @@ class CreateImageAudioTodoList(GuideBase):
     def run_query(self):
         add_list = []
         my_sql = 'SELECT [BirdName], [TaxanomicCode], [ScientificName] FROM [BirdGuide].[dbo].[Birds] ' \
-                 'where artist = 1002 and AudioLength = 1;'
+                 'where artist = 1002 and AudioLength = 1 order by TaxanomicCode;'
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                  sql=my_sql)
         raw_data = utilities.run_plain_sql_return()
