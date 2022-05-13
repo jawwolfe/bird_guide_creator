@@ -507,9 +507,12 @@ class ParseGuideAbundance(UtilitiesBase):
 
     def calculate_region_abundance(self, bird_id, guide_id):
         # return series of 12 strings to represent the abundance of this bird in the guide for each month
-        # for example:   -*-rsUCCs-- one for each month: JFMAMJJASOND, hpyhen + space = no observations,
+        # for example:   -*-rsUCCs-- one for each month: JFMAMJJASOND
+        # hpyhen = no observations (add a space after for readability),
         # * = insufficient data
-        # max of each week in each month, max of each region
+        # max of each week in each month
+        # max of all region
+        # todo change above to AVG of all regions if > 3 regions in the guide?
         str_regions_abundance = ''
         lst_regions_abundance = []
         params = (bird_id, guide_id)
