@@ -4,7 +4,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from bs4 import BeautifulSoup
-import requests, json
+import requests, json, math
 
 
 class UtilitiesBase:
@@ -493,17 +493,45 @@ class ParseGuideAbundance(UtilitiesBase):
         ct_r = abundance_string.count('r')
         if ct_a >= 2:
             return_int = 1
-        elif (ct_c >=2 or ct_a == 1) and ct_a <= 1:
+        elif (ct_c >= 2 or ct_a == 1) and ct_a <= 1:
             return_int = 2
-        elif (ct_u >= 2 or ct_c == 1) and ct_c <=1 and ct_a == 0:
+        elif (ct_u >= 2 or ct_c == 1) and ct_c <= 1 and ct_a == 0:
             return_int = 3
-        elif (ct_s >= 2 or ct_u == 1) and ct_u <=1 and ct_c == 0 and ct_a == 0:
+        elif (ct_s >= 2 or ct_u == 1) and ct_u <= 1 and ct_c == 0 and ct_a == 0:
             return_int = 4
-        elif (ct_r >= 1 or ct_s == 1) and ct_s <=1 and ct_u == 0 and ct_c == 0 and ct_a == 0:
+        elif (ct_r >= 1 or ct_s == 1) and ct_s <= 1 and ct_u == 0 and ct_c == 0 and ct_a == 0:
             return_int = 5
         else:
             return 0
         return return_int
+
+    def _process_avg_abundance(self, abundance_list):
+        counts_by_month = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        sums_by_month = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        avg_abundance = []
+        for region in abundance_list:
+            # m is the index for the running counts and sums lists
+            m = 0
+            for month in region:
+                # empty string means no abundance data available so don't include this in the running counts by month
+                # nor in the running sum by month
+                if month != '':
+                    counts_by_month[m] += 1
+                    sums_by_month[m] += int(month)
+                m += 1
+        for x in range(12):
+            if counts_by_month[x] == 0:
+                avg_abundance.append('0')
+            else:
+                # for guides with more than 4 regions, add a correction to the sum for all > 0 values
+                if len(abundance_list) > 4:
+                    average = sums_by_month[x] / counts_by_month[x]
+                    if average > 0:
+                        average += 0.6
+                    avg_abundance.append(str(math.ceil(average)))
+                else:
+                    avg_abundance.append(str(math.ceil(sums_by_month[x] / counts_by_month[x])))
+        return avg_abundance
 
     def calculate_region_abundance(self, bird_id, guide_id):
         # return series of 12 strings to represent the abundance of this bird in the guide for each month
@@ -511,8 +539,7 @@ class ParseGuideAbundance(UtilitiesBase):
         # hpyhen = no observations (add a space after for readability),
         # * = insufficient data
         # max of each week in each month
-        # max of all region
-        # todo change above to AVG of all regions if > 3 regions in the guide?
+        # AVG of all regions if > 1  region in the guide
         lst_regions_abundance = []
         params = (bird_id, guide_id)
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
@@ -520,47 +547,47 @@ class ParseGuideAbundance(UtilitiesBase):
                                  params='@BirdID=?, @GuideID=?')
         regions_abundance = utilities.run_sql_return_params()
         abundance_raw = []
-        for region in regions_abundance:
-            abundance_raw_list = []
-            # convert stored json string to json object
-            big_list = json.loads(region[2])
-            # split into 12 moth groups of 4 weeks each
-            n = 4
-            lists_of_lists = [big_list[i:i + n] for i in range(0, len(big_list), n)]
-            for four_list in lists_of_lists:
-                # create a list of the four values in each month and find the maximum value
-                this_item = []
-                for dict in four_list:
-                    for key, value in dict.items():
-                        this_item.append(value)
-                my_result = max(this_item)
-                abundance_raw_list.append(my_result)
-            trans_data = self._translate_regions_abundance(abundance_raw_list)
-            diction = {'region': region[1], 'country': region[0], 'data': trans_data, 'region_id': region[3]}
-            lst_regions_abundance.append(diction)
-            abundance_this_region = []
-            for four_list in lists_of_lists:
-                # create a list of the four values in each month and find the maximum value
-                this_item = []
-                for dict in four_list:
-                    for key, value in dict.items():
-                        this_item.append(value)
-                # my_result is the max of each month in each region
-                my_result = max(this_item)
-                # list of the abundance for each month for this region
-                abundance_this_region.append(my_result)
-            # this list is for all regions
-            abundance_raw.append(abundance_this_region)
-        if len(abundance_raw) == 1:
-            abundance_final = abundance_raw
-        elif 1 < len(abundance_raw) < 4:
-            # here you take max and not average
-            abundance_final = ([sublist[-1] for sublist in abundance_raw])
+        if regions_abundance:
+            for region in regions_abundance:
+                abundance_raw_list = []
+                # convert stored json string to json object
+                big_list = json.loads(region[2])
+                # split into 12 moth groups of 4 weeks each
+                n = 4
+                lists_of_lists = [big_list[i:i + n] for i in range(0, len(big_list), n)]
+                for four_list in lists_of_lists:
+                    # create a list of the four values in each month and find the maximum value
+                    this_item = []
+                    for dict in four_list:
+                        for key, value in dict.items():
+                            this_item.append(value)
+                    my_result = max(this_item)
+                    abundance_raw_list.append(my_result)
+                trans_data = self._translate_regions_abundance(abundance_raw_list)
+                diction = {'region': region[1], 'country': region[0], 'data': trans_data, 'region_id': region[3]}
+                lst_regions_abundance.append(diction)
+                abundance_this_region = []
+                for four_list in lists_of_lists:
+                    # create a list of the four values in each month and find the maximum value
+                    this_item = []
+                    for dict in four_list:
+                        for key, value in dict.items():
+                            this_item.append(value)
+                    # my_result is the max of each month in each region
+                    my_result = max(this_item)
+                    # list of the abundance for each month for this region
+                    abundance_this_region.append(my_result)
+                # this list is for all regions
+                abundance_raw.append(abundance_this_region)
+            if len(abundance_raw) == 1:
+                abundance_final = abundance_raw[0]
+            else:
+                # calc the average of all the regions lists into one list
+                abundance_final = self._process_avg_abundance(abundance_raw)
+            str_regions_abundance = self._translate_regions_abundance(abundance_final)
+            return [str_regions_abundance, lst_regions_abundance, abundance_final]
         else:
-            # calc the average of all the regions lists into one list
-            abundance_final = [sum(sub_list) / len(sub_list) for sub_list in zip(*abundance_raw)]
-        str_regions_abundance = self._translate_regions_abundance(abundance_final)
-        return [str_regions_abundance, lst_regions_abundance, abundance_final]
+            return['', '', '']
 
     def update_abundance_calc(self):
         self.logger.info("Start script execution.")
