@@ -364,7 +364,7 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                     os.remove(os.path.join(playlist_path, fil))
             for item in playlists_sps:
                 if item['name'] == '':
-                    playlist_name = guide[2] + ' Guide'
+                    playlist_name = guide[2]
                 else:
                     playlist_name = guide[2] + ' ' + item['name']
                 str_sp = item['sp']
