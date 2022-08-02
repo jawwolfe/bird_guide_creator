@@ -18,5 +18,5 @@ EBIRD_MAXTRIX = config.EBIRD_ABUNDANCE_DIFFICULTY_MATRIX
 embed = EmbedTags(logger=LOGGER, sql_server_connection=initialize_sqlserver(), image_path=IMAGE_PATH_FINAL,
                   audio_path=AUDIO_PATH_FINAL, playlist_root=PLAYLIST_ROOT, google_api_scopes=GOOGLE_API_SCOPES,
                   google_cred_path=GOOGLE_CRED_PATH, super_guide_perm=SUPER_GUIDE_PERMISSIONS,
-                  ebird_matrix=EBIRD_MAXTRIX)
+                  ebird_matrix=EBIRD_MAXTRIX, auto_drive=0)
 embed.run_embed()

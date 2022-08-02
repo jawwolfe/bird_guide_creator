@@ -7,7 +7,7 @@ from guide_creator.utilites import SQLUtilities, GoogleDriveSuperGuide, Playlist
 
 class EmbedTags:
     def __init__(self, logger, sql_server_connection, audio_path, image_path, playlist_root, google_api_scopes,
-                 google_cred_path, super_guide_perm, ebird_matrix):
+                 google_cred_path, super_guide_perm, ebird_matrix, auto_drive):
         self.logger = logger
         self.sql_server_connection = sql_server_connection
         self.audio_path = audio_path
@@ -17,6 +17,7 @@ class EmbedTags:
         self.google_cred_path = google_cred_path
         self.super_guide_perm = super_guide_perm
         self.ebird_matrix = ebird_matrix
+        self.auto_drive = auto_drive
 
     def parse_length(self, length_string):
         values = length_string.split('-')
@@ -170,21 +171,22 @@ class EmbedTags:
                 with open(cover_file, 'rb') as f:
                     audio.tags.add(APIC(mime='image/jpeg', type=3, desc=u'Cover', data=open(cover_file, 'rb').read()))
                 audio.save(full_path_name)
-            # refresh the google drive files for this super guide
-            gdrive = GoogleDriveSuperGuide(logger=self.logger, sql_server_connection=self.sql_server_connection,
-                                           root_guide_dir='Bird Guide Directories',
+            if self.auto_drive:
+                # refresh the google drive files for this super guide
+                gdrive = GoogleDriveSuperGuide(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                               root_guide_dir='Bird Guide Directories',
+                                               google_api_scopes=self.google_api_scopes,
+                                               google_cred_path=self.google_cred_path, super_guide_id=sg_id,
+                                               super_guide_name=sg_name, audio_path=self.audio_path,
+                                               super_guide_perm=self.super_guide_perm)
+                gdrive.refresh()
+                # refresh the playlists for this super guide
+                play = PlaylistsSuperGuide(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                           drive_root='Playlists Directories', playlist_root=self.playlist_root,
                                            google_api_scopes=self.google_api_scopes,
                                            google_cred_path=self.google_cred_path, super_guide_id=sg_id,
-                                           super_guide_name=sg_name, audio_path=self.audio_path,
-                                           super_guide_perm=self.super_guide_perm)
-            gdrive.refresh()
-            # refresh the playlists for this super guide
-            play = PlaylistsSuperGuide(logger=self.logger, sql_server_connection=self.sql_server_connection,
-                                       drive_root='Playlists Directories', playlist_root=self.playlist_root,
-                                       google_api_scopes=self.google_api_scopes,
-                                       google_cred_path=self.google_cred_path, super_guide_id=sg_id,
-                                       super_guide_name=sg_name, super_guide_perm=self.super_guide_perm)
-            play.refresh()
+                                           super_guide_name=sg_name, super_guide_perm=self.super_guide_perm)
+                play.refresh()
         self.logger.info("End script execution.")
 
 
