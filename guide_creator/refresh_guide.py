@@ -68,6 +68,8 @@ class EmbedTags:
                 return_data += '\nSONG: ' + item[7]
             if item[4]:
                 return_data += '\nBREEDING: ' + item[4]
+            if item[12]:
+                return_data += '\nMIGRATION: ' + item[12]
             if item[6]:
                 return_data += '\nCONSERVATION: ' + item[6]
             return_data += '\n\nRANGE (CLEMENTS): ' + item[10]
