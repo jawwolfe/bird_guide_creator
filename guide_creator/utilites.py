@@ -34,6 +34,21 @@ class SQLUtilities(UtilitiesBase):
         self.sql = sql
         UtilitiesBase.__init__(self, logger=logger)
 
+    def run_sql_return_params_no_sp(self):
+        conn = self.connect_sqlserver(self.sql_server_connection)
+        cursor = conn.cursor()
+        my_params = self.params_values
+        try:
+            cursor.execute(self.sql, my_params)
+            data = cursor.fetchall()
+        except pyodbc.ProgrammingError as err:
+            msg = "An error occurred executing a sql server command"
+            raise DatabaseOperationException(msg)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return data
+
     def run_sql_return_no_params(self):
         conn = self.connect_sqlserver(self.sql_server_connection)
         cursor = conn.cursor()

@@ -61,7 +61,7 @@ class GuideBase:
 
 
 class CreateImageAudioTodoList(GuideBase):
-    def __init__(self, logger, audio_guide_path, sql_server_connection, todo_path):
+    def __init__(self, logger, audio_guide_path, sql_server_connection, todo_path, lst_genus_taxons=None):
         GuideBase.__init__(self, logger=logger, sql_server_connection=sql_server_connection)
         self.audio_guide_path = audio_guide_path
         self.todo_path = todo_path
@@ -78,6 +78,12 @@ class CreateImageAudioTodoList(GuideBase):
             f.write('"' + item['code'] + ' ' + item['name'] + '"' + ',"' + item['scientific'] + '"' + '\n')
         f.close()
 
+    def _write_audio_all(self, my_list):
+        for item in my_list:
+            # move audio files into Audio Blacks direcgtory
+            shutil.copy(self.todo_path + 'blank.mp3', self.todo_path + 'Audio_Blanks\\'
+                        + item[0] + '.mp3')
+
     def run_query(self):
         add_list = []
         my_sql = 'SELECT [BirdName], [TaxanomicCode], [ScientificName] FROM [BirdGuide].[dbo].[Birds] ' \
@@ -90,6 +96,14 @@ class CreateImageAudioTodoList(GuideBase):
             add_list.append(diction)
         self._write_audio(my_name='Sibley', my_list=add_list)
         pass
+
+    def run_create_audio_blanks(self):
+        self.logger.info("Begin script execution.")
+        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                 sp='sp_get_all_audio_completed')
+        raw_data = utilities.run_sql_return_no_params()
+        self._write_audio_all(raw_data)
+        self.logger.info('End script execution.')
 
     def run(self):
         self.logger.info("Begin script execution.")
