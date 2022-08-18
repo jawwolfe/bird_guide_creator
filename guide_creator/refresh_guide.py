@@ -58,18 +58,20 @@ class EmbedTags:
                 str_abundance = parse_abundance.calculate_region_abundance(item[11], island[6])
                 if str_abundance[0].strip():
                     return_data += '; ' + str_abundance[0]
-                if island[4] in (6,7):
+                if island[4] in (6, 7):
                     return_data += '; ' + island[0]
                 return_data += '\n'
             return_data = return_data[:-2]
+            if item[13]:
+                return_data += '\nIDENTIFICATION: ' + item[12]
             if item[5]:
                 return_data += '\nHABITAT: ' + item[5]
+            if item[12]:
+                return_data += '\nMOVEMENT: ' + item[12]
             if item[7]:
                 return_data += '\nSONG: ' + item[7]
             if item[4]:
                 return_data += '\nBREEDING: ' + item[4]
-            if item[12]:
-                return_data += '\nMIGRATION: ' + item[12]
             if item[6]:
                 return_data += '\nCONSERVATION: ' + item[6]
             return_data += '\n\nRANGE (CLEMENTS): ' + item[10]
