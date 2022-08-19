@@ -62,8 +62,10 @@ class EmbedTags:
                     return_data += '; ' + island[0]
                 return_data += '\n'
             return_data = return_data[:-2]
+            if item[14]:
+                return_data += '\nEBIRD OVERVIEW: ' + item[14]
             if item[13]:
-                return_data += '\nIDENTIFICATION: ' + item[12]
+                return_data += '\nIDENTIFICATION: ' + item[13]
             if item[5]:
                 return_data += '\nHABITAT: ' + item[5]
             if item[12]:

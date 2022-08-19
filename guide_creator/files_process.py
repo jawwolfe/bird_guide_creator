@@ -55,6 +55,14 @@ class RenameAudioFiles(GuideBase):
                 new_path = self.source_path + file.replace('_', "'")
             os.rename(old_path, new_path)
 
+    def run_rename_all_images(self):
+        os.chdir(self.source_path)
+        for file in glob.glob('*'):
+            old_path = self.source_path + file
+            if file.count('_') == 2:
+                new_path = self.source_path + file.replace('_', "'", 1)
+                os.rename(old_path, new_path)
+
     def run_move(self):
         os.chdir(self.source_path)
         for file in glob.glob('*.mp3'):
