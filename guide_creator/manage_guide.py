@@ -102,6 +102,10 @@ class CreateImageAudioTodoList(GuideBase):
         utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
                                  sp='sp_get_all_audio_completed')
         raw_data = utilities.run_sql_return_no_params()
+        # delete all blank images before refreshing
+        for audio in os.listdir(self.todo_path + 'Audio_Blanks'):
+            if audio.endswith('mp3'):
+                os.remove(self.todo_path + 'Audio_Blanks//' + audio)
         self._write_audio_all(raw_data)
         self.logger.info('End script execution.')
 
