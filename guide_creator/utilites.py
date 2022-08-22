@@ -288,7 +288,8 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                                          params='@GuideID=?')
                 birds = utilities.run_sql_return_params()
                 for bird in birds:
-                    file.write('"' + bird[1] + '"' + ',"' + bird[4] + '"' + '\n')
+                    file.write('"' + bird[1] + '"' + ',"' + bird[4] + '"' + ',"' + bird[5] + '"' + ',"'
+                               + bird[6] + '"' + ',"' + bird[7] + '"' + '\n')
                 file.close()
                 google_api.create_document_upload(service=service, doc_name=chart_name + '.csv',
                                                   doc_path=chart_path, parent_id=new_folder_id,
