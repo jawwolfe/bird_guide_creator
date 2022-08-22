@@ -312,7 +312,7 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                     elif new_column_letter == 'E':
                         sheet.column_dimensions[new_column_letter].width = 20
                 book.save(chart_path + '\\' + chart_name + '.xlsx')
-                google_api.create_document_upload(service=service, doc_name=chart_name + '.csv',
+                google_api.create_document_upload(service=service, doc_name=chart_name + '.xlsx',
                                                   doc_path=chart_path, parent_id=new_folder_id,
                                                   mimetype='text/csv',
                                                   meta_mine_type='application/vnd.google-apps.document')
