@@ -33,12 +33,18 @@ class EmbedTags:
         region_count = utilities.run_sql_return_params()
         return region_count[0][0]
 
-    def process_description(self, data_birds, data_islands, artist_data):
+    def process_description(self, data_birds, data_islands, artist_data, alternatives_data):
         return_data = ''
         for item in data_birds:
             t = datetime.datetime.now()
             updated = t.strftime('%m-%d-%Y')
             return_data += item[0].strip() + ' (' + item[9] + ') ' + '\n'
+            if alternatives_data:
+                return_data += '('
+                for name in alternatives_data:
+                    return_data += name[0] + ', '
+                return_data = return_data[:-2]
+                return_data += ')\n'
             if len(item[1]) > 1:
                 length = self.parse_length(item[1])
                 return_data += length + ' in. '
@@ -143,7 +149,12 @@ class EmbedTags:
                                          params='@Bird_Name=?, @Taxanomic_Code=?',
                                          params_values=params_birds)
                 artist_data = utilities.run_sql_return_params()
-                lyrics = self.process_description(data_bird, data_guides, artist_data)
+                utilities = SQLUtilities(sp='sp_get_alternatives_data', logger=self.logger,
+                                         sql_server_connection=self.sql_server_connection,
+                                         params='@Bird_Name=?, @Taxanomic_Code=?',
+                                         params_values=params_birds)
+                alternatives_data = utilities.run_sql_return_params()
+                lyrics = self.process_description(data_bird, data_guides, artist_data, alternatives_data)
                 if artist_data:
                     artist = artist_data[0][0]
                 else:
