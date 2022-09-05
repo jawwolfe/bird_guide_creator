@@ -33,7 +33,7 @@ class EmbedTags:
         region_count = utilities.run_sql_return_params()
         return region_count[0][0]
 
-    def process_description(self, data_birds, data_islands, artist_data, alternatives_data):
+    def process_description(self, data_birds, data_islands, artist_data, alternatives_data, abundance_data_date):
         return_data = ''
         for item in data_birds:
             t = datetime.datetime.now()
@@ -68,6 +68,7 @@ class EmbedTags:
                     return_data += '; ' + island[0]
                 return_data += '\n'
             return_data = return_data[:-2]
+            return_data += "\n(Abundance Refresh: " + str(abundance_data_date) + ")"
             if item[14]:
                 return_data += '\nEBIRD OVERVIEW: ' + item[14]
             if item[13]:
@@ -111,7 +112,7 @@ class EmbedTags:
             return_data += ', authors: ' + artist_data[0][2]
             return_data += ', publisher: ' + artist_data[0][5]
             return_data += ', year: ' + str(artist_data[0][4])
-            return_data += '\nLast Updated: ' + updated
+            return_data += '\nLast Guide Refresh: ' + updated
         return return_data
 
     def run_embed(self):
@@ -154,7 +155,11 @@ class EmbedTags:
                                          params='@Bird_Name=?, @Taxanomic_Code=?',
                                          params_values=params_birds)
                 alternatives_data = utilities.run_sql_return_params()
-                lyrics = self.process_description(data_bird, data_guides, artist_data, alternatives_data)
+                utilities = SQLUtilities(sp='sp_get_abundance_updated_date', logger=self.logger,
+                                         sql_server_connection=self.sql_server_connection)
+                abundance_date = utilities.run_sql_return_no_params()
+                lyrics = self.process_description(data_bird, data_guides, artist_data, alternatives_data,
+                                                  abundance_data_date=abundance_date[0][0])
                 if artist_data:
                     artist = artist_data[0][0]
                 else:
