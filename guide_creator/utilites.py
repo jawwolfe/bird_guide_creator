@@ -1,4 +1,4 @@
-import pyodbc, os
+import pyodbc, os, datetime
 from guide_creator.exceptions import DatabaseConnectionException, DatabaseOperationException
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -251,6 +251,10 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
 
     def refresh(self):
         super_guide_chart_path = self.chart_root
+        utilities = SQLUtilities(sp='sp_get_abundance_updated_date', logger=self.logger,
+                                 sql_server_connection=self.sql_server_connection)
+        abundance_date = utilities.run_sql_return_no_params()[0][0]
+        today_date = datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
         if not os.path.exists(super_guide_chart_path):
             os.mkdir(super_guide_chart_path)
         google_api = GoogleAPIUtilities(self.logger, self.scopes, self.cred_path,
@@ -294,6 +298,9 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                 for item in return_values:
                     my_data = [item[1], item[4], item[5], item[6], item[7]]
                     birds.append(my_data)
+                birds.append(['', '', '', '', ''])
+                birds.append(['Abundance Refresh: ' + str(abundance_date), 'Chart Refresh: '
+                              + str(today_date), '', '', '', ''])
                 header = ['Species', 'Ebird Abundance', 'Residency', 'Endemic PH', 'Conservation']
                 sheet.append(header)
                 sheet.append([])
