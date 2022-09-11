@@ -254,7 +254,7 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
         utilities = SQLUtilities(sp='sp_get_abundance_updated_date', logger=self.logger,
                                  sql_server_connection=self.sql_server_connection)
         abundance_date = utilities.run_sql_return_no_params()[0][0]
-        today_date = datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        today_date = datetime.datetime.today().strftime('%Y-%m-%d')
         if not os.path.exists(super_guide_chart_path):
             os.mkdir(super_guide_chart_path)
         google_api = GoogleAPIUtilities(self.logger, self.scopes, self.cred_path,
