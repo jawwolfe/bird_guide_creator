@@ -171,12 +171,16 @@ class EmbedTags:
                 if len(tags.getall(u"USLT::'en'")) != 0:
                     tags.delall(u"USLT::'en'")
                     tags.save(full_path_name)
+                # Lyrics
                 tags["USLT::'eng'"] = (USLT(encoding=3, lang=u'eng', desc=u'desc', text=lyrics))
                 tags["USLT"] = (USLT(encoding=3, text=lyrics))
                 tags["USLT::XXX"] = (USLT(encoding=3, text=lyrics))
+                # Track name
                 tags["TIT2"] = TIT2(encoding=3, text=full_name)
-                tags["TPE1"] = TPE1(encoding=3, text=artist)
-                tags["TALB"] = TALB(encoding=3, text=sg_name)
+                # Artist
+                tags["TPE1"] = TPE1(encoding=3, text=bird[1])
+                # Album
+                tags["TALB"] = TALB(encoding=3, text=sg_name + ' ' + artist)
                 tags.save(full_path_name)
                 audio = MP3(full_path_name, ID3=ID3)
                 length = int(audio.info.length)

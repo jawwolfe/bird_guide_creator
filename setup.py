@@ -21,7 +21,7 @@ if _requirements_common_file.exists() and _requirements_common_file.is_file():
 
 setup(
    name='bird_guide_creator',
-   version='17.9',
+   version='17.10',
    description='Makes bird guides for phone music player.',
    author='DCS',
    author_email='jawwolfe@gmail.com',
