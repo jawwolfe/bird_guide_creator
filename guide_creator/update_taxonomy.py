@@ -1,4 +1,4 @@
-import string, csv
+import string, csv,os
 from openpyxl import load_workbook
 from guide_creator.utilites import SQLUtilities
 
@@ -105,6 +105,47 @@ class UpdateTaxonomy:
             utilities.run_sql_params()
         self.logger.info("End script execution.")
 
+
+class RepairUnmatchedFiles:
+    def __init__(self, logger, image_path, guide_path, sql_server_connection):
+        self.logger = logger
+        self.sql_server_connection = sql_server_connection
+        self.image_path = image_path
+        self.guide_path = guide_path
+
+    def compare(self, base_list, search_list):
+        for base_item in base_list:
+            flag = False
+            for search_item in search_list:
+                if base_item == search_item:
+                    flag = True
+            if not flag:
+                print(base_item)
+
+    def get_unmatched_files_by_name(self):
+        # note all birds in guides should be equal to all those with completed audio
+        utilities = SQLUtilities(sp='sp_get_all_audio_completed', logger=self.logger,
+                                 sql_server_connection=self.sql_server_connection)
+        db_birds = utilities.run_sql_return_no_params()
+        birds = []
+        for item in db_birds:
+            birds.append(item[0][4:].strip())
+        filenames_p = os.listdir(self.image_path)
+        filenames_g = os.listdir(self.guide_path)
+        guides = []
+        photos = []
+        for file in filenames_g:
+            name_ext = file[4:].strip()
+            name = name_ext[:-4]
+            guides.append(name)
+        for photo in filenames_p:
+            split_name = photo.split("_", 1)
+            name = split_name[0][4:].strip()
+            photos.append(name)
+        #self.compare(birds, photos)
+        #self.compare(birds, guides)
+        #self.compare(photos, birds)
+        self.compare(guides, birds)
 
 class UpdateBLIConservation:
     def __init__(self, logger, sql_server_connection):

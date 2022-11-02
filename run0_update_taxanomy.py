@@ -1,11 +1,12 @@
-from guide_creator.update_taxonomy import UpdateTaxonomy, UpdateBLIConservation
+from guide_creator.update_taxonomy import UpdateTaxonomy, UpdateBLIConservation, RepairUnmatchedFiles
 from guide_creator.configs import config
 from globals import initialize_logger, initialize_sqlserver
 
 SQLSERVER_NAME = config.SQLSERVER_NAME
 SQLSERVER_DATABASE = config.SQLSERVER_DATABASE
 LOGGER = initialize_logger('bird_guide')
-
+IMAGE_PATH = config.IMAGE_PATH_GUIDE
+GUIDE_PATH = config.AUDIO_PATH_GUIDE
 
 '''
 STEP ONE:
@@ -21,25 +22,42 @@ STEP TWO:
 Run "UpdateTaxonomy", which will refresh the "Clements" table with the new taxonomy for Order, English, Scientific, 
 and Range.  It also adds the custom sort code and the EbirdGroup. 
 
-Manually truncate the BirdsRegionsAbundance table.
-Run the 
+STEP THREE:
+Make query to get the different kinds of changes from the Clements table
 
-Scientific Name Change only: Script
-English Name Change only: Script
-Splits: add new rows in Birds and BirdGuides
-Lumps: inactivate or remove rows in Birds and BirdsGuides
+Scientific Name Change only: run Script
+English Name Change only: run Script
+Splits: edit the scientific and/or English name as appropriate. New additions will happen during next refresh
+Lumps: remove rows in Birds and BirdsGuides as appropriate 
+(***if remove a bird you must also remove the files in Photos and Mp3 directories***)
 
-Once the Scieneific names all fixed in Birds table do this:
-TaxononmicSrot code needs updated in Birds table from Clements table in case new generea were added
+STEP FOUR
+Once the Scientific names all fixed in Birds table do this:
+TaxononmicSrot code needs updated in Birds table from Clements table in case new generea were added or changed
+Run an update query to update all Taxonomic Sort in Birds from Code in Clements join on Scientific name
+
+STEP FIVE
+The photos and mps files need to be changed to reflect changes in English names and Taxonomic Sort Codes
+First find unmatched English Names using code. Fix manually.  Then run code to update all the Sort Codes.
+Repeat for MP3/guides 
+
+STEP 6
+Manually truncate the BirdsRegionsAbundance table so it is completely refreshed.
+
+STEP 7
+Run an entire refresh.  The new birds from the splits should be automatically added in the refresh. 
+
 '''
-
-
 
 '''
 update_cons = UpdateBLIConservation(logger=LOGGER, sql_server_connection=initialize_sqlserver())
 update_cons.run()
-'''
 
 
 update = UpdateTaxonomy(logger=LOGGER, sql_server_connection=initialize_sqlserver())
 update.run_taxonomy_update()
+'''
+
+find = RepairUnmatchedFiles(logger=LOGGER, sql_server_connection=initialize_sqlserver(), image_path=IMAGE_PATH,
+                            guide_path=GUIDE_PATH)
+find.get_unmatched_files_by_name()
