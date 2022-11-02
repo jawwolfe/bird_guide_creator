@@ -44,7 +44,7 @@ class UpdateTaxonomy:
                 else:
                     pass
             diction = {'order': item[0], 'group': family, 'code': fpre + gpre, 'english': item[3],
-                       'scientific': item[4], 'range': ''}
+                       'scientific': item[4], 'range': '', 'changes': item[5]}
             add_list.append(diction)
         return add_list
 
@@ -76,7 +76,7 @@ class UpdateTaxonomy:
         # create range strings for each species from subspecies
         for item in raw_data:
             if item['category'] == 'species':
-                if item['range'] is None:
+                if item['range'] == '':
                     if item['scientific'] == 'Crypturellus noctivagus':
                         pass
                     # this species has subspecies get all the ranges and ss name
@@ -92,12 +92,15 @@ class UpdateTaxonomy:
             for str_range in species_ranges:
                 if add['scientific'] == str_range['scientific']:
                     add['range'] = str_range['range']
-        # todo truncate the table "Clements"
+        # truncate the table "Clements"
+        utilities = SQLUtilities(sp='sp_truncate_clements', logger=self.logger,
+                                 sql_server_connection=self.sql_server_connection)
+        utilities.run_sql()
         # insert finished taxonomy into database
         for i in add_list:
-            params = (i['order'], i['code'], i['english'], i['scientific'], i['group'], i['range'])
-            utilities = SQLUtilities(sp='sp_insert_clements_test', logger=self.logger, params_values=params,
-                                     params='@order=?, @code=?, @english=?, @scientific=?, @ebirdgroup=?, @range=?',
+            params = (i['order'], i['code'], i['english'], i['scientific'], i['group'], i['range'], i['changes'])
+            utilities = SQLUtilities(sp='sp_insert_clements', logger=self.logger, params_values=params,
+                                     params='@order=?, @code=?, @english=?, @scientific=?, @ebirdgroup=?, @range=?, @changes=?',
                                      sql_server_connection=self.sql_server_connection)
             utilities.run_sql_params()
         self.logger.info("End script execution.")
