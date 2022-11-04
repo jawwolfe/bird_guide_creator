@@ -33,7 +33,7 @@ Lumps: remove rows in Birds and BirdsGuides as appropriate
 
 STEP FOUR
 Once the Scientific names all fixed in Birds table do this:
-TaxononmicSrot code needs updated in Birds table from Clements table in case new generea were added or changed
+TaxononmicSort code needs updated in Birds table from Clements table in case new generea were added or changed
 Run the update query to update all Taxonomic Sort in Birds from Code in Clements join on Scientific name
 
 STEP FIVE
@@ -60,4 +60,5 @@ update.run_taxonomy_update()
 
 find = RepairUnmatchedFiles(logger=LOGGER, sql_server_connection=initialize_sqlserver(), image_path=IMAGE_PATH,
                             guide_path=GUIDE_PATH)
-find.get_unmatched_files_by_name()
+#find.get_unmatched_files_by_name()
+find.update_files_codes()

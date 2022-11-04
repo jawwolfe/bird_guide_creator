@@ -112,6 +112,16 @@ class RepairUnmatchedFiles:
         self.sql_server_connection = sql_server_connection
         self.image_path = image_path
         self.guide_path = guide_path
+        self.all_completed_birds = None
+
+    def get_all_completed_birds(self):
+        return self.all_completed_birds
+
+    def set_all_completed_birds(self):
+        # note all birds in guides should be equal to all those with completed audio
+        utilities = SQLUtilities(logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                 sp='sp_get_all_audio_completed')
+        self.all_completed_birds = utilities.run_sql_return_no_params()
 
     def compare(self, base_list, search_list):
         for base_item in base_list:
@@ -122,17 +132,46 @@ class RepairUnmatchedFiles:
             if not flag:
                 print(base_item)
 
+    def get_new_code(self, english):
+        for bird in self.get_all_completed_birds():
+            full_name = bird[0]
+            name = full_name[4:]
+            if name.strip() == english:
+                return bird[1]
+
     def update_files_codes(self):
-        pass
+        names_codes = []
+        self.set_all_completed_birds()
+        for item in self.get_all_completed_birds():
+            diction = {'english': item[0][4:], 'code': item[1]}
+            names_codes.append(diction)
+        filenames_p = os.listdir(self.image_path)
+        filenames_g = os.listdir(self.guide_path)
+        for file in filenames_g:
+            flag = False
+            name_ext = file[4:].strip()
+            for bird in names_codes:
+                if bird['code'] + ' ' + bird['english'].strip() == file[:-4]:
+                    flag = True
+            if not flag:
+                print('Unable to match this file english name to database: ' + file)
+                new_code = self.get_new_code(name_ext[:-4])
+                old_path = self.guide_path + "\\" + file
+                new_path = self.guide_path + "\\" + new_code + ' ' + name_ext
+                print(old_path)
+                print(new_path)
+                os.rename(old_path, new_path)
+
+
+
+
+
 
 
     def get_unmatched_files_by_name(self):
-        # note all birds in guides should be equal to all those with completed audio
-        utilities = SQLUtilities(sp='sp_get_all_audio_completed', logger=self.logger,
-                                 sql_server_connection=self.sql_server_connection)
-        db_birds = utilities.run_sql_return_no_params()
         birds = []
-        for item in db_birds:
+        self.set_all_completed_birds()
+        for item in self.get_all_completed_birds():
             birds.append(item[0][4:].strip())
         filenames_p = os.listdir(self.image_path)
         filenames_g = os.listdir(self.guide_path)
