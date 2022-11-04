@@ -34,12 +34,12 @@ Lumps: remove rows in Birds and BirdsGuides as appropriate
 STEP FOUR
 Once the Scientific names all fixed in Birds table do this:
 TaxononmicSrot code needs updated in Birds table from Clements table in case new generea were added or changed
-Run an update query to update all Taxonomic Sort in Birds from Code in Clements join on Scientific name
+Run the update query to update all Taxonomic Sort in Birds from Code in Clements join on Scientific name
 
 STEP FIVE
 The photos and mps files need to be changed to reflect changes in English names and Taxonomic Sort Codes
-First find unmatched English Names using code. Fix manually.  Then run code to update all the Sort Codes.
-Repeat for MP3/guides 
+First find unmatched English Names using code. Fix manually in both Photos and Guides.  
+Then run code to update all the Sort Code in photos and guides directories using English Name to match Birds table. 
 
 STEP 6
 Manually truncate the BirdsRegionsAbundance table so it is completely refreshed.

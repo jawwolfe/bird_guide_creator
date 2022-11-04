@@ -122,6 +122,10 @@ class RepairUnmatchedFiles:
             if not flag:
                 print(base_item)
 
+    def update_files_codes(self):
+        pass
+
+
     def get_unmatched_files_by_name(self):
         # note all birds in guides should be equal to all those with completed audio
         utilities = SQLUtilities(sp='sp_get_all_audio_completed', logger=self.logger,
@@ -142,10 +146,11 @@ class RepairUnmatchedFiles:
             split_name = photo.split("_", 1)
             name = split_name[0][4:].strip()
             photos.append(name)
-        #self.compare(birds, photos)
-        #self.compare(birds, guides)
-        #self.compare(photos, birds)
+        self.compare(birds, photos)
+        self.compare(birds, guides)
+        self.compare(photos, birds)
         self.compare(guides, birds)
+
 
 class UpdateBLIConservation:
     def __init__(self, logger, sql_server_connection):
