@@ -140,6 +140,7 @@ class RepairUnmatchedFiles:
                 return bird[1]
 
     def update_files_codes(self):
+        self.logger.info('Start script execution.')
         names_codes = []
         self.set_all_completed_birds()
         for item in self.get_all_completed_birds():
@@ -154,11 +155,10 @@ class RepairUnmatchedFiles:
                 if bird['code'] + ' ' + bird['english'].strip() == file[:-4]:
                     flag = True
             if not flag:
-                print('Unable to match this file english name to database: ' + file)
                 new_code = self.get_new_code(name_ext[:-4])
                 old_path = self.guide_path + "\\" + file
                 new_path = self.guide_path + "\\" + new_code + ' ' + name_ext
-                self.logger.info("New file: " + new_path)
+                self.logger.info("New file: " + new_code + ' ' + name_ext)
                 os.rename(old_path, new_path)
         for file in filenames_p:
             flag = False
@@ -172,14 +172,10 @@ class RepairUnmatchedFiles:
                 new_path = self.image_path + "\\" + new_code + ' ' + name_ext
                 self.logger.info("New file: " + new_code + ' ' + name_ext)
                 os.rename(old_path, new_path)
-
-
-
-
-
-
+        self.logger.info('End script execution.')
 
     def get_unmatched_files_by_name(self):
+        self.logger.info('Start script execution.')
         birds = []
         self.set_all_completed_birds()
         for item in self.get_all_completed_birds():
@@ -200,6 +196,7 @@ class RepairUnmatchedFiles:
         self.compare(birds, guides)
         self.compare(photos, birds)
         self.compare(guides, birds)
+        self.logger.info('End script execution.')
 
 
 class UpdateBLIConservation:
