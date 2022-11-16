@@ -322,7 +322,7 @@ class ExoticParseUtility(GuideBase):
         guides = self.get_guides()
         c = 0
         for guide in guides:
-            if guide[2]:
+            if guide[2] and guide[4]:
                 guide_id = guide[0]
                 self.set_errors()
                 # Get the checklist for this guide from exotic website
