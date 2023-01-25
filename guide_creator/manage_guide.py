@@ -474,7 +474,7 @@ class EbirdBarchartParseUtility(GuideBase):
                                 skip_non_species = True
                                 continue
                         # 12 months are in rows 4-15
-                        if td_ct >= 4 or td_ct <= 15:
+                        if 4 <= td_ct <= 15:
                             if not skip_non_species and bird_name:
                                 weeks = td.findAll("div")
                                 for week in weeks:
