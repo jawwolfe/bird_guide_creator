@@ -16,12 +16,13 @@ utilities = SQLUtilities(sp='sp_get_active_super_guides', logger=LOGGER, sql_ser
 super_guides = utilities.run_sql_return_no_params()
 
 for super_guide in super_guides:
-    playlists = PlaylistsSuperGuide(logger=LOGGER, sql_server_connection=initialize_sqlserver(),
+    '''playlists = PlaylistsSuperGuide(logger=LOGGER, sql_server_connection=initialize_sqlserver(),
                                     playlist_root=PLAYLIST_ROOT, google_api_scopes=GOOGLE_API_SCOPES,
                                     super_guide_id=super_guide[1], super_guide_name=super_guide[0],
                                     google_cred_path=GOOGLE_CRED_PATH, super_guide_perm=SUPER_GUIDE_PERMISSIONS,
                                     drive_root='Playlists Directories')
     playlists.refresh()
+    '''
     playlists = AbundanceChartSuperGuide(logger=LOGGER, sql_server_connection=initialize_sqlserver(),
                                          chart_root=CHART_ROOT, google_api_scopes=GOOGLE_API_SCOPES,
                                          super_guide_id=super_guide[1], super_guide_name=super_guide[0],

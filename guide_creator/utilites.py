@@ -249,6 +249,13 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
         GoogleAPIUtilities.__init__(self, logger=logger, drive_root=drive_root, cred_path=google_cred_path,
                                     scopes=google_api_scopes)
 
+    def parse_abundance(self, str_abundance):
+        return_string = []
+        for myChar in str_abundance:
+            if myChar.strip():
+                return_string.append(myChar)
+        return return_string
+
     def refresh(self):
         super_guide_chart_path = self.chart_root
         utilities = SQLUtilities(sp='sp_get_abundance_updated_date', logger=self.logger,
@@ -257,6 +264,7 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
         today_date = datetime.datetime.today().strftime('%Y-%m-%d')
         if not os.path.exists(super_guide_chart_path):
             os.mkdir(super_guide_chart_path)
+        emails = []
         google_api = GoogleAPIUtilities(self.logger, self.scopes, self.cred_path,
                                         drive_root=self.drive_root)
         service = google_api.authenticate()
@@ -274,7 +282,6 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
         # create the directory
         new_folder_id = google_api.create_file_or_directory(service=service, item_name=self.super_guide_name,
                                                             parent_id=root_id)
-        emails = []
         if permissions:
             for perm in permissions['permissions']:
                 if perm['role'] != 'owner':
@@ -287,18 +294,21 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
             guides = utilities.run_sql_return_params()
             for guide in guides:
                 chart_path = super_guide_chart_path
-                chart_name = guide[2] + ' Abundance Chart'
-                book = Workbook()
-                sheet = book.active
-                birds = []
                 utilities = SQLUtilities(sp="sp_get_pl_guide", logger=self.logger,
                                          sql_server_connection=self.sql_server_connection, params_values=guide[1],
                                          params='@GuideID=?')
                 return_values = utilities.run_sql_return_params()
+                # make the first chart with abundance in one column and residence, endemic, and conservation
+                chart_name = guide[2] + ' Abundance Chart'
+                book = Workbook()
+                sheet = book.active
+                birds = []
                 for item in return_values:
                     my_data = [item[1], item[4], item[5], item[6], item[7]]
                     birds.append(my_data)
+                # add empty line in chart
                 birds.append(['', '', '', '', ''])
+                # add footer in chart
                 birds.append(['Abundance Refresh: ' + str(abundance_date), 'Chart Refresh: '
                               + str(today_date), '', '', '', ''])
                 header = ['Species', 'Ebird Abundance', 'Residency', 'Endemic PH', 'Conservation']
@@ -317,6 +327,63 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                     elif new_column_letter == 'D':
                         sheet.column_dimensions[new_column_letter].width = 12
                     elif new_column_letter == 'E':
+                        sheet.column_dimensions[new_column_letter].width = 20
+                book.save(chart_path + '\\' + chart_name + '.xlsx')
+
+                # make the second chart with abundance per month and residence
+                chart_name = guide[2] + ' Abundance Detail Chart'
+                book = Workbook()
+                sheet = book.active
+                birds = []
+                for item in return_values:
+                    abundance_list = self.parse_abundance(item[4])
+                    if not abundance_list:
+                        abundance_list = ['', '', '', '', '', '', '', '', '', '', '', '']
+                    my_data = [item[1], abundance_list[0], abundance_list[1], abundance_list[2],
+                               abundance_list[3], abundance_list[4], abundance_list[5], abundance_list[6],
+                               abundance_list[7], abundance_list[8], abundance_list[9], abundance_list[10],
+                               abundance_list[11], item[5]]
+                    birds.append(my_data)
+                # add empty line in chart
+                birds.append(['', '', '', '', ''])
+                # add footer in chart
+                birds.append(['Abundance Refresh: ' + str(abundance_date), 'Chart Refresh: '
+                              + str(today_date), '', '', '', ''])
+                header = ['Species', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct',
+                          'Nov', 'Dec', 'Residency']
+                sheet.append(header)
+                sheet.append([])
+                for bird in birds:
+                    sheet.append(bird)
+                for column_cells in sheet.columns:
+                    new_column_letter = (get_column_letter(column_cells[0].column))
+                    if new_column_letter == 'A':
+                        sheet.column_dimensions[new_column_letter].width = 30
+                    elif new_column_letter == 'B':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'C':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'D':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'E':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'F':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'G':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'H':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'I':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'J':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'K':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'L':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'M':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'N':
                         sheet.column_dimensions[new_column_letter].width = 20
                 book.save(chart_path + '\\' + chart_name + '.xlsx')
                 google_api.create_document_upload(service=service, doc_name=chart_name + '.xlsx',
