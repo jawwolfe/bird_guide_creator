@@ -13,6 +13,13 @@ class UtilitiesBase:
     def __init__(self, logger):
         self.logger = logger
 
+    def parse_abundance(self, str_abundance):
+        return_string = []
+        for myChar in str_abundance:
+            if myChar.strip():
+                return_string.append(myChar)
+        return return_string
+
     def connect_sqlserver(self, sqlserver_connection):
         connection_string = "Driver={ODBC Driver 17 for SQL Server};"
         connection_string += "Server=" + sqlserver_connection.name + ";"
@@ -249,13 +256,6 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
         GoogleAPIUtilities.__init__(self, logger=logger, drive_root=drive_root, cred_path=google_cred_path,
                                     scopes=google_api_scopes)
 
-    def parse_abundance(self, str_abundance):
-        return_string = []
-        for myChar in str_abundance:
-            if myChar.strip():
-                return_string.append(myChar)
-        return return_string
-
     def refresh(self):
         super_guide_chart_path = self.chart_root
         utilities = SQLUtilities(sp='sp_get_abundance_updated_date', logger=self.logger,
@@ -329,7 +329,10 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                     elif new_column_letter == 'E':
                         sheet.column_dimensions[new_column_letter].width = 20
                 book.save(chart_path + '\\' + chart_name + '.xlsx')
-
+                google_api.create_document_upload(service=service, doc_name=chart_name + '.xlsx',
+                                                  doc_path=chart_path, parent_id=new_folder_id,
+                                                  mimetype='text/csv',
+                                                  meta_mine_type='application/vnd.google-apps.document')
                 # make the second chart with abundance per month and residence
                 chart_name = guide[2] + ' Abundance Detail Chart'
                 book = Workbook()
@@ -402,6 +405,17 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
         self.super_guide_perm = super_guide_perm
         GoogleAPIUtilities.__init__(self, logger=logger, drive_root=drive_root, cred_path=google_cred_path,
                                     scopes=google_api_scopes)
+
+    def month_list_include(self, months, abundance):
+        include = False
+        c = 0
+        for item in abundance:
+            c += 1
+            for m in months:
+                if c == m[0]:
+                    if item.strip() != '-':
+                        include = True
+        return include
 
     def refresh(self):
         super_guide_playlist_path = self.playlist_root + self.super_guide_name + '\\'
@@ -495,6 +509,35 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                 google_api.create_media_upload(service=service, media_name=playlist_name + '.m3u',
                                                media_path=playlist_path + '\\', parent_id=new_guide_folder_id,
                                                mimetype='audio/x-mpegurl')
+                # now create the months based playlist version if months are configured in DB
+                utilities = SQLUtilities(sp='sp_get_months_playlist_data', logger=self.logger,
+                                         sql_server_connection=self.sql_server_connection)
+                months = utilities.run_sql_return_no_params()
+                if months:
+                    months_suffix = ''
+                    for m in months:
+                        months_suffix += m[1].strip() + '_'
+                    months_suffix = months_suffix[:-1]
+                    file_path = playlist_path + "\\" + playlist_name
+                    str_file = header
+                    for bird in birds:
+                        # check to see if the abundance string has a letter (r,s,C,U,A) in the months positions,
+                        # if not don't include in the playlist
+                        abundance_raw = bird[4]
+                        if abundance_raw:
+                            abundance = self.parse_abundance(bird[4])
+                            # needs to be truthy and not a hyphen in at least one of the months
+                            if self.month_list_include(months, abundance):
+                                str_file += item_begin
+                                str_file += str(bird[2]) + ',' + bird[3] + " - "
+                                str_file += bird[0] + ' ' + bird[1] + '\n'
+                                str_file += root_phone + folder_phone + bird[0] + ' ' + bird[1] + extension
+                        with open(file_path, 'w') as myfile:
+                            myfile.write(str_file)
+                            myfile.close()
+                        google_api.create_media_upload(service=service, media_name=playlist_name + '_' + months_suffix + '.m3u',
+                                                       media_path=playlist_path + '\\', parent_id=new_guide_folder_id,
+                                                       mimetype='audio/x-mpegurl')
 
 
 class ParseEbirdRegions(UtilitiesBase):
