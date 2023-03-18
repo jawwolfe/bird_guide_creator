@@ -413,7 +413,8 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
             c += 1
             for m in months:
                 if c == m[0]:
-                    if item.strip() != '-':
+                    # anything but no observations (-) and no data (*) is considered True
+                    if item.strip() != '-' and item.strip() != '*':
                         include = True
         return include
 
@@ -518,7 +519,7 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                     for m in months:
                         months_suffix += m[1].strip() + '_'
                     months_suffix = months_suffix[:-1]
-                    file_path = playlist_path + "\\" + playlist_name
+                    file_path = playlist_path + "\\" + playlist_name + '_' + months_suffix + '.m3u'
                     str_file = header
                     for bird in birds:
                         # check to see if the abundance string has a letter (r,s,C,U,A) in the months positions,
