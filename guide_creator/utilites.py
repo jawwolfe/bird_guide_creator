@@ -422,44 +422,12 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
         super_guide_playlist_path = self.playlist_root + self.super_guide_name + '\\'
         if not os.path.exists(super_guide_playlist_path):
             os.mkdir(super_guide_playlist_path)
-        google_api = GoogleAPIUtilities(self.logger, self.scopes, self.cred_path,
-                                        drive_root=self.drive_root)
-        service = google_api.authenticate()
-        # get root directory id where all the bird directories will be found
-        root_id = google_api.list_folders_id_by_name(service=service)
-        # todo make same change here as above
-
-        # find this superguide directory if it exists and get permissions then delete
-        folders = google_api.list_all_folders_py_parent(service=service, file_id=root_id)
-        permissions = None
-        file_id = None
-        for folder in folders['files']:
-            if self.super_guide_name == folder['name']:
-                file_id = folder['id']
-                permissions = google_api.list_permissions_by_file_id(service=service, file_id=folder['id'])
-        # then delete directory and all files
-        if file_id:
-            google_api.delete_file_or_directory(service=service, file_id=file_id)
-        # create the directory
-        new_folder_id = google_api.create_file_or_directory(service=service, item_name=self.super_guide_name,
-                                                            parent_id=root_id)
-        emails = []
-        if permissions:
-            for perm in permissions['permissions']:
-                if perm['role'] != 'owner':
-                    emails.append(perm['emailAddress'])
-
-        if emails:
-            for email in emails:
-                new_perm_id = google_api.create_permission(service=service, file_id=new_folder_id, email=email)
         # now get a list of active guides in this superguide and create directory for each
         utilities = SQLUtilities(sp='sp_get_active_guides_in_super_guide', logger=self.logger,
                                  params_values=self.super_guide_id, params='@SuperGuideID=?',
                                  sql_server_connection=self.sql_server_connection)
         guides = utilities.run_sql_return_params()
         for guide in guides:
-            new_guide_folder_id = google_api.create_file_or_directory(service=service, item_name=guide[0],
-                                                                      parent_id=new_folder_id)
             playlists_sps = [{'sp': 'sp_get_pl_breeding', 'name': 'Breeding'},
                              {'sp': 'sp_get_pl_common', 'name': 'Common'},
                              {'sp': 'sp_get_pl_common_passerines', 'name': 'Passerines C-A'},
@@ -507,9 +475,6 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                 with open(file_path, 'w') as myfile:
                     myfile.write(str_file)
                     myfile.close()
-                google_api.create_media_upload(service=service, media_name=playlist_name + '.m3u',
-                                               media_path=playlist_path + '\\', parent_id=new_guide_folder_id,
-                                               mimetype='audio/x-mpegurl')
                 # now create the months based playlist version if months are configured in DB
                 utilities = SQLUtilities(sp='sp_get_months_playlist_data', logger=self.logger,
                                          sql_server_connection=self.sql_server_connection)
@@ -536,9 +501,6 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                         with open(file_path, 'w') as myfile:
                             myfile.write(str_file)
                             myfile.close()
-                        google_api.create_media_upload(service=service, media_name=playlist_name + '_' + months_suffix + '.m3u',
-                                                       media_path=playlist_path + '\\', parent_id=new_guide_folder_id,
-                                                       mimetype='audio/x-mpegurl')
 
 
 class ParseEbirdRegions(UtilitiesBase):
