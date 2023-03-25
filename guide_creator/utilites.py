@@ -427,14 +427,17 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                                  params_values=self.super_guide_id, params='@SuperGuideID=?',
                                  sql_server_connection=self.sql_server_connection)
         guides = utilities.run_sql_return_params()
+        primary_id = 2
         for guide in guides:
             playlists_sps = [{'sp': 'sp_get_pl_breeding', 'name': 'Breeding'},
                              {'sp': 'sp_get_pl_common', 'name': 'Common'},
                              {'sp': 'sp_get_pl_common_passerines', 'name': 'Passerines C-A'},
                              {'sp': 'sp_get_pl_common_scarce_passerines', 'name': 'Passerines s-A'},
+                             {'sp': 'sp_get_pl_common_scarce_passerines_second', 'name': 'Passerines s-A Sec'},
                              {'sp': 'sp_get_pl_common_uncommon_doves', 'name': 'Doves Cuckoos UC-A'},
                              {'sp': 'sp_get_pl_doves', 'name': 'Doves Cuckoos'},
                              {'sp': 'sp_get_pl_guide', 'name': ''},
+                             {'sp': 'sp_get_pl_guide_second', 'name': 'Sec'},
                              {'sp': 'sp_get_pl_hawks', 'name': 'Hawks Owls'},
                              {'sp': 'sp_get_pl_herons', 'name': 'Rails Herons'},
                              {'sp': 'sp_get_pl_kingfishers', 'name': 'Kingfihsers'},
@@ -457,13 +460,17 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                 for fil in os.listdir(playlist_path):
                     os.remove(os.path.join(playlist_path, fil))
             for item in playlists_sps:
+                str_sp = item['sp']
                 if item['name'] == '':
                     playlist_name = guide[2]
                 else:
                     playlist_name = guide[2] + ' ' + item['name']
-                str_sp = item['sp']
-                utilities = SQLUtilities(sp=str_sp, logger=self.logger, sql_server_connection=self.sql_server_connection,
-                                         params_values=guide[1], params='@GuideID=?')
+                if str_sp[-6:] == 'second':
+                    utilities = SQLUtilities(sp=str_sp, logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                             params_values=(guide[1], primary_id), params='@SecondID=?, @GuideID=?')
+                else:
+                    utilities = SQLUtilities(sp=str_sp, logger=self.logger, sql_server_connection=self.sql_server_connection,
+                                             params_values=guide[1], params='@GuideID=?')
                 birds = utilities.run_sql_return_params()
                 str_file = header
                 for bird in birds:
