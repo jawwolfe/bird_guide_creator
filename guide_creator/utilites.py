@@ -450,7 +450,7 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
             item_begin = '#EXTINF:'
             extension = '.mp3\n'
             # todo config this or make variable based on super guide?
-            folder_phone = 'Birds/'
+            folder_phone = 'Philippines/'
             # todo get phone root from database
             root_phone = '/storage/emulated/0/'
             playlist_path = super_guide_playlist_path + guide[0]
