@@ -12,6 +12,7 @@
 *.csv
 *.xlsx
 *.json
+*.txt
 
 
 *.pyc
