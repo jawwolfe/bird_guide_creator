@@ -16,6 +16,7 @@ ONLY COMPLETE 6-10 IF PREVIOUS STEPS RESULT IN NEW BIRDS W/O IMAGES OR AUDIO
 7) Create all the audio files using the blank templates with the bird name. Put them into the Utilities directory.
 8) run_process_audio_files.py (fixes apostrophes from drive download and checks names moves them to Audio Finished directory)
 9) run_process_photo_files (optimized the images and moves them to Optimized directory)
+9.5) move the photo and audio files into the directories: Bird Photos and Bird Guides
 10) Using the Access database and Birds of the World website, for the new birds, add the description data (habitat, conservation status,etc...)
 
 CONTINUE HERE FOR REFRESH
@@ -23,5 +24,7 @@ CONTINUE HERE FOR REFRESH
 SUPER GUIDE SETTINGS:  WHICH SUPERGUIES TO REFRESH TAGS AND UPLOAD, SET GUIDES IN SUPERGUIDES
 GUIDE REGIONS SETTINGS:  WHICH GUIDES WILL SHOW UP IN THE DESCRIPTION
 12) run_embed_tags (add all the meta data to the audio file and uploads files to drive per the super guide settings.)
-13) Run the DriveSync application on your phone to refresh you local directory. 
-14) Download the appropriate playlists. If you added birds to the guide you will need to delete the old playlists and add the new ones.  
+13) Manually upload the changed files in Bird Guide directory to the Superguide directory after deleting and recreating the that directory
+14) Run the DriveSync application on your phone to refresh you local directory.
+15) run_refresh_playlists then manually upload
+16) Download the appropriate playlists. If you added birds to the guide you will need to delete the old playlists and add the new ones.
