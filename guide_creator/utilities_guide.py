@@ -48,9 +48,9 @@ class Compare:
                 add.append(diction)
 
     def run_compare_db_directory(self):
-        utilities = SQLUtilities(sp='sp_get_new_birds_by_guide', sql_server_connection=self.sql_server_connection,
-                                 params_values=12, params='@GuideID=?', logger=self.logger)
-        new_bird_list = utilities.run_sql_return_params()
+        utilities = SQLUtilities(sp='sp_get_all_birds_superguide_files_audit', sql_server_connection=self.sql_server_connection,
+                                 logger=self.logger)
+        new_bird_list = utilities.run_sql_return_no_params()
         for item in new_bird_list:
             flag = False
             for filename in os.listdir(self.path_one):
