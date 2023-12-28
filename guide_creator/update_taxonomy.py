@@ -124,13 +124,16 @@ class RepairUnmatchedFiles:
         self.all_completed_birds = utilities.run_sql_return_no_params()
 
     def compare(self, base_list, search_list):
+        x = 0
         for base_item in base_list:
             flag = False
             for search_item in search_list:
                 if base_item == search_item:
                     flag = True
             if not flag:
+                x += 1
                 print(base_item)
+        print(str(x))
 
     def get_new_code(self, english):
         for bird in self.get_all_completed_birds():
@@ -142,6 +145,8 @@ class RepairUnmatchedFiles:
     def update_files_codes(self):
         self.logger.info('Start script execution.')
         names_codes = []
+        a = 0
+        b = 0
         self.set_all_completed_birds()
         for item in self.get_all_completed_birds():
             diction = {'english': item[0][4:], 'code': item[1]}
@@ -155,6 +160,7 @@ class RepairUnmatchedFiles:
                 if bird['code'] + ' ' + bird['english'].strip() == file[:-4]:
                     flag = True
             if not flag:
+                a += 1
                 new_code = self.get_new_code(name_ext[:-4])
                 old_path = self.guide_path + "\\" + file
                 new_path = self.guide_path + "\\" + new_code + ' ' + name_ext
@@ -167,11 +173,14 @@ class RepairUnmatchedFiles:
                 if bird['code'] + ' ' + bird['english'].strip() == file.split("_", 1)[0]:
                     flag = True
             if not flag:
+                b += 1
                 new_code = self.get_new_code(name_ext[:-4].split("_", 1)[0])
                 old_path = self.image_path + "\\" + file
                 new_path = self.image_path + "\\" + new_code + ' ' + name_ext
                 self.logger.info("New file: " + new_code + ' ' + name_ext)
                 os.rename(old_path, new_path)
+        print(str(a))
+        print(str(b))
         self.logger.info('End script execution.')
 
     def get_unmatched_files_by_name(self):
@@ -192,10 +201,10 @@ class RepairUnmatchedFiles:
             split_name = photo.split("_", 1)
             name = split_name[0][4:].strip()
             photos.append(name)
-        self.compare(birds, photos)
+        #self.compare(birds, photos)
         self.compare(birds, guides)
-        self.compare(photos, birds)
-        self.compare(guides, birds)
+        #self.compare(photos, birds)
+        #self.compare(guides, birds)
         self.logger.info('End script execution.')
 
 
