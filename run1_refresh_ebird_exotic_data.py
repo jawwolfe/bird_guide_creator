@@ -15,6 +15,7 @@ update.parse_all_regions()
 
 
 '''
+# NOTE!!!  Splits required me to remove species from Exotic, this should be adding new guides only not updated old guides!!
 #Only run the Exotic utility to add a new guide.  Data never changes so updates have no effect.
 update = ExoticParseUtility(logger=LOGGER, sql_server_connection=initialize_sqlserver(),
                             exotic_base_url=EXOTIC_ROOT)
