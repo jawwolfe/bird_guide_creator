@@ -430,6 +430,7 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
         for guide in guides:
             playlists_sps = [{'sp': 'sp_get_pl_common', 'name': 'Common'},
                              {'sp': 'sp_get_pl_common_passerines', 'name': 'Passerines C-A'},
+                             {'sp': 'sp_get_pl_uncommon_passerines', 'name': 'Passerines U-A'},
                              {'sp': 'sp_get_pl_common_scarce_passerines', 'name': 'Passerines s-A'},
                              {'sp': 'sp_get_pl_doves', 'name': 'Doves Cuckoos'},
                              {'sp': 'sp_get_pl_guide', 'name': ''},
