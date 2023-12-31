@@ -304,14 +304,15 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                 sheet = book.active
                 birds = []
                 for item in return_values:
-                    my_data = [item[1], item[4], item[5], item[6], item[7]]
+                    my_data = [item[1], item[4], item[5], item[6], item[7], item[8], item[9], item[10], item[11]]
                     birds.append(my_data)
                 # add empty line in chart
-                birds.append(['', '', '', '', ''])
+                birds.append(['', '', '', '', '', '', '', '', ''])
                 # add footer in chart
                 birds.append(['Abundance Refresh: ' + str(abundance_date), 'Chart Refresh: '
                               + str(today_date), '', '', '', ''])
-                header = ['Species', 'Ebird Abundance', 'Residency', 'Endemic PH', 'Conservation']
+                header = ['Species', 'Ebird Abundance', 'Residency', 'Endemic PH', 'Conservation', 'Mont', 'Low', 'Pri',
+                          'Sec']
                 sheet.append(header)
                 sheet.append([])
                 for bird in birds:
@@ -319,20 +320,28 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                 for column_cells in sheet.columns:
                     new_column_letter = (get_column_letter(column_cells[0].column))
                     if new_column_letter == 'A':
-                        sheet.column_dimensions[new_column_letter].width = 30
+                        sheet.column_dimensions[new_column_letter].width = 28
                     elif new_column_letter == 'B':
-                        sheet.column_dimensions[new_column_letter].width = 18
+                        sheet.column_dimensions[new_column_letter].width = 17
                     elif new_column_letter == 'C':
-                        sheet.column_dimensions[new_column_letter].width = 23
+                        sheet.column_dimensions[new_column_letter].width = 16
                     elif new_column_letter == 'D':
-                        sheet.column_dimensions[new_column_letter].width = 12
+                        sheet.column_dimensions[new_column_letter].width = 10
                     elif new_column_letter == 'E':
-                        sheet.column_dimensions[new_column_letter].width = 20
+                        sheet.column_dimensions[new_column_letter].width = 17
+                    elif new_column_letter == 'F':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'G':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'H':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'I':
+                        sheet.column_dimensions[new_column_letter].width = 4
                 book.save(chart_path + '\\' + chart_name + '.xlsx')
-                google_api.create_document_upload(service=service, doc_name=chart_name + '.xlsx',
-                                                  doc_path=chart_path, parent_id=new_folder_id,
-                                                  mimetype='text/csv',
-                                                  meta_mine_type='application/vnd.google-apps.document')
+                #google_api.create_document_upload(service=service, doc_name=chart_name + '.xlsx',
+                #                                  doc_path=chart_path, parent_id=new_folder_id,
+                #                                  mimetype='text/csv',
+                #                                  meta_mine_type='application/vnd.google-apps.document')
                 # make the second chart with abundance per month and residence
                 chart_name = guide[2] + ' Abundance Detail Chart'
                 book = Workbook()
@@ -389,10 +398,10 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                     elif new_column_letter == 'N':
                         sheet.column_dimensions[new_column_letter].width = 20
                 book.save(chart_path + '\\' + chart_name + '.xlsx')
-                google_api.create_document_upload(service=service, doc_name=chart_name + '.xlsx',
-                                                  doc_path=chart_path, parent_id=new_folder_id,
-                                                  mimetype='text/csv',
-                                                  meta_mine_type='application/vnd.google-apps.document')
+                #google_api.create_document_upload(service=service, doc_name=chart_name + '.xlsx',
+                #                                  doc_path=chart_path, parent_id=new_folder_id,
+                #                                  mimetype='text/csv',
+                #                                  meta_mine_type='application/vnd.google-apps.document')
 
 
 class PlaylistsSuperGuide(GoogleAPIUtilities):
