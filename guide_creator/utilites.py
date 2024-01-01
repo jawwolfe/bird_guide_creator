@@ -304,15 +304,16 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                 sheet = book.active
                 birds = []
                 for item in return_values:
-                    my_data = [item[1], item[4], item[5], item[6], item[7], item[8], item[9], item[10], item[11]]
+                    my_data = [item[1], item[4], item[5], item[6], item[7], item[8], item[9], item[10], item[11],
+                               item[12], item[13], item[14]]
                     birds.append(my_data)
                 # add empty line in chart
                 birds.append(['', '', '', '', '', '', '', '', ''])
                 # add footer in chart
                 birds.append(['Abundance Refresh: ' + str(abundance_date), 'Chart Refresh: '
                               + str(today_date), '', '', '', ''])
-                header = ['Species', 'Ebird Abundance', 'Residency', 'Endemic PH', 'Conservation', 'Mont', 'Low', 'Pri',
-                          'Sec']
+                header = ['Species', 'Ebird Abundance', 'Residency', 'Endem', 'Consv', 'Lo', 'Cs', 'Gr',
+                          'Mt', 'Fr', 'Pr', 'Sc']
                 sheet.append(header)
                 sheet.append([])
                 for bird in birds:
@@ -324,11 +325,11 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                     elif new_column_letter == 'B':
                         sheet.column_dimensions[new_column_letter].width = 17
                     elif new_column_letter == 'C':
-                        sheet.column_dimensions[new_column_letter].width = 16
+                        sheet.column_dimensions[new_column_letter].width = 18
                     elif new_column_letter == 'D':
-                        sheet.column_dimensions[new_column_letter].width = 10
+                        sheet.column_dimensions[new_column_letter].width = 7
                     elif new_column_letter == 'E':
-                        sheet.column_dimensions[new_column_letter].width = 17
+                        sheet.column_dimensions[new_column_letter].width = 7
                     elif new_column_letter == 'F':
                         sheet.column_dimensions[new_column_letter].width = 4
                     elif new_column_letter == 'G':
@@ -336,6 +337,12 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                     elif new_column_letter == 'H':
                         sheet.column_dimensions[new_column_letter].width = 4
                     elif new_column_letter == 'I':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'J':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'K':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'L':
                         sheet.column_dimensions[new_column_letter].width = 4
                 book.save(chart_path + '\\' + chart_name + '.xlsx')
                 #google_api.create_document_upload(service=service, doc_name=chart_name + '.xlsx',
@@ -396,7 +403,7 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                     elif new_column_letter == 'M':
                         sheet.column_dimensions[new_column_letter].width = 4
                     elif new_column_letter == 'N':
-                        sheet.column_dimensions[new_column_letter].width = 20
+                        sheet.column_dimensions[new_column_letter].width = 16
                 book.save(chart_path + '\\' + chart_name + '.xlsx')
                 #google_api.create_document_upload(service=service, doc_name=chart_name + '.xlsx',
                 #                                  doc_path=chart_path, parent_id=new_folder_id,
@@ -438,6 +445,7 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
         guides = utilities.run_sql_return_params()
         for guide in guides:
             playlists_sps = [{'sp': 'sp_get_pl_common', 'name': 'Common'},
+                             {'sp': 'sp_get_pl_scarce', 'name': 'Scarce'},
                              {'sp': 'sp_get_pl_common_passerines', 'name': 'Passerines C-A'},
                              {'sp': 'sp_get_pl_uncommon_passerines', 'name': 'Passerines U-A'},
                              {'sp': 'sp_get_pl_common_scarce_passerines', 'name': 'Passerines s-A'},

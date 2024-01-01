@@ -114,6 +114,7 @@ class EmbedTags:
             return_data += ', authors: ' + artist_data[0][2]
             return_data += ', publisher: ' + artist_data[0][5]
             return_data += ', year: ' + str(artist_data[0][4])
+            return_data += "\n(Abundance Refresh: " + str(abundance_data_date) + ")"
             return_data += '\nLast Guide Refresh: ' + updated
         return return_data
 
