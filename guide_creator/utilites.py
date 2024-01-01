@@ -247,9 +247,10 @@ class GoogleDriveSuperGuide:
 
 class AbundanceChartSuperGuide(GoogleAPIUtilities):
     def __init__(self, logger, sql_server_connection, drive_root, super_guide_id, super_guide_name,
-                 super_guide_perm, chart_root, google_api_scopes=None, google_cred_path=None):
+                 super_guide_perm, chart_root, ebird_only, google_api_scopes=None, google_cred_path=None):
         self.sql_server_connection = sql_server_connection
         self.chart_root = chart_root
+        self.ebird_only = ebird_only
         self.super_guide_id = super_guide_id
         self.super_guide_name = super_guide_name
         self.super_guide_perm = super_guide_perm
@@ -257,6 +258,10 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                                     scopes=google_api_scopes)
 
     def refresh(self):
+        if self.ebird_only:
+            birds_query = 'sp_get_pl_guide_ebird'
+        else:
+            birds_query = 'sp_get_pl_guide'
         super_guide_chart_path = self.chart_root
         utilities = SQLUtilities(sp='sp_get_abundance_updated_date', logger=self.logger,
                                  sql_server_connection=self.sql_server_connection)
@@ -294,7 +299,7 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
             guides = utilities.run_sql_return_params()
             for guide in guides:
                 chart_path = super_guide_chart_path
-                utilities = SQLUtilities(sp="sp_get_pl_guide", logger=self.logger,
+                utilities = SQLUtilities(sp=birds_query, logger=self.logger,
                                          sql_server_connection=self.sql_server_connection, params_values=guide[1],
                                          params='@GuideID=?')
                 return_values = utilities.run_sql_return_params()
@@ -444,8 +449,9 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                                  sql_server_connection=self.sql_server_connection)
         guides = utilities.run_sql_return_params()
         for guide in guides:
-            playlists_sps = [{'sp': 'sp_get_pl_common', 'name': 'Common'},
-                             {'sp': 'sp_get_pl_scarce', 'name': 'Scarce'},
+            playlists_sps = [{'sp': 'sp_get_pl_common', 'name': 'Common C-A'},
+                             {'sp': 'sp_get_pl_uncommon', 'name': 'Uncommon U-A'},
+                             {'sp': 'sp_get_pl_scarce', 'name': 'Scarce s-A'},
                              {'sp': 'sp_get_pl_common_passerines', 'name': 'Passerines C-A'},
                              {'sp': 'sp_get_pl_uncommon_passerines', 'name': 'Passerines U-A'},
                              {'sp': 'sp_get_pl_common_scarce_passerines', 'name': 'Passerines s-A'},
