@@ -68,7 +68,6 @@ class EmbedTags:
                     return_data += '; ' + island[0]
                 return_data += '\n'
             return_data = return_data[:-2]
-            return_data += "\n(Abundance Refresh: " + str(abundance_data_date) + ")"
             if item[15].strip():
                 return_data += '\n' + item[15]
             if item[14]:
