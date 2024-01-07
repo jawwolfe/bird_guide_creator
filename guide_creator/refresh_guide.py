@@ -72,14 +72,14 @@ class EmbedTags:
                 return_data += '\n' + item[15]
             if item[14]:
                 return_data += '\nEBIRD OVERVIEW: ' + item[14]
-            if item[13]:
-                return_data += '\nIDENTIFICATION: ' + item[13]
-            if item[5]:
-                return_data += '\nHABITAT: ' + item[5]
-            if item[12]:
-                return_data += '\nMOVEMENT: ' + item[12]
             if item[7]:
                 return_data += '\nSONG: ' + item[7]
+            if item[5]:
+                return_data += '\nHABITAT: ' + item[5]
+            if item[13]:
+                return_data += '\nIDENTIFICATION: ' + item[13]
+            if item[12]:
+                return_data += '\nMOVEMENT: ' + item[12]
             if item[4]:
                 return_data += '\nBREEDING: ' + item[4]
             if item[6]:
@@ -114,7 +114,7 @@ class EmbedTags:
             return_data += ', publisher: ' + artist_data[0][5]
             return_data += ', year: ' + str(artist_data[0][4])
             return_data += "\n(Abundance Refresh: " + str(abundance_data_date) + ")"
-            return_data += '\nLast Guide Refresh: ' + updated
+            return_data += '\n(Last Guide Refresh: ' + updated + ")"
         return return_data
 
     def run_embed(self):
