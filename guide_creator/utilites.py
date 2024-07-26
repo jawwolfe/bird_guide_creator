@@ -309,15 +309,15 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                 sheet = book.active
                 birds = []
                 for item in return_values:
-                    my_data = [item[1], item[4], item[5], item[6], item[7], item[8], item[9], item[10], item[11],
-                               item[12], item[13], item[14]]
+                    my_data = [item[1], item[4], item[5], item[6], item[8], item[9], item[10], item[11], item[12],
+                               item[13], item[14], item[15], item[16], item[17]]
                     birds.append(my_data)
                 # add empty line in chart
                 birds.append(['', '', '', '', '', '', '', '', ''])
                 # add footer in chart
                 birds.append(['Abundance Refresh: ' + str(abundance_date), 'Chart Refresh: '
                               + str(today_date), '', '', '', ''])
-                header = ['Species', 'Ebird Abundance', 'Residency', 'Endem', 'Consv', 'Lo', 'Cs', 'Gr',
+                header = ['Species', 'Ebird Abundance', 'Residency', 'Ed', 'Cs', 'Mg', 'Lo', 'Pd', 'Ms', 'Gr',
                           'Mt', 'Fr', 'Pr', 'Sc']
                 sheet.append(header)
                 sheet.append([])
@@ -330,11 +330,11 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                     elif new_column_letter == 'B':
                         sheet.column_dimensions[new_column_letter].width = 17
                     elif new_column_letter == 'C':
-                        sheet.column_dimensions[new_column_letter].width = 18
+                        sheet.column_dimensions[new_column_letter].width = 16
                     elif new_column_letter == 'D':
-                        sheet.column_dimensions[new_column_letter].width = 7
+                        sheet.column_dimensions[new_column_letter].width = 4
                     elif new_column_letter == 'E':
-                        sheet.column_dimensions[new_column_letter].width = 7
+                        sheet.column_dimensions[new_column_letter].width = 4
                     elif new_column_letter == 'F':
                         sheet.column_dimensions[new_column_letter].width = 4
                     elif new_column_letter == 'G':
@@ -348,6 +348,10 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                     elif new_column_letter == 'K':
                         sheet.column_dimensions[new_column_letter].width = 4
                     elif new_column_letter == 'L':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'M':
+                        sheet.column_dimensions[new_column_letter].width = 4
+                    elif new_column_letter == 'N':
                         sheet.column_dimensions[new_column_letter].width = 4
                 book.save(chart_path + '\\' + chart_name + '.xlsx')
                 #google_api.create_document_upload(service=service, doc_name=chart_name + '.xlsx',
