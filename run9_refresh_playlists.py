@@ -23,7 +23,7 @@ for super_guide in super_guides:
                                          chart_root=CHART_ROOT, google_api_scopes=GOOGLE_API_SCOPES,
                                          super_guide_id=super_guide[1], super_guide_name=super_guide[0],
                                          google_cred_path=GOOGLE_CRED_PATH, super_guide_perm=SUPER_GUIDE_PERMISSIONS,
-                                         drive_root='Chart Directories', ebird_only=1)
+                                         drive_root='Chart Directories', inc_exotic=0)
     charts.refresh()
 
     playlists = PlaylistsSuperGuide(logger=LOGGER, sql_server_connection=initialize_sqlserver(),

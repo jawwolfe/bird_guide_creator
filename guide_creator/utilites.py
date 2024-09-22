@@ -247,10 +247,10 @@ class GoogleDriveSuperGuide:
 
 class AbundanceChartSuperGuide(GoogleAPIUtilities):
     def __init__(self, logger, sql_server_connection, drive_root, super_guide_id, super_guide_name,
-                 super_guide_perm, chart_root, ebird_only, google_api_scopes=None, google_cred_path=None):
+                 super_guide_perm, chart_root, inc_exotic, google_api_scopes=None, google_cred_path=None):
         self.sql_server_connection = sql_server_connection
         self.chart_root = chart_root
-        self.ebird_only = ebird_only
+        self.inc_exotic = inc_exotic
         self.super_guide_id = super_guide_id
         self.super_guide_name = super_guide_name
         self.super_guide_perm = super_guide_perm
@@ -258,8 +258,8 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
                                     scopes=google_api_scopes)
 
     def refresh(self):
-        if self.ebird_only:
-            birds_query = 'sp_get_pl_guide_ebird'
+        if self.inc_exotic:
+            birds_query = 'sp_get_pl_guide_inc_exotic'
         else:
             birds_query = 'sp_get_pl_guide'
         super_guide_chart_path = self.chart_root
@@ -461,6 +461,7 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                              {'sp': 'sp_get_pl_common_scarce_passerines', 'name': 'Passerines s-A'},
                              {'sp': 'sp_get_pl_doves', 'name': 'Doves Cuckoos'},
                              {'sp': 'sp_get_pl_guide', 'name': ''},
+                             {'sp': 'sp_get_pl_guide_inc_exotic', 'name': 'ALL'},
                              {'sp': 'sp_get_pl_hawks', 'name': 'Hawks Owls Kingfishers'},
                              {'sp': 'sp_get_pl_herons', 'name': 'Rails Herons'},
                              {'sp': 'sp_get_pl_passerines', 'name': 'Passerines'},
