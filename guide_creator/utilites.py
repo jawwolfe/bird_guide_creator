@@ -280,17 +280,17 @@ class AbundanceChartSuperGuide(GoogleAPIUtilities):
         for folder in folders['files']:
             if self.super_guide_name == folder['name']:
                 file_id = folder['id']
-                permissions = google_api.list_permissions_by_file_id(service=service, file_id=folder['id'])
+                #permissions = google_api.list_permissions_by_file_id(service=service, file_id=folder['id'])
         # then delete directory and all files
-        if file_id:
-            google_api.delete_file_or_directory(service=service, file_id=file_id)
+        #if file_id:
+        #    google_api.delete_file_or_directory(service=service, file_id=file_id)
         # create the directory
-        new_folder_id = google_api.create_file_or_directory(service=service, item_name=self.super_guide_name,
-                                                            parent_id=root_id)
-        if permissions:
-            for perm in permissions['permissions']:
-                if perm['role'] != 'owner':
-                    emails.append(perm['emailAddress'])
+        #new_folder_id = google_api.create_file_or_directory(service=service, item_name=self.super_guide_name,
+        #                                                    parent_id=root_id)
+        #if permissions:
+        #    for perm in permissions['permissions']:
+        #        if perm['role'] != 'owner':
+        #            emails.append(perm['emailAddress'])
         if emails:
             # now get a list of active guides in this superguide and create directory for each
             utilities = SQLUtilities(sp='sp_get_active_guides_in_super_guide', logger=self.logger,
@@ -452,6 +452,7 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                                  params_values=self.super_guide_id, params='@SuperGuideID=?',
                                  sql_server_connection=self.sql_server_connection)
         guides = utilities.run_sql_return_params()
+        primary_id = 2
         for guide in guides:
             playlists_sps = [{'sp': 'sp_get_pl_common', 'name': 'Common C-A'},
                              {'sp': 'sp_get_pl_uncommon', 'name': 'Uncommon U-A'},
@@ -461,6 +462,7 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                              {'sp': 'sp_get_pl_common_scarce_passerines', 'name': 'Passerines s-A'},
                              {'sp': 'sp_get_pl_doves', 'name': 'Doves Cuckoos'},
                              {'sp': 'sp_get_pl_guide', 'name': ''},
+                             {'sp': 'sp_get_pl_guide_second', 'name': ''},
                              {'sp': 'sp_get_pl_guide_inc_exotic', 'name': 'ALL'},
                              {'sp': 'sp_get_pl_hawks', 'name': 'Hawks Owls Kingfishers'},
                              {'sp': 'sp_get_pl_herons', 'name': 'Rails Herons'},
@@ -480,14 +482,20 @@ class PlaylistsSuperGuide(GoogleAPIUtilities):
                 for fil in os.listdir(playlist_path):
                     os.remove(os.path.join(playlist_path, fil))
             for item in playlists_sps:
-                if item['name'] == '':
-                    playlist_name = guide[2]
-                else:
-                    playlist_name = guide[2] + ' ' + item['name']
                 str_sp = item['sp']
-                utilities = SQLUtilities(sp=str_sp, logger=self.logger,
-                                         sql_server_connection=self.sql_server_connection,
-                                         params_values=guide[1], params='@GuideID=?')
+                if str_sp[-6:] == 'second':
+                    playlist_name = guide[2] + ' NOT IN CEBU'
+                    utilities = SQLUtilities(sp=str_sp, logger=self.logger,
+                                             sql_server_connection=self.sql_server_connection,
+                                             params_values=(guide[1], primary_id), params='@SecondID=?, @GuideID=?')
+                else:
+                    if item['name'] == '':
+                        playlist_name = guide[2]
+                    else:
+                        playlist_name = guide[2] + ' ' + item['name']
+                    utilities = SQLUtilities(sp=str_sp, logger=self.logger,
+                                             sql_server_connection=self.sql_server_connection,
+                                             params_values=guide[1], params='@GuideID=?')
                 birds = utilities.run_sql_return_params()
                 str_file = header
                 for bird in birds:
