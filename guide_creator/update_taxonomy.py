@@ -169,12 +169,14 @@ class RepairUnmatchedFiles:
         for file in filenames_p:
             flag = False
             name_ext = file[4:].strip()
+            name_ext_2 = name_ext[:-4].split("_", 1)[0]
+            file2 = file.split("_", 1)[0]
             for bird in names_codes:
-                if bird['code'] + ' ' + bird['english'].strip() == file.split("_", 1)[0]:
+                if bird['code'] + ' ' + bird['english'].strip() == file2:
                     flag = True
             if not flag:
                 b += 1
-                new_code = self.get_new_code(name_ext[:-4].split("_", 1)[0])
+                new_code = self.get_new_code(name_ext_2)
                 old_path = self.image_path + "\\" + file
                 new_path = self.image_path + "\\" + new_code + ' ' + name_ext
                 self.logger.info("New file: " + new_code + ' ' + name_ext)

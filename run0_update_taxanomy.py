@@ -16,9 +16,17 @@ Remove the First row of data which is not actually data
 Use SSMS DB tasks, Import Data, Excel Source, Destination: "Microsoft OLE DB Provider for SQLServer"
 Rename new table to "Clements_202X".  You may need to drop a number of "Phantom field" with no data
 
+2024 used Import from Flat File: download and view in Excel, delete the Extinct columns save as CSV. 
+All columns not allow nulls, make sort columns float, range and text for website nvarchar(max), all 
+others nvarchar(255)
+
 Add underscores to all field names and change the first column sort to "TAXON_ORDER"
 Backup the Clements table which will be truncated in the next step in case of errors
-change the two clements queries to use the appropriate new tables by incrementing the year
+change the two clements queries to use the appropriate new tables by incrementing the year 
+sp_get_clements_species, sp_get_clements_species_subspecies
+
+Backup Table:  Database, generate scripts, advanced, schema and data, then find replace name Clements 
+to Clements_backup_year
 
 STEP TWO:
 Run "UpdateTaxonomy", which will refresh the "Clements" table with the new taxonomy for Order, English, Scientific, 
@@ -33,6 +41,7 @@ Next joining on English Name Update the Scientific Name for all birds that had S
 Then joining on Scientific Name Update the English Names for all birds that had E.N. change
 
 Make query to get the different kinds of changes from the Clements table
+Go through splits and lumps relevant to Birds table (link on SN or EN) and make spreadsheet per last year.
 
 Splits: edit the scientific and/or English name as appropriate. New additions will happen during next refresh
 Lumps: remove rows in Birds, BirdsGuides, and ExoticChecklists as appropriate (these will become orphans)
@@ -57,6 +66,8 @@ STEP 6.5  Edit the bird playlist queries that hard code the taxonomy codes and o
 STEP 7
 Run an entire refresh.  The new birds from the splits should be automatically added in the refresh. 
 
+STEP 8 Add new photos and audio from the TODO.  Add/edit metadata where noted in my spreadsheet for splits and lumps
+
 '''
 
 '''
@@ -70,5 +81,6 @@ update.run_taxonomy_update()
 '''
 find = RepairUnmatchedFiles(logger=LOGGER, sql_server_connection=initialize_sqlserver(), image_path=IMAGE_PATH,
                             guide_path=GUIDE_PATH)
-find.get_unmatched_files_by_name()
-#find.update_files_codes()
+#find.get_unmatched_files_by_name()
+find.update_files_codes()
+
