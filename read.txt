@@ -28,3 +28,10 @@ GUIDE REGIONS SETTINGS:  WHICH GUIDES WILL SHOW UP IN THE DESCRIPTION
 14) Run the DriveSync application on your phone to refresh you local directory.
 15) run_refresh_playlists then manually upload
 16) Download the appropriate playlists. If you added birds to the guide you will need to delete the old playlists and add the new ones.
+
+
+Import Media Data:
+Download CSV from McCauley Library with all types of media.
+Remove unused Columns form CSV File and resave as CSV
+DB, tasks, Import Data, Flat File source (edit types to match destination (Unicode text)), OLE DB provider for SQL server, choose
+the table (Media), map the fields to columns, import..;
