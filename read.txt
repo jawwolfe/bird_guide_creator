@@ -32,7 +32,7 @@ GUIDE REGIONS SETTINGS:  WHICH GUIDES WILL SHOW UP IN THE DESCRIPTION
 
 Import Media Data:
 Download CSV from McCauley Library with all types of media.
-Remove unused Columns form CSV File and resave as CSV
+Remove unused Columns form CSV File and resave as CSV (only 18 columns being used, match to Media table)
 DB, tasks, Import Flat File, Flat File source, select file, preview (check data quality), Modify Columns (match the Media
 table types and lengths, and make all allow Null, run....
 execute the stored procedure sp_update_media
