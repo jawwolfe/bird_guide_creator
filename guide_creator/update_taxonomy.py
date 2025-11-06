@@ -128,11 +128,14 @@ class RepairUnmatchedFiles:
         for base_item in base_list:
             flag = False
             for search_item in search_list:
-                if base_item == search_item:
+                if base_item[0] == search_item[0]:
                     flag = True
             if not flag:
                 x += 1
+                #path = self.image_path + "\\" + base_item[1]
+                #os.remove(path)
                 print(base_item)
+
         print(str(x))
 
     def get_new_code(self, english):
@@ -190,18 +193,25 @@ class RepairUnmatchedFiles:
         birds = []
         self.set_all_completed_birds()
         for item in self.get_all_completed_birds():
-            birds.append(item[0][4:].strip())
+            name = {}
+            name[0] = item[0][4:].strip()
+            name[1] = item[0]
+            birds.append(name)
         filenames_p = os.listdir(self.image_path)
         filenames_g = os.listdir(self.guide_path)
         guides = []
         photos = []
         for file in filenames_g:
+            name = {}
             name_ext = file[4:].strip()
-            name = name_ext[:-4]
+            name[0] = name_ext[:-4]
+            name[1] = file
             guides.append(name)
         for photo in filenames_p:
+            name = {}
             split_name = photo.split("_", 1)
-            name = split_name[0][4:].strip()
+            name[0] = split_name[0][4:].strip()
+            name[1] = photo
             photos.append(name)
         #self.compare(birds, photos)
         self.compare(birds, guides)

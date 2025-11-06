@@ -12,25 +12,23 @@ GUIDE_PATH = config.AUDIO_PATH_GUIDE
 STEP ONE:
 Get the combined "eBird/Clements Checklist v202X" Excel version from
 https://www.birds.cornell.edu/clementschecklist
-Remove the First row of data which is not actually data
-Use SSMS DB tasks, Import Data, Excel Source, Destination: "Microsoft OLE DB Provider for SQLServer"
-Rename new table to "Clements_202X".  You may need to drop a number of "Phantom field" with no data
-
-2024 used Import from Flat File: download and view in Excel, delete the Extinct columns save as CSV. 
-All columns not allow nulls, make sort columns float, range and text for website nvarchar(max), all 
-others nvarchar(255)
-
+Download and view in Excel, delete all columns except the 11 in use in the Clements_2025 table. 
 Add underscores to all field names and change the first column sort to "TAXON_ORDER"
-Backup the Clements table which will be truncated in the next step in case of errors
-change the two clements queries to use the appropriate new tables by incrementing the year 
-sp_get_clements_species, sp_get_clements_species_subspecies
+Remove the First row of data which is not actually data
+DB, Tasks, Import from Flat File. All columns allow nulls, make sort columns float, 
+range and text for website nvarchar(max), all others nvarchar(255)Rename new table to "Clements_202X".
 
+Backup the Clements table which will be truncated in the next step in case of errors. 
 Backup Table:  Database, generate scripts, advanced, schema and data, then find replace name Clements 
-to Clements_backup_year
+to Clements_backup_year.  Change the two clements queries to use the appropriate new tables by incrementing the year 
+sp_get_clements_species, sp_get_clements_species_subspecies
 
 STEP TWO:
 Run "UpdateTaxonomy", which will refresh the "Clements" table with the new taxonomy for Order, English, Scientific, 
 and Range.  It also adds the custom sort code and the EbirdGroup. 
+
+** NOTE: NEXT YEAR 2026 NEED TO ADD THE TEXT FOR THE CHANGES TO THE UPDATE TAXONOMY CODE.**
+** OR can use the Update query after the fact to add text**
 
 STEP THREE:
 First manually go through the birds with both English and Scientific name changes and update English name in BirdName table
@@ -64,9 +62,10 @@ Manually truncate the BirdsRegionsAbundance table so it is completely refreshed.
 STEP 6.5  Edit the bird playlist queries that hard code the taxonomy codes and order ID which have probably changed
 
 STEP 7
-Run an entire refresh.  The new birds from the splits should be automatically added in the refresh. 
+Run an entire refresh up until Embed Tags.  The new birds from the splits should be automatically added in the refresh. 
 
 STEP 8 Add new photos and audio from the TODO.  Add/edit metadata where noted in my spreadsheet for splits and lumps
+After finished run "Embed Tags" and "Refresh Playlists".  Note:  all playlists will need to up updated and reinstalled. 
 
 '''
 
@@ -77,8 +76,8 @@ update_cons.run()
 
 update = UpdateTaxonomy(logger=LOGGER, sql_server_connection=initialize_sqlserver())
 update.run_taxonomy_update()
-
 '''
+
 find = RepairUnmatchedFiles(logger=LOGGER, sql_server_connection=initialize_sqlserver(), image_path=IMAGE_PATH,
                             guide_path=GUIDE_PATH)
 #find.get_unmatched_files_by_name()
