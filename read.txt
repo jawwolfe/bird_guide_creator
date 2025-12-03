@@ -37,3 +37,7 @@ DB, tasks, Import Flat File, Flat File source, select file, preview (check data 
 table types and lengths, and make all allow Null, run....
 execute the stored procedure sp_update_media
 delete the table "media_temp"
+
+
+3001 (B.Throat Bee), 258 (S.T. Drong C), and 379 (L.B. Crow) all removed from Birds Guides (except Palawan SQ DrongC) and Exotic checklists
+2995 (B.B dward kingf) also ditto

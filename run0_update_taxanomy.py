@@ -12,11 +12,12 @@ GUIDE_PATH = config.AUDIO_PATH_GUIDE
 STEP ONE:
 Get the combined "eBird/Clements Checklist v202X" Excel version from
 https://www.birds.cornell.edu/clementschecklist
-Download and view in Excel, delete all columns except the 11 in use in the Clements_2025 table. 
-Add underscores to all field names and change the first column sort to "TAXON_ORDER"
 Remove the First row of data which is not actually data
-DB, Tasks, Import from Flat File. All columns allow nulls, make sort columns float, 
-range and text for website nvarchar(max), all others nvarchar(255)Rename new table to "Clements_202X".
+Remove all but 11 columns need to match dbo.Clements_202X table. Rename first column TAXON_ORDER. 
+Make all other columns names with underscores to match DB fields. Save as CSV. 
+DB, Tasks, Import from Flat File
+All columns allow nulls, make 2 sort columns float, range and text for website nvarchar(max), all 
+others nvarchar(255)
 
 Backup the Clements table which will be truncated in the next step in case of errors. 
 Backup Table:  Database, generate scripts, advanced, schema and data, then find replace name Clements 
